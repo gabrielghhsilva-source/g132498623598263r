@@ -9,7 +9,7 @@ interface Props {
   areas: TaskArea[];
   onReorder: (fromIndex: number, toIndex: number) => void;
   onToggleCollapse: (areaId: string) => void;
-  onAddTask: (areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule) => void;
+  onAddTask: (areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => void;
   onUpdateStatus: (areaId: string, taskId: string, status: TaskStatus) => void;
   onUpdateStyle: (areaId: string, taskId: string, style: Partial<TaskTextStyle>) => void;
   onUpdateText: (areaId: string, taskId: string, text: string) => void;
