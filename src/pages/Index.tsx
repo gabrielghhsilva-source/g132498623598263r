@@ -51,7 +51,7 @@ const Index = () => {
             areas={store.areas}
             onReorder={store.reorderAreas}
             onToggleCollapse={store.toggleCollapse}
-            onAddTask={(areaId, text, date, rec) => store.addTask(areaId, text, date, rec)}
+            onAddTask={(areaId, text, date, rec, time) => store.addTask(areaId, text, date, rec, time)}
             onUpdateStatus={store.updateTaskStatus}
             onUpdateStyle={store.updateTaskStyle}
             onUpdateText={store.updateTaskText}
