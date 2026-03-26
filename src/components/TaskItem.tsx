@@ -1,6 +1,6 @@
+import React, { useState } from "react";
 import { Task, TaskStatus, TaskTextStyle } from "@/lib/types";
-import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush } from "lucide-react";
-import { useState } from "react";
+import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
@@ -17,13 +17,23 @@ interface Props {
   onStyleChange: (style: Partial<TaskTextStyle>) => void;
   onTextChange: (text: string) => void;
   onDelete: () => void;
+  onAddComment: (text: string) => void;
+  onDeleteComment: (commentId: string) => void;
 }
 
-export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, onDelete }: Props) {
+export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment }: Props) {
   const [showStyle, setShowStyle] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
   const statusCfg = STATUS_CONFIG[task.status];
-  const isOverdue = task.dueDate && task.status !== "done" && new Date(task.dueDate) < new Date();
+  const isOverdue = task.dueDate && task.status !== "done" && new Date(task.dueDate) < new Date(new Date().toISOString().split("T")[0]);
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    onAddComment(newComment.trim());
+    setNewComment("");
+  };
 
   return (
     <div className={`group rounded-lg border px-4 py-3 transition-all animate-fade-in ${
@@ -68,15 +78,30 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
             }`}
             style={{ color: task.style.color }}
           />
-          {task.dueDate && (
-            <p className={`text-xs mt-1 ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-              {isOverdue ? "⚠ Atrasada — " : ""}Prazo: {new Date(task.dueDate).toLocaleDateString("pt-BR")}
-            </p>
-          )}
+          <div className="flex items-center gap-2 mt-1">
+            {task.dueDate && (
+              <p className={`text-xs ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                {isOverdue ? "⚠ Atrasada — " : ""}Prazo: {new Date(task.dueDate + "T12:00:00").toLocaleDateString("pt-BR")}
+              </p>
+            )}
+            {task.recurrence && (
+              <span className="text-xs bg-info/10 text-info px-1.5 py-0.5 rounded">
+                🔄 {task.recurrence.type === "weekly" ? "Semanal" : "Mensal"}
+              </span>
+            )}
+            {task.comments.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                💬 {task.comments.length}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => setShowComments(!showComments)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários">
+            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
           <button onClick={() => setShowStyle(!showStyle)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Estilo">
             <Type className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -127,8 +152,37 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      {showComments && (
+        <div className="mt-3 pt-3 border-t border-border animate-fade-in space-y-2">
+          {task.comments.map(c => (
+            <div key={c.id} className="flex items-start gap-2 bg-secondary/50 rounded-md px-3 py-2">
+              <p className="flex-1 text-xs text-foreground">{c.text}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                </span>
+                <button onClick={() => onDeleteComment(c.id)} className="text-destructive hover:text-destructive/80">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <input
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleAddComment()}
+              placeholder="Adicionar comentário..."
+              className="flex-1 bg-secondary/60 rounded-md px-3 py-1.5 text-xs outline-none border border-border focus:border-primary/40 transition-colors text-foreground placeholder:text-muted-foreground"
+            />
+            <button onClick={handleAddComment} className="p-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90">
+              <Send className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-import React from "react";
