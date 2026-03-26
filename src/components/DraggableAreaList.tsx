@@ -102,7 +102,7 @@ export function DraggableAreaList({
                 area={area}
                 isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
                 onToggleCollapse={() => onToggleCollapse(area.id)}
-                onAddTask={(text, date, rec) => onAddTask(area.id, text, date, rec)}
+                onAddTask={(text, date, rec, time) => onAddTask(area.id, text, date, rec, time)}
                 onUpdateStatus={(taskId, s) => onUpdateStatus(area.id, taskId, s)}
                 onUpdateStyle={(taskId, s) => onUpdateStyle(area.id, taskId, s)}
                 onUpdateText={(taskId, t) => onUpdateText(area.id, taskId, t)}
