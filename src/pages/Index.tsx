@@ -1,65 +1,76 @@
+import { useState, useCallback } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { Preloader } from "@/components/Preloader";
+import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
-import { TaskAreaCard } from "@/components/TaskAreaCard";
+import { DraggableAreaList } from "@/components/DraggableAreaList";
 import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
 import { ClipboardList } from "lucide-react";
 
-const DEFAULT_AREA_IDS = ["work", "games", "leisure", "home", "investments"];
-
 const Index = () => {
   const store = useTaskStore();
+  const [preloaderDone, setPreloaderDone] = useState(() => {
+    // Only show preloader once per session
+    if (sessionStorage.getItem("preloader-shown")) return true;
+    return false;
+  });
+
+  const handlePreloaderDone = useCallback(() => {
+    sessionStorage.setItem("preloader-shown", "true");
+    setPreloaderDone(true);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ClipboardList className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold tracking-tight">Minhas Tarefas</h1>
-          </div>
-          <ThemeSwitcher
-            current={store.theme}
-            onChange={store.setTheme}
-            customColors={store.customColors}
-            onCustomColorsChange={store.setCustomColors}
-          />
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pr-12 sm:pr-6">
-        <StatsBar stats={store.stats} />
-
-        <div className="space-y-4">
-          {store.areas.map(area => (
-            <TaskAreaCard
-              key={area.id}
-              area={area}
-              isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
-              onToggleCollapse={() => store.toggleCollapse(area.id)}
-              onAddTask={(text, date, rec) => store.addTask(area.id, text, date, rec)}
-              onUpdateStatus={(taskId, s) => store.updateTaskStatus(area.id, taskId, s)}
-              onUpdateStyle={(taskId, s) => store.updateTaskStyle(area.id, taskId, s)}
-              onUpdateText={(taskId, t) => store.updateTaskText(area.id, taskId, t)}
-              onDeleteTask={taskId => store.deleteTask(area.id, taskId)}
-              onDeleteArea={!DEFAULT_AREA_IDS.includes(area.id) ? () => store.deleteArea(area.id) : undefined}
-              onAddComment={(taskId, text) => store.addComment(area.id, taskId, text)}
-              onDeleteComment={(taskId, commentId) => store.deleteComment(area.id, taskId, commentId)}
+    <>
+      {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
+      <div className={`min-h-screen bg-background transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"}`}>
+        {/* Header */}
+        <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="w-6 h-6 text-primary" />
+              <h1 className="text-xl font-bold tracking-tight">Minhas Tarefas</h1>
+            </div>
+            <SettingsMenu
+              theme={store.theme}
+              onThemeChange={store.setTheme}
+              customColors={store.customColors}
+              onCustomColorsChange={store.setCustomColors}
+              timezone={store.timezone}
+              onTimezoneChange={store.setTimezone}
             />
-          ))}
-          <AddAreaDialog onAdd={store.addArea} />
-        </div>
-      </main>
+          </div>
+        </header>
 
-      {/* Today's tasks panel */}
-      <TodayPanel
-        tasks={store.todayTasks}
-        onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
-      />
-    </div>
+        {/* Content */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pr-12 sm:pr-6">
+          <StatsBar stats={store.stats} />
+
+          <DraggableAreaList
+            areas={store.areas}
+            onReorder={store.reorderAreas}
+            onToggleCollapse={store.toggleCollapse}
+            onAddTask={(areaId, text, date, rec) => store.addTask(areaId, text, date, rec)}
+            onUpdateStatus={store.updateTaskStatus}
+            onUpdateStyle={store.updateTaskStyle}
+            onUpdateText={store.updateTaskText}
+            onDeleteTask={store.deleteTask}
+            onDeleteArea={store.deleteArea}
+            onAddComment={store.addComment}
+            onDeleteComment={store.deleteComment}
+          />
+
+          <AddAreaDialog onAdd={store.addArea} />
+        </main>
+
+        {/* Today's tasks panel */}
+        <TodayPanel
+          tasks={store.todayTasks}
+          onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+        />
+      </div>
+    </>
   );
 };
 
