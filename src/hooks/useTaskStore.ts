@@ -57,7 +57,6 @@ function applyCustomColors(colors: CustomThemeColors) {
   root.style.setProperty("--popover-foreground", hexToHsl(colors.foreground));
   root.style.setProperty("--border", hexToHsl(colors.border));
   root.style.setProperty("--input", hexToHsl(colors.border));
-  // Derive secondary/muted from card
   root.style.setProperty("--secondary", hexToHsl(colors.card));
   root.style.setProperty("--secondary-foreground", hexToHsl(colors.foreground));
   root.style.setProperty("--muted", hexToHsl(colors.card));
@@ -78,7 +77,6 @@ function clearCustomColors() {
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
     const loaded = loadFromStorage("task-areas", DEFAULT_AREAS);
-    // Migrate old tasks without comments
     return loaded.map(a => ({
       ...a,
       tasks: a.tasks.map(t => ({ ...t, comments: t.comments || [] }))
@@ -86,6 +84,7 @@ export function useTaskStore() {
   });
   const [theme, setThemeState] = useState<ThemeId>(() => loadFromStorage("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadFromStorage("task-custom-colors", DEFAULT_CUSTOM_COLORS));
+  const [timezone, setTimezoneState] = useState<string>(() => loadFromStorage("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
 
   useEffect(() => {
     localStorage.setItem("task-areas", JSON.stringify(areas));
@@ -106,6 +105,10 @@ export function useTaskStore() {
     localStorage.setItem("task-custom-colors", JSON.stringify(customColors));
   }, [customColors]);
 
+  useEffect(() => {
+    localStorage.setItem("task-timezone", JSON.stringify(timezone));
+  }, [timezone]);
+
   // Recurring task generation
   useEffect(() => {
     const lastCheck = loadFromStorage<string>("task-recurrence-last-check", "");
@@ -118,7 +121,7 @@ export function useTaskStore() {
         const recurringTasks = area.tasks.filter(t => t.recurrence && !t.recurrenceSourceId);
         for (const template of recurringTasks) {
           const rule = template.recurrence!;
-          const nextDates = getUpcomingDates(rule, 14); // check next 14 days
+          const nextDates = getUpcomingDates(rule, 14);
           for (const date of nextDates) {
             const advDate = new Date(date);
             advDate.setDate(advDate.getDate() - rule.advanceDays);
@@ -152,18 +155,57 @@ export function useTaskStore() {
     });
   }, []);
 
-  const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
-  const setCustomColors = useCallback((colors: CustomThemeColors) => {
-    setCustomColorsState(colors);
-  }, []);
+  // Background notification check every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const nowStr = now.toISOString().split("T")[0];
+      const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule) => {
+      const allTasks = areas.flatMap(a => a.tasks);
+      const dueTasks = allTasks.filter(t =>
+        t.dueDate === nowStr && t.dueTime === nowTime && t.status !== "done"
+      );
+
+      if (dueTasks.length > 0 && document.hidden) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          dueTasks.forEach(t => {
+            new Notification("⏰ Tarefa agora!", {
+              body: t.text,
+              icon: "/placeholder.svg",
+            });
+          });
+        }
+        try {
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 830;
+          osc.type = "sine";
+          gain.gain.value = 0.3;
+          osc.start();
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc.stop(ctx.currentTime + 0.5);
+        } catch {}
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [areas]);
+
+  const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
+  const setCustomColors = useCallback((colors: CustomThemeColors) => setCustomColorsState(colors), []);
+  const setTimezone = useCallback((tz: string) => setTimezoneState(tz), []);
+
+  const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task: Task = {
       id: crypto.randomUUID(),
       text,
       status: "todo",
       style: { ...DEFAULT_STYLE },
       dueDate,
+      dueTime,
       createdAt: new Date().toISOString(),
       comments: [],
       recurrence,
@@ -173,50 +215,34 @@ export function useTaskStore() {
 
   const updateTaskStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, status } : t) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, status } : t) } : a
     ));
   }, []);
 
   const updateTaskStyle = useCallback((areaId: string, taskId: string, style: Partial<TaskTextStyle>) => {
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, style: { ...t.style, ...style } } : t) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, style: { ...t.style, ...style } } : t) } : a
     ));
   }, []);
 
   const updateTaskText = useCallback((areaId: string, taskId: string, text: string) => {
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, text } : t) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, text } : t) } : a
     ));
   }, []);
 
   const deleteTask = useCallback((areaId: string, taskId: string) => {
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.filter(t => t.id !== taskId) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.filter(t => t.id !== taskId) } : a
     ));
   }, []);
 
   const toggleCollapse = useCallback((areaId: string) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, collapsed: !a.collapsed } : a
-    ));
+    setAreas(prev => prev.map(a => a.id === areaId ? { ...a, collapsed: !a.collapsed } : a));
   }, []);
 
   const addArea = useCallback((name: string, icon: string) => {
-    const area: TaskArea = {
-      id: crypto.randomUUID(),
-      name,
-      icon,
-      tasks: [],
-      collapsed: false,
-    };
+    const area: TaskArea = { id: crypto.randomUUID(), name, icon, tasks: [], collapsed: false };
     setAreas(prev => [...prev, area]);
   }, []);
 
@@ -224,28 +250,28 @@ export function useTaskStore() {
     setAreas(prev => prev.filter(a => a.id !== areaId));
   }, []);
 
+  const reorderAreas = useCallback((fromIndex: number, toIndex: number) => {
+    setAreas(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  }, []);
+
   const addComment = useCallback((areaId: string, taskId: string, text: string) => {
-    const comment: TaskComment = {
-      id: crypto.randomUUID(),
-      text,
-      createdAt: new Date().toISOString(),
-    };
+    const comment: TaskComment = { id: crypto.randomUUID(), text, createdAt: new Date().toISOString() };
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t) } : a
     ));
   }, []);
 
   const deleteComment = useCallback((areaId: string, taskId: string, commentId: string) => {
     setAreas(prev => prev.map(a =>
-      a.id === areaId
-        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: t.comments.filter(c => c.id !== commentId) } : t) }
-        : a
+      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: t.comments.filter(c => c.id !== commentId) } : t) } : a
     ));
   }, []);
 
-  // Stats
   const allTasks = areas.flatMap(a => a.tasks);
   const stats = {
     total: allTasks.length,
@@ -258,7 +284,6 @@ export function useTaskStore() {
     }).length,
   };
 
-  // Today's tasks
   const todayStr = new Date().toISOString().split("T")[0];
   const todayTasks = areas.flatMap(a =>
     a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
@@ -266,8 +291,10 @@ export function useTaskStore() {
 
   return {
     areas, theme, setTheme, customColors, setCustomColors,
+    timezone, setTimezone,
     addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
-    toggleCollapse, addArea, deleteArea, addComment, deleteComment,
+    toggleCollapse, addArea, deleteArea, reorderAreas,
+    addComment, deleteComment,
     stats, todayTasks,
   };
 }
@@ -276,17 +303,11 @@ function getUpcomingDates(rule: RecurrenceRule, daysAhead: number): Date[] {
   const dates: Date[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   for (let i = 0; i <= daysAhead; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
-
-    if (rule.type === "weekly" && rule.daysOfWeek?.includes(d.getDay())) {
-      dates.push(new Date(d));
-    }
-    if (rule.type === "monthly" && rule.dayOfMonth === d.getDate()) {
-      dates.push(new Date(d));
-    }
+    if (rule.type === "weekly" && rule.daysOfWeek?.includes(d.getDay())) dates.push(new Date(d));
+    if (rule.type === "monthly" && rule.dayOfMonth === d.getDate()) dates.push(new Date(d));
   }
   return dates;
 }

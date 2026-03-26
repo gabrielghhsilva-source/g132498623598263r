@@ -18,7 +18,7 @@ interface Props {
   area: TaskArea;
   isCustom?: boolean;
   onToggleCollapse: () => void;
-  onAddTask: (text: string, dueDate?: string, recurrence?: RecurrenceRule) => void;
+  onAddTask: (text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
   onUpdateStyle: (taskId: string, style: Partial<TaskTextStyle>) => void;
   onUpdateText: (taskId: string, text: string) => void;
@@ -31,6 +31,7 @@ interface Props {
 export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
   const [newTask, setNewTask] = useState("");
   const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [showRecurrence, setShowRecurrence] = useState(false);
   const [recType, setRecType] = useState<"weekly" | "monthly">("weekly");
@@ -51,9 +52,10 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
         ...(recType === "weekly" ? { daysOfWeek: recDays } : { dayOfMonth: recDayOfMonth }),
       };
     }
-    onAddTask(newTask.trim(), newDate || undefined, recurrence);
+    onAddTask(newTask.trim(), newDate || undefined, recurrence, newTime || undefined);
     setNewTask("");
     setNewDate("");
+    setNewTime("");
     setShowAdd(false);
     setShowRecurrence(false);
     setRecDays([]);
@@ -64,7 +66,7 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
   };
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden animate-fade-in">
+    <div className="glass-card rounded-xl overflow-hidden animate-fade-in transition-all duration-300">
       {/* Header */}
       <div className="flex items-center">
         <button
@@ -81,9 +83,9 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
             )}
           </div>
           {area.collapsed ? (
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground transition-transform" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform" />
           )}
         </button>
         {isCustom && onDeleteArea && (
@@ -95,7 +97,7 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
 
       {/* Content */}
       {!area.collapsed && (
-        <div className="px-5 pb-4 space-y-2">
+        <div className="px-5 pb-4 space-y-2 animate-fade-in">
           {area.tasks.length === 0 && !showAdd && (
             <p className="text-sm text-muted-foreground py-3 text-center">
               Nenhuma tarefa ainda
@@ -131,6 +133,12 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
                   type="date"
                   value={newDate}
                   onChange={e => setNewDate(e.target.value)}
+                  className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border text-muted-foreground"
+                />
+                <input
+                  type="time"
+                  value={newTime}
+                  onChange={e => setNewTime(e.target.value)}
                   className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border text-muted-foreground"
                 />
                 <button
@@ -203,7 +211,7 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
               <div className="flex items-center gap-2">
                 <div className="flex-1" />
                 <button
-                  onClick={() => { setShowAdd(false); setNewTask(""); setNewDate(""); setShowRecurrence(false); }}
+                  onClick={() => { setShowAdd(false); setNewTask(""); setNewDate(""); setNewTime(""); setShowRecurrence(false); }}
                   className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors text-muted-foreground"
                 >
                   Cancelar

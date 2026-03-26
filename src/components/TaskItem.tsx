@@ -36,7 +36,7 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
   };
 
   return (
-    <div className={`group rounded-lg border px-4 py-3 transition-all animate-fade-in ${
+    <div className={`group rounded-lg border px-4 py-3 transition-all duration-200 animate-fade-in ${
       task.status === "done" ? "border-success/20 bg-success/5" : isOverdue ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"
     }`}>
       <div className="flex items-start gap-3">
@@ -78,10 +78,11 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
             }`}
             style={{ color: task.style.color }}
           />
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             {task.dueDate && (
               <p className={`text-xs ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                 {isOverdue ? "⚠ Atrasada — " : ""}Prazo: {new Date(task.dueDate + "T12:00:00").toLocaleDateString("pt-BR")}
+                {task.dueTime && ` às ${task.dueTime}`}
               </p>
             )}
             {task.recurrence && (
@@ -98,7 +99,7 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button onClick={() => setShowComments(!showComments)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários">
             <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -116,11 +117,7 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
         <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-3 animate-fade-in">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Type className="w-3 h-3" />
-            <select
-              value={task.style.size}
-              onChange={e => onStyleChange({ size: e.target.value as TaskTextStyle["size"] })}
-              className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground"
-            >
+            <select value={task.style.size} onChange={e => onStyleChange({ size: e.target.value as TaskTextStyle["size"] })} className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground">
               <option value="sm">Pequeno</option>
               <option value="base">Normal</option>
               <option value="lg">Grande</option>
@@ -129,11 +126,7 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Bold className="w-3 h-3" />
-            <select
-              value={task.style.weight}
-              onChange={e => onStyleChange({ weight: e.target.value as TaskTextStyle["weight"] })}
-              className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground"
-            >
+            <select value={task.style.weight} onChange={e => onStyleChange({ weight: e.target.value as TaskTextStyle["weight"] })} className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground">
               <option value="light">Leve</option>
               <option value="normal">Normal</option>
               <option value="medium">Médio</option>
@@ -143,12 +136,7 @@ export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, on
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Paintbrush className="w-3 h-3" />
-            <input
-              type="color"
-              value={task.style.color}
-              onChange={e => onStyleChange({ color: e.target.value })}
-              className="w-6 h-6 rounded border border-border cursor-pointer"
-            />
+            <input type="color" value={task.style.color} onChange={e => onStyleChange({ color: e.target.value })} className="w-6 h-6 rounded border border-border cursor-pointer" />
           </div>
         </div>
       )}

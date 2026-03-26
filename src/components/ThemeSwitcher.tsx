@@ -1,6 +1,5 @@
 import { ThemeId, ThemeOption, CustomThemeColors } from "@/lib/types";
-import { Palette } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
 const THEMES: ThemeOption[] = [
   { id: "mono-light", name: "Claro", preview: "#f7f7f7" },
@@ -24,65 +23,52 @@ interface Props {
   onChange: (t: ThemeId) => void;
   customColors: CustomThemeColors;
   onCustomColorsChange: (colors: CustomThemeColors) => void;
+  embedded?: boolean;
 }
 
-export function ThemeSwitcher({ current, onChange, customColors, onCustomColorsChange }: Props) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+export function ThemeSwitcher({ current, onChange, customColors, onCustomColorsChange, embedded }: Props) {
+  // If not embedded, we don't render (it's used inside SettingsMenu now)
+  // But we keep the standalone mode for backward compat
+  const [open, setOpen] = useState(embedded ? true : false);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  if (embedded) {
+    return (
+      <div className="space-y-1">
+        {THEMES.map(t => (
+          <button
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+              current === t.id ? "bg-accent font-semibold" : "hover:bg-accent/50"
+            }`}
+          >
+            {t.id === "custom" ? (
+              <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ background: t.preview }} />
+            ) : (
+              <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: t.preview }} />
+            )}
+            {t.name}
+          </button>
+        ))}
+        {current === "custom" && (
+          <div className="mt-2 pt-2 border-t border-border space-y-2 px-1">
+            {COLOR_LABELS.map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">{label}</span>
+                <input
+                  type="color"
+                  value={customColors[key]}
+                  onChange={e => onCustomColorsChange({ ...customColors, [key]: e.target.value })}
+                  className="w-7 h-7 rounded border border-border cursor-pointer"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors text-sm font-medium"
-      >
-        <Palette className="w-4 h-4" />
-        <span className="hidden sm:inline">Tema</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg p-2 z-50 animate-scale-in min-w-[200px]">
-          {THEMES.map(t => (
-            <button
-              key={t.id}
-              onClick={() => { onChange(t.id); if (t.id !== "custom") setOpen(false); }}
-              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
-                current === t.id ? "bg-accent font-semibold" : "hover:bg-accent/50"
-              }`}
-            >
-              {t.id === "custom" ? (
-                <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ background: t.preview }} />
-              ) : (
-                <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: t.preview }} />
-              )}
-              {t.name}
-            </button>
-          ))}
-
-          {current === "custom" && (
-            <div className="mt-2 pt-2 border-t border-border space-y-2 px-1">
-              {COLOR_LABELS.map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">{label}</span>
-                  <input
-                    type="color"
-                    value={customColors[key]}
-                    onChange={e => onCustomColorsChange({ ...customColors, [key]: e.target.value })}
-                    className="w-7 h-7 rounded border border-border cursor-pointer"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // Standalone mode (unused now but kept)
+  return null;
 }
