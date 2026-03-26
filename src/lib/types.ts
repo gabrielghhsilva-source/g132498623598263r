@@ -14,9 +14,9 @@ export interface TaskComment {
 
 export interface RecurrenceRule {
   type: "weekly" | "monthly";
-  daysOfWeek?: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
-  dayOfMonth?: number;   // 1-31
-  advanceDays: number;   // how many days in advance to create task
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
+  advanceDays: number;
 }
 
 export interface Task {
@@ -25,10 +25,11 @@ export interface Task {
   status: TaskStatus;
   style: TaskTextStyle;
   dueDate?: string;
+  dueTime?: string;
   createdAt: string;
   comments: TaskComment[];
   recurrence?: RecurrenceRule;
-  recurrenceSourceId?: string; // links generated tasks to their template
+  recurrenceSourceId?: string;
 }
 
 export interface TaskArea {
