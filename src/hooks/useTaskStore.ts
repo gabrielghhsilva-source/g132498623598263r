@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId } from "@/lib/types";
+import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskComment } from "@/lib/types";
 
 const DEFAULT_STYLE: TaskTextStyle = { size: "base", weight: "normal", color: "#000000" };
 
@@ -11,6 +11,13 @@ const DEFAULT_AREAS: TaskArea[] = [
   { id: "investments", name: "Investimentos", icon: "📈", tasks: [], collapsed: false },
 ];
 
+const DEFAULT_CUSTOM_COLORS: CustomThemeColors = {
+  background: "#f7f7f7",
+  foreground: "#171717",
+  card: "#ffffff",
+  border: "#e0e0e0",
+};
+
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
     const stored = localStorage.getItem(key);
@@ -20,9 +27,65 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+function hexToHsl(hex: string): string {
+  let r = 0, g = 0, b = 0;
+  hex = hex.replace("#", "");
+  r = parseInt(hex.substring(0, 2), 16) / 255;
+  g = parseInt(hex.substring(2, 4), 16) / 255;
+  b = parseInt(hex.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function applyCustomColors(colors: CustomThemeColors) {
+  const root = document.documentElement;
+  root.style.setProperty("--background", hexToHsl(colors.background));
+  root.style.setProperty("--foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--card", hexToHsl(colors.card));
+  root.style.setProperty("--card-foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--popover", hexToHsl(colors.card));
+  root.style.setProperty("--popover-foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--border", hexToHsl(colors.border));
+  root.style.setProperty("--input", hexToHsl(colors.border));
+  // Derive secondary/muted from card
+  root.style.setProperty("--secondary", hexToHsl(colors.card));
+  root.style.setProperty("--secondary-foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--muted", hexToHsl(colors.card));
+  root.style.setProperty("--muted-foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--accent", hexToHsl(colors.card));
+  root.style.setProperty("--accent-foreground", hexToHsl(colors.foreground));
+  root.style.setProperty("--primary", hexToHsl(colors.foreground));
+  root.style.setProperty("--primary-foreground", hexToHsl(colors.background));
+  root.style.setProperty("--ring", hexToHsl(colors.foreground));
+}
+
+function clearCustomColors() {
+  const root = document.documentElement;
+  const props = ["--background", "--foreground", "--card", "--card-foreground", "--popover", "--popover-foreground", "--border", "--input", "--secondary", "--secondary-foreground", "--muted", "--muted-foreground", "--accent", "--accent-foreground", "--primary", "--primary-foreground", "--ring"];
+  props.forEach(p => root.style.removeProperty(p));
+}
+
 export function useTaskStore() {
-  const [areas, setAreas] = useState<TaskArea[]>(() => loadFromStorage("task-areas", DEFAULT_AREAS));
+  const [areas, setAreas] = useState<TaskArea[]>(() => {
+    const loaded = loadFromStorage("task-areas", DEFAULT_AREAS);
+    // Migrate old tasks without comments
+    return loaded.map(a => ({
+      ...a,
+      tasks: a.tasks.map(t => ({ ...t, comments: t.comments || [] }))
+    }));
+  });
   const [theme, setThemeState] = useState<ThemeId>(() => loadFromStorage("task-theme", "mono-light" as ThemeId));
+  const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadFromStorage("task-custom-colors", DEFAULT_CUSTOM_COLORS));
 
   useEffect(() => {
     localStorage.setItem("task-areas", JSON.stringify(areas));
@@ -30,12 +93,71 @@ export function useTaskStore() {
 
   useEffect(() => {
     localStorage.setItem("task-theme", JSON.stringify(theme));
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    if (theme === "custom") {
+      document.documentElement.setAttribute("data-theme", "mono-light");
+      applyCustomColors(customColors);
+    } else {
+      clearCustomColors();
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+  }, [theme, customColors]);
+
+  useEffect(() => {
+    localStorage.setItem("task-custom-colors", JSON.stringify(customColors));
+  }, [customColors]);
+
+  // Recurring task generation
+  useEffect(() => {
+    const lastCheck = loadFromStorage<string>("task-recurrence-last-check", "");
+    const today = new Date().toISOString().split("T")[0];
+    if (lastCheck === today) return;
+
+    setAreas(prev => {
+      let updated = [...prev];
+      for (const area of updated) {
+        const recurringTasks = area.tasks.filter(t => t.recurrence && !t.recurrenceSourceId);
+        for (const template of recurringTasks) {
+          const rule = template.recurrence!;
+          const nextDates = getUpcomingDates(rule, 14); // check next 14 days
+          for (const date of nextDates) {
+            const advDate = new Date(date);
+            advDate.setDate(advDate.getDate() - rule.advanceDays);
+            const advStr = advDate.toISOString().split("T")[0];
+            const todayDate = new Date(today);
+            if (advDate <= todayDate) {
+              const dateStr = date.toISOString().split("T")[0];
+              const exists = area.tasks.some(t =>
+                t.recurrenceSourceId === template.id && t.dueDate === dateStr
+              );
+              if (!exists) {
+                const newTask: Task = {
+                  id: crypto.randomUUID(),
+                  text: template.text,
+                  status: "todo",
+                  style: { ...template.style },
+                  dueDate: dateStr,
+                  createdAt: new Date().toISOString(),
+                  comments: [],
+                  recurrenceSourceId: template.id,
+                };
+                const areaIdx = updated.findIndex(a => a.id === area.id);
+                updated[areaIdx] = { ...updated[areaIdx], tasks: [...updated[areaIdx].tasks, newTask] };
+              }
+            }
+          }
+        }
+      }
+      localStorage.setItem("task-recurrence-last-check", JSON.stringify(today));
+      return updated;
+    });
+  }, []);
 
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
+  const setCustomColors = useCallback((colors: CustomThemeColors) => {
+    setCustomColorsState(colors);
+  }, []);
 
-  const addTask = useCallback((areaId: string, text: string, dueDate?: string) => {
+  const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule) => {
     const task: Task = {
       id: crypto.randomUUID(),
       text,
@@ -43,6 +165,8 @@ export function useTaskStore() {
       style: { ...DEFAULT_STYLE },
       dueDate,
       createdAt: new Date().toISOString(),
+      comments: [],
+      recurrence,
     };
     setAreas(prev => prev.map(a => a.id === areaId ? { ...a, tasks: [...a.tasks, task] } : a));
   }, []);
@@ -85,6 +209,42 @@ export function useTaskStore() {
     ));
   }, []);
 
+  const addArea = useCallback((name: string, icon: string) => {
+    const area: TaskArea = {
+      id: crypto.randomUUID(),
+      name,
+      icon,
+      tasks: [],
+      collapsed: false,
+    };
+    setAreas(prev => [...prev, area]);
+  }, []);
+
+  const deleteArea = useCallback((areaId: string) => {
+    setAreas(prev => prev.filter(a => a.id !== areaId));
+  }, []);
+
+  const addComment = useCallback((areaId: string, taskId: string, text: string) => {
+    const comment: TaskComment = {
+      id: crypto.randomUUID(),
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    setAreas(prev => prev.map(a =>
+      a.id === areaId
+        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t) }
+        : a
+    ));
+  }, []);
+
+  const deleteComment = useCallback((areaId: string, taskId: string, commentId: string) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId
+        ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: t.comments.filter(c => c.id !== commentId) } : t) }
+        : a
+    ));
+  }, []);
+
   // Stats
   const allTasks = areas.flatMap(a => a.tasks);
   const stats = {
@@ -94,9 +254,39 @@ export function useTaskStore() {
     todo: allTasks.filter(t => t.status === "todo").length,
     overdue: allTasks.filter(t => {
       if (!t.dueDate || t.status === "done") return false;
-      return new Date(t.dueDate) < new Date();
+      return new Date(t.dueDate) < new Date(new Date().toISOString().split("T")[0]);
     }).length,
   };
 
-  return { areas, theme, setTheme, addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask, toggleCollapse, stats };
+  // Today's tasks
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayTasks = areas.flatMap(a =>
+    a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+  );
+
+  return {
+    areas, theme, setTheme, customColors, setCustomColors,
+    addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
+    toggleCollapse, addArea, deleteArea, addComment, deleteComment,
+    stats, todayTasks,
+  };
+}
+
+function getUpcomingDates(rule: RecurrenceRule, daysAhead: number): Date[] {
+  const dates: Date[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i <= daysAhead; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+
+    if (rule.type === "weekly" && rule.daysOfWeek?.includes(d.getDay())) {
+      dates.push(new Date(d));
+    }
+    if (rule.type === "monthly" && rule.dayOfMonth === d.getDate()) {
+      dates.push(new Date(d));
+    }
+  }
+  return dates;
 }
