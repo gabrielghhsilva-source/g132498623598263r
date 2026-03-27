@@ -134,11 +134,8 @@ const AppContent = () => {
           {activeTab === "stocks" && (
             <StockMarket
               positions={stockStore.positions}
-              apiKey={stockStore.apiKey}
-              onSetApiKey={stockStore.setApiKey}
-              onBuy={stockStore.buyStock}
-              onSell={stockStore.sellStock}
-              onDelete={stockStore.deletePosition}
+              onAdd={stockStore.addPosition}
+              onRemove={stockStore.removePosition}
             />
           )}
         </main>

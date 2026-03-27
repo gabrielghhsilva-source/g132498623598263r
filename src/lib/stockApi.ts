@@ -1,6 +1,6 @@
-const API_BASE = "https://www.alphavantage.co/query";
+import { supabase } from "@/integrations/supabase/client";
 
-// Simple in-memory cache to avoid API rate limits
+// In-memory cache to reduce API calls
 const responseCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
@@ -12,6 +12,13 @@ function getCached(key: string): any | null {
 
 function setCache(key: string, data: any) {
   responseCache.set(key, { data, timestamp: Date.now() });
+}
+
+async function callProxy(body: Record<string, string>) {
+  const { data, error } = await supabase.functions.invoke("stock-proxy", { body });
+  if (error) throw new Error(error.message || "Proxy request failed");
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 export interface StockQuote {
@@ -43,17 +50,13 @@ export interface SearchResult {
   currency: string;
 }
 
-export async function searchSymbols(query: string, apiKey: string): Promise<SearchResult[]> {
+export async function searchSymbols(query: string): Promise<SearchResult[]> {
   if (!query || query.length < 1) return [];
   const cacheKey = `search-${query}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const url = `${API_BASE}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (data.Note || data["Information"]) throw new Error("API rate limit reached");
+  const data = await callProxy({ action: "search", keywords: query });
 
   const results: SearchResult[] = (data.bestMatches || []).map((m: any) => ({
     symbol: m["1. symbol"],
@@ -67,16 +70,12 @@ export async function searchSymbols(query: string, apiKey: string): Promise<Sear
   return results;
 }
 
-export async function getQuote(symbol: string, apiKey: string): Promise<StockQuote | null> {
+export async function getQuote(symbol: string): Promise<StockQuote | null> {
   const cacheKey = `quote-${symbol}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const url = `${API_BASE}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (data.Note || data["Information"]) throw new Error("API rate limit reached");
+  const data = await callProxy({ action: "quote", symbol });
 
   const q = data["Global Quote"];
   if (!q || !q["05. price"]) return null;
@@ -97,22 +96,18 @@ export async function getQuote(symbol: string, apiKey: string): Promise<StockQuo
   return quote;
 }
 
-export async function getDailyHistory(symbol: string, apiKey: string): Promise<DailyPrice[]> {
+export async function getDailyHistory(symbol: string): Promise<DailyPrice[]> {
   const cacheKey = `daily-${symbol}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const url = `${API_BASE}?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=compact&apikey=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (data.Note || data["Information"]) throw new Error("API rate limit reached");
+  const data = await callProxy({ action: "daily", symbol });
 
   const series = data["Time Series (Daily)"];
   if (!series) return [];
 
   const prices: DailyPrice[] = Object.entries(series)
-    .slice(0, 30) // Last 30 days
+    .slice(0, 30)
     .map(([date, values]: [string, any]) => ({
       date,
       open: parseFloat(values["1. open"]),
