@@ -171,6 +171,8 @@ export function useTaskStore() {
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
   const setCustomColors = useCallback((colors: CustomThemeColors) => setCustomColorsState(colors), []);
   const setTimezone = useCallback((tz: string) => setTimezoneState(tz), []);
+  const setButtonBgColor = useCallback((c: string) => setButtonBgColorState(c), []);
+  const setButtonTextColor = useCallback((c: string) => setButtonTextColorState(c), []);
 
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task: Task = {
