@@ -20,8 +20,9 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const encoded = new TextEncoder().encode(password);
   const keyMaterial = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+    "raw", encoded.buffer as ArrayBuffer, "PBKDF2", false, ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
