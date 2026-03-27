@@ -21,7 +21,7 @@ interface Props {
 }
 
 export function DraggableAreaList({
-  areas, onReorder, onToggleCollapse, onAddTask, onUpdateStatus,
+  areas, timezone, onReorder, onToggleCollapse, onAddTask, onUpdateStatus,
   onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment
 }: Props) {
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
