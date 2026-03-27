@@ -101,6 +101,7 @@ export function DraggableAreaList({
             >
               <TaskAreaCard
                 area={area}
+                timezone={timezone}
                 isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
                 onToggleCollapse={() => onToggleCollapse(area.id)}
                 onAddTask={(text, date, rec, time) => onAddTask(area.id, text, date, rec, time)}
