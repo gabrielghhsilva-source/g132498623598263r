@@ -44,7 +44,7 @@ export function CardNavigation({ active, onChange }: Props) {
             <button
               key={tab.id}
               onClick={() => onChange(tab.id)}
-              className="absolute rounded-lg border-2 shadow-md transition-all ease-out flex flex-col items-center justify-center gap-1 cursor-pointer hover:!scale-105 hover:!rotate-0 hover:!shadow-lg"
+              className="absolute rounded-lg border-2 shadow-md transition-all ease-out flex flex-col items-center justify-center gap-1 cursor-pointer"
               style={{
                 width: 50,
                 height: 64,
