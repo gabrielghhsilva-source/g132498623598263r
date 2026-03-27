@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskComment } from "@/lib/types";
 import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
+import { secureGet, secureSet } from "@/lib/crypto";
 
 const DEFAULT_STYLE: TaskTextStyle = { size: "base", weight: "normal", color: "#000000" };
 
@@ -19,9 +20,18 @@ const DEFAULT_CUSTOM_COLORS: CustomThemeColors = {
   border: "#e0e0e0",
 };
 
-function loadFromStorage<T>(key: string, fallback: T): T {
+function loadPlain<T>(key: string, fallback: T): T {
   try {
     const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function loadSecure<T>(key: string, fallback: T): T {
+  try {
+    const stored = secureGet(key);
     return stored ? JSON.parse(stored) : fallback;
   } catch {
     return fallback;
@@ -75,22 +85,23 @@ function clearCustomColors() {
   props.forEach(p => root.style.removeProperty(p));
 }
 
+// Force clean remount after hook changes
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
-    const loaded = loadFromStorage("task-areas", DEFAULT_AREAS);
+    const loaded = loadSecure("task-areas", DEFAULT_AREAS);
     return loaded.map(a => ({
       ...a,
       tasks: a.tasks.map(t => ({ ...t, comments: t.comments || [] }))
     }));
   });
-  const [theme, setThemeState] = useState<ThemeId>(() => loadFromStorage("task-theme", "mono-light" as ThemeId));
-  const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadFromStorage("task-custom-colors", DEFAULT_CUSTOM_COLORS));
-  const [timezone, setTimezoneState] = useState<string>(() => loadFromStorage("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
-  const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadFromStorage("task-button-bg", "#000000"));
-  const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadFromStorage("task-button-text", "#ffffff"));
+  const [theme, setThemeState] = useState<ThemeId>(() => loadPlain("task-theme", "mono-light" as ThemeId));
+  const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadPlain("task-custom-colors", DEFAULT_CUSTOM_COLORS));
+  const [timezone, setTimezoneState] = useState<string>(() => loadPlain("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
+  const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadPlain("task-button-bg", "#000000"));
+  const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadPlain("task-button-text", "#ffffff"));
 
   useEffect(() => {
-    localStorage.setItem("task-areas", JSON.stringify(areas));
+    secureSet("task-areas", JSON.stringify(areas));
   }, [areas]);
 
   useEffect(() => {
@@ -104,25 +115,14 @@ export function useTaskStore() {
     }
   }, [theme, customColors]);
 
-  useEffect(() => {
-    localStorage.setItem("task-custom-colors", JSON.stringify(customColors));
-  }, [customColors]);
-
-  useEffect(() => {
-    localStorage.setItem("task-timezone", JSON.stringify(timezone));
-  }, [timezone]);
-
-  useEffect(() => {
-    localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor));
-  }, [buttonBgColor]);
-
-  useEffect(() => {
-    localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor));
-  }, [buttonTextColor]);
+  useEffect(() => { localStorage.setItem("task-custom-colors", JSON.stringify(customColors)); }, [customColors]);
+  useEffect(() => { localStorage.setItem("task-timezone", JSON.stringify(timezone)); }, [timezone]);
+  useEffect(() => { localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor)); }, [buttonBgColor]);
+  useEffect(() => { localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor)); }, [buttonTextColor]);
 
   // Recurring task generation
   useEffect(() => {
-    const lastCheck = loadFromStorage<string>("task-recurrence-last-check", "");
+    const lastCheck = loadPlain<string>("task-recurrence-last-check", "");
     const now = getNowInTimezone(timezone);
     const today = now.date;
     if (lastCheck === today) return;
@@ -176,15 +176,8 @@ export function useTaskStore() {
 
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task: Task = {
-      id: crypto.randomUUID(),
-      text,
-      status: "todo",
-      style: { ...DEFAULT_STYLE },
-      dueDate,
-      dueTime,
-      createdAt: new Date().toISOString(),
-      comments: [],
-      recurrence,
+      id: crypto.randomUUID(), text, status: "todo", style: { ...DEFAULT_STYLE },
+      dueDate, dueTime, createdAt: new Date().toISOString(), comments: [], recurrence,
     };
     setAreas(prev => prev.map(a => a.id === areaId ? { ...a, tasks: [...a.tasks, task] } : a));
   }, []);
@@ -248,7 +241,6 @@ export function useTaskStore() {
     ));
   }, []);
 
-  // Stats computed with timezone-aware overdue
   const allTasks = areas.flatMap(a => a.tasks);
   const stats = {
     total: allTasks.length,
@@ -264,7 +256,6 @@ export function useTaskStore() {
     a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
   );
 
-  // All tasks with area info for notification system
   const allTasksWithArea = areas.flatMap(a =>
     a.tasks.map(t => ({ task: t, areaName: a.name }))
   );

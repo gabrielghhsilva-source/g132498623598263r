@@ -4,6 +4,7 @@ import { useNotificationStore } from "@/hooks/useNotificationStore";
 import { useNotificationSystem } from "@/hooks/useNotificationSystem";
 import { useInvestmentStore } from "@/hooks/useInvestmentStore";
 import { useBackgroundStore } from "@/hooks/useBackgroundStore";
+import { useStockStore } from "@/hooks/useStockStore";
 import { Preloader } from "@/components/Preloader";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
@@ -14,15 +15,18 @@ import { NotificationPopup } from "@/components/NotificationPopup";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
-import { ClipboardList, TrendingUp } from "lucide-react";
+import { StockMarket } from "@/components/StockMarket";
+import { PasswordGate } from "@/components/PasswordGate";
+import { ClipboardList, TrendingUp, BarChart3 } from "lucide-react";
 import { AppTab } from "@/lib/types";
+import { isUnlocked } from "@/lib/crypto";
 
-// Force clean remount after hook changes
-const Index = () => {
+const AppContent = () => {
   const store = useTaskStore();
   const notifStore = useNotificationStore();
   const investStore = useInvestmentStore();
   const bgStore = useBackgroundStore();
+  const stockStore = useStockStore();
   const { currentEvent, dismissEvent } = useNotificationSystem(
     store.allTasksWithArea,
     notifStore.settings,
@@ -41,7 +45,6 @@ const Index = () => {
   }, []);
 
   const handleCreateTaskReminder = useCallback((text: string) => {
-    // Add to "investments" task area, or first area
     const area = store.areas.find(a => a.id === "investments") || store.areas[0];
     if (area) {
       store.addTask(area.id, text, new Date().toISOString().split("T")[0]);
@@ -49,32 +52,27 @@ const Index = () => {
     setActiveTab("tasks");
   }, [store]);
 
+  const tabMeta: Record<AppTab, { icon: typeof ClipboardList; label: string; color: string }> = {
+    tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
+    investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
+    stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
+  };
+
+  const ActiveIcon = tabMeta[activeTab].icon;
+
   return (
     <>
       {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
-
-      {/* Background layer */}
       <BackgroundLayer settings={bgStore.settings} />
 
       <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"} ${bgStore.settings.mode !== "none" ? "" : "bg-background"}`}>
-        {/* Card navigation */}
         <CardNavigation active={activeTab} onChange={setActiveTab} />
 
-        {/* Header */}
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between pl-20">
             <div className="flex items-center gap-3">
-              {activeTab === "tasks" ? (
-                <>
-                  <ClipboardList className="w-6 h-6 text-primary" />
-                  <h1 className="text-xl font-bold tracking-tight">Minhas Tarefas</h1>
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="w-6 h-6 text-success" />
-                  <h1 className="text-xl font-bold tracking-tight">Investimentos</h1>
-                </>
-              )}
+              <ActiveIcon className={`w-6 h-6 ${tabMeta[activeTab].color}`} />
+              <h1 className="text-xl font-bold tracking-tight">{tabMeta[activeTab].label}</h1>
             </div>
             <SettingsMenu
               theme={store.theme}
@@ -97,9 +95,8 @@ const Index = () => {
           </div>
         </header>
 
-        {/* Content */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pl-20 pr-12 sm:pr-6">
-          {activeTab === "tasks" ? (
+          {activeTab === "tasks" && (
             <>
               <StatsBar stats={store.stats} />
               <DraggableAreaList
@@ -118,7 +115,8 @@ const Index = () => {
               />
               <AddAreaDialog onAdd={store.addArea} />
             </>
-          ) : (
+          )}
+          {activeTab === "investments" && (
             <InvestmentDashboard
               areas={investStore.areas}
               onAddArea={investStore.addArea}
@@ -133,15 +131,23 @@ const Index = () => {
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}
+          {activeTab === "stocks" && (
+            <StockMarket
+              positions={stockStore.positions}
+              apiKey={stockStore.apiKey}
+              onSetApiKey={stockStore.setApiKey}
+              onBuy={stockStore.buyStock}
+              onSell={stockStore.sellStock}
+              onDelete={stockStore.deletePosition}
+            />
+          )}
         </main>
 
-        {/* Today's tasks panel */}
         <TodayPanel
           tasks={store.todayTasks}
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
         />
 
-        {/* Notification popup */}
         <NotificationPopup
           event={currentEvent}
           settings={notifStore.settings}
@@ -150,6 +156,17 @@ const Index = () => {
       </div>
     </>
   );
+};
+
+// Outer component: password gate
+const Index = () => {
+  const [unlocked, setUnlocked] = useState(() => isUnlocked());
+
+  if (!unlocked) {
+    return <PasswordGate onUnlocked={() => setUnlocked(true)} />;
+  }
+
+  return <AppContent />;
 };
 
 export default Index;
