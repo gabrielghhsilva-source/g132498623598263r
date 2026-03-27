@@ -191,16 +191,15 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
                 className="w-16 px-2 py-1.5 rounded-lg text-sm bg-muted border border-border outline-none text-center"
                 placeholder="Qtd"
               />
-              <input
-                type="number" min={0} step={0.01} value={addPrice}
-                onChange={e => setAddPrice(e.target.value)}
-                className="w-24 px-2 py-1.5 rounded-lg text-sm bg-muted border border-border outline-none text-center"
-                placeholder="Preço médio"
-              />
+              <div className="px-3 py-1.5 rounded-lg text-sm bg-muted/50 border border-border text-muted-foreground text-center min-w-[80px]">
+                {formatUSD(selectedQuote.price)}
+              </div>
+              <div className="px-3 py-1.5 rounded-lg text-sm bg-muted/50 border border-border font-semibold text-center min-w-[100px]">
+                = {formatUSD(selectedQuote.price * addQty)}
+              </div>
               <button
                 onClick={() => {
-                  const price = parseFloat(addPrice) || selectedQuote.price;
-                  onAdd(selectedQuote.symbol, addQty, price);
+                  onAdd(selectedQuote.symbol, addQty, selectedQuote.price);
                   setAddQty(1);
                 }}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors"
