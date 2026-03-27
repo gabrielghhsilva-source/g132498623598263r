@@ -272,6 +272,7 @@ export function useTaskStore() {
   return {
     areas, theme, setTheme, customColors, setCustomColors,
     timezone, setTimezone,
+    buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
