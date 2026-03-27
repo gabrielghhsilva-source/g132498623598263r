@@ -54,3 +54,24 @@ export interface ThemeOption {
   name: string;
   preview: string;
 }
+
+export interface NotificationSettings {
+  advanceTimes: number[]; // minutes before due (e.g. [90, 60, 30, 15])
+  volume: number; // 0-1
+  customSoundUrl?: string;
+  popupTemplate: string; // e.g. "Opa, não esqueça de fazer {tarefas}"
+  includeTaskNames: boolean;
+  popupBorderColor: string;
+  popupTextColor: string;
+  popupTextSize: "sm" | "base" | "lg" | "xl";
+}
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  advanceTimes: [30, 15],
+  volume: 0.5,
+  popupTemplate: "⏰ Ei, não esqueça de fazer {tarefas}!",
+  includeTaskNames: true,
+  popupBorderColor: "#3b82f6",
+  popupTextColor: "#1e293b",
+  popupTextSize: "base",
+};

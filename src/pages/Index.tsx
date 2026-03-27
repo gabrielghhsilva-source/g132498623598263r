@@ -1,17 +1,26 @@
 import { useState, useCallback } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
+import { useNotificationStore } from "@/hooks/useNotificationStore";
+import { useNotificationSystem } from "@/hooks/useNotificationSystem";
 import { Preloader } from "@/components/Preloader";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
 import { DraggableAreaList } from "@/components/DraggableAreaList";
 import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
+import { NotificationPopup } from "@/components/NotificationPopup";
 import { ClipboardList } from "lucide-react";
 
 const Index = () => {
   const store = useTaskStore();
+  const notifStore = useNotificationStore();
+  const { currentEvent, dismissEvent } = useNotificationSystem(
+    store.allTasksWithArea,
+    notifStore.settings,
+    store.timezone,
+  );
+
   const [preloaderDone, setPreloaderDone] = useState(() => {
-    // Only show preloader once per session
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
   });
@@ -39,6 +48,10 @@ const Index = () => {
               onCustomColorsChange={store.setCustomColors}
               timezone={store.timezone}
               onTimezoneChange={store.setTimezone}
+              notificationSettings={notifStore.settings}
+              onNotificationUpdate={notifStore.setSettings}
+              onToggleAdvanceTime={notifStore.toggleAdvanceTime}
+              onTestSound={notifStore.playTestSound}
             />
           </div>
         </header>
@@ -49,6 +62,7 @@ const Index = () => {
 
           <DraggableAreaList
             areas={store.areas}
+            timezone={store.timezone}
             onReorder={store.reorderAreas}
             onToggleCollapse={store.toggleCollapse}
             onAddTask={(areaId, text, date, rec, time) => store.addTask(areaId, text, date, rec, time)}
@@ -68,6 +82,13 @@ const Index = () => {
         <TodayPanel
           tasks={store.todayTasks}
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+        />
+
+        {/* Notification popup */}
+        <NotificationPopup
+          event={currentEvent}
+          settings={notifStore.settings}
+          onDismiss={dismissEvent}
         />
       </div>
     </>

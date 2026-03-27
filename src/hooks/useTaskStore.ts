@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskComment } from "@/lib/types";
+import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
 
 const DEFAULT_STYLE: TaskTextStyle = { size: "base", weight: "normal", color: "#000000" };
 
@@ -112,7 +113,8 @@ export function useTaskStore() {
   // Recurring task generation
   useEffect(() => {
     const lastCheck = loadFromStorage<string>("task-recurrence-last-check", "");
-    const today = new Date().toISOString().split("T")[0];
+    const now = getNowInTimezone(timezone);
+    const today = now.date;
     if (lastCheck === today) return;
 
     setAreas(prev => {
@@ -139,6 +141,7 @@ export function useTaskStore() {
                   status: "todo",
                   style: { ...template.style },
                   dueDate: dateStr,
+                  dueTime: template.dueTime,
                   createdAt: new Date().toISOString(),
                   comments: [],
                   recurrenceSourceId: template.id,
@@ -153,46 +156,7 @@ export function useTaskStore() {
       localStorage.setItem("task-recurrence-last-check", JSON.stringify(today));
       return updated;
     });
-  }, []);
-
-  // Background notification check every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const nowStr = now.toISOString().split("T")[0];
-      const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-      const allTasks = areas.flatMap(a => a.tasks);
-      const dueTasks = allTasks.filter(t =>
-        t.dueDate === nowStr && t.dueTime === nowTime && t.status !== "done"
-      );
-
-      if (dueTasks.length > 0 && document.hidden) {
-        if ("Notification" in window && Notification.permission === "granted") {
-          dueTasks.forEach(t => {
-            new Notification("⏰ Tarefa agora!", {
-              body: t.text,
-              icon: "/placeholder.svg",
-            });
-          });
-        }
-        try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 830;
-          osc.type = "sine";
-          gain.gain.value = 0.3;
-          osc.start();
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-          osc.stop(ctx.currentTime + 0.5);
-        } catch {}
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [areas]);
+  }, [timezone]);
 
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
   const setCustomColors = useCallback((colors: CustomThemeColors) => setCustomColorsState(colors), []);
@@ -272,21 +236,25 @@ export function useTaskStore() {
     ));
   }, []);
 
+  // Stats computed with timezone-aware overdue
   const allTasks = areas.flatMap(a => a.tasks);
   const stats = {
     total: allTasks.length,
     done: allTasks.filter(t => t.status === "done").length,
     inProgress: allTasks.filter(t => t.status === "in-progress").length,
     todo: allTasks.filter(t => t.status === "todo").length,
-    overdue: allTasks.filter(t => {
-      if (!t.dueDate || t.status === "done") return false;
-      return new Date(t.dueDate) < new Date(new Date().toISOString().split("T")[0]);
-    }).length,
+    overdue: allTasks.filter(t => isTaskOverdue(t.dueDate, t.dueTime, t.status, timezone)).length,
   };
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const now = getNowInTimezone(timezone);
+  const todayStr = now.date;
   const todayTasks = areas.flatMap(a =>
     a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+  );
+
+  // All tasks with area info for notification system
+  const allTasksWithArea = areas.flatMap(a =>
+    a.tasks.map(t => ({ task: t, areaName: a.name }))
   );
 
   return {
@@ -295,7 +263,7 @@ export function useTaskStore() {
     addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
-    stats, todayTasks,
+    stats, todayTasks, allTasksWithArea,
   };
 }
 
