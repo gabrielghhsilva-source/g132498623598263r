@@ -7,6 +7,7 @@ const DEFAULT_AREA_IDS = ["work", "games", "leisure", "home", "investments"];
 
 interface Props {
   areas: TaskArea[];
+  timezone: string;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onToggleCollapse: (areaId: string) => void;
   onAddTask: (areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => void;
