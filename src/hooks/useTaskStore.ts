@@ -112,6 +112,14 @@ export function useTaskStore() {
     localStorage.setItem("task-timezone", JSON.stringify(timezone));
   }, [timezone]);
 
+  useEffect(() => {
+    localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor));
+  }, [buttonBgColor]);
+
+  useEffect(() => {
+    localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor));
+  }, [buttonTextColor]);
+
   // Recurring task generation
   useEffect(() => {
     const lastCheck = loadFromStorage<string>("task-recurrence-last-check", "");
