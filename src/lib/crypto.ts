@@ -21,11 +21,13 @@ async function hashPassword(password: string): Promise<string> {
 
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoded = new TextEncoder().encode(password);
+  const rawKey = new Uint8Array(encoded).buffer;
   const keyMaterial = await crypto.subtle.importKey(
-    "raw", encoded.buffer as ArrayBuffer, "PBKDF2", false, ["deriveKey"]
+    "raw", rawKey, "PBKDF2", false, ["deriveKey"]
   );
+  const saltBuf = new Uint8Array(salt).buffer;
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: new Uint8Array(saltBuf), iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
