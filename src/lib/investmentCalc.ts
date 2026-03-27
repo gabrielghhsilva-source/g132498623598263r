@@ -1,4 +1,4 @@
-import { Investment } from "./types";
+import { Investment, Debt } from "./types";
 
 export interface GrowthDataPoint {
   month: number;
@@ -31,10 +31,7 @@ export function getCurrentValue(investment: Investment): number {
   const start = new Date(investment.startDate);
   const now = new Date();
   const months = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
-
-  // Add manual contributions
   const manualTotal = investment.contributions.reduce((sum, c) => sum + c.amount, 0);
-
   const monthlyRate = getMonthlyRate(investment);
   let total = investment.initialValue + investment.previouslyInvested;
 
@@ -42,14 +39,15 @@ export function getCurrentValue(investment: Investment): number {
     total = total * (1 + monthlyRate) + investment.monthlyContribution;
   }
 
-  total += manualTotal * (1 + monthlyRate); // simplified: contributions earn one period of interest
+  total += manualTotal * (1 + monthlyRate);
   return Math.round(total * 100) / 100;
 }
 
-export function getAreaTotals(investments: Investment[]) {
+export function getAreaTotals(investments: Investment[], debts: Debt[] = []) {
   let totalInvested = 0;
   let totalCurrent = 0;
   let totalPassiveIncome = 0;
+  const totalMonthlyDebts = debts.reduce((sum, d) => sum + d.monthlyAmount, 0);
 
   for (const inv of investments) {
     const baseInvested = inv.initialValue + inv.previouslyInvested;
@@ -68,6 +66,8 @@ export function getAreaTotals(investments: Investment[]) {
     totalCurrent: Math.round(totalCurrent * 100) / 100,
     totalProfit: Math.round((totalCurrent - totalInvested) * 100) / 100,
     totalPassiveIncome: Math.round(totalPassiveIncome * 100) / 100,
+    totalMonthlyDebts: Math.round(totalMonthlyDebts * 100) / 100,
+    netMonthlyIncome: Math.round((totalPassiveIncome - totalMonthlyDebts) * 100) / 100,
   };
 }
 
@@ -77,4 +77,30 @@ export function simulateUntilDate(investment: Investment, targetDate: string): G
   const months = Math.max(0, (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth()));
   const data = calculateGrowth(investment, months);
   return data[data.length - 1];
+}
+
+// Global simulation across all investments and debts
+export function simulateGlobalUntilDate(investments: Investment[], debts: Debt[], targetDate: string) {
+  let totalInvested = 0;
+  let totalValue = 0;
+  const totalMonthlyDebts = debts.reduce((sum, d) => sum + d.monthlyAmount, 0);
+
+  for (const inv of investments) {
+    const result = simulateUntilDate(inv, targetDate);
+    totalInvested += result.invested;
+    totalValue += result.total;
+  }
+
+  const start = new Date(investments[0]?.startDate || new Date().toISOString());
+  const target = new Date(targetDate);
+  const months = Math.max(0, (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth()));
+  const totalDebtsPaid = totalMonthlyDebts * months;
+
+  return {
+    totalInvested: Math.round(totalInvested * 100) / 100,
+    totalValue: Math.round(totalValue * 100) / 100,
+    totalProfit: Math.round((totalValue - totalInvested) * 100) / 100,
+    totalDebtsPaid: Math.round(totalDebtsPaid * 100) / 100,
+    netProfit: Math.round((totalValue - totalInvested - totalDebtsPaid) * 100) / 100,
+  };
 }

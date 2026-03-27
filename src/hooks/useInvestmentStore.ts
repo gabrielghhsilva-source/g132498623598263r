@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord } from "@/lib/types";
+import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt } from "@/lib/types";
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
@@ -11,9 +11,10 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export function useInvestmentStore() {
-  const [areas, setAreas] = useState<InvestmentArea[]>(() =>
-    loadFromStorage("investment-areas", [])
-  );
+  const [areas, setAreas] = useState<InvestmentArea[]>(() => {
+    const loaded = loadFromStorage<InvestmentArea[]>("investment-areas", []);
+    return loaded.map(a => ({ ...a, debts: a.debts || [] }));
+  });
 
   useEffect(() => {
     localStorage.setItem("investment-areas", JSON.stringify(areas));
@@ -25,6 +26,7 @@ export function useInvestmentStore() {
       name, color, logoEmoji,
       investments: [],
       goals: [],
+      debts: [],
     };
     setAreas(prev => [...prev, area]);
   }, []);
@@ -71,5 +73,18 @@ export function useInvestmentStore() {
     ));
   }, []);
 
-  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal };
+  const addDebt = useCallback((areaId: string, name: string, monthlyAmount: number) => {
+    const debt: Debt = { id: crypto.randomUUID(), name, monthlyAmount };
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? { ...a, debts: [...a.debts, debt] } : a
+    ));
+  }, []);
+
+  const deleteDebt = useCallback((areaId: string, debtId: string) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? { ...a, debts: a.debts.filter(d => d.id !== debtId) } : a
+    ));
+  }, []);
+
+  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt };
 }
