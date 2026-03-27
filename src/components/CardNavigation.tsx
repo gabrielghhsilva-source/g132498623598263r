@@ -31,13 +31,13 @@ export function CardNavigation({ active, onChange }: Props) {
 
           let transform: string;
           if (hovered) {
-            const fanY = offset * 46;
-            const fanRotate = offset * 5;
+            const fanY = offset * 28;
+            const fanRotate = offset * 4;
             transform = `translateY(${fanY}px) rotate(${fanRotate}deg) scale(0.97)`;
           } else if (isActive) {
             transform = "translateY(0) rotate(0deg) scale(1)";
           } else {
-            transform = `translateY(${offset * 8}px) rotate(${offset * 3}deg) scale(0.93)`;
+            transform = `translateY(${offset * 6}px) rotate(${offset * 2}deg) scale(0.93)`;
           }
 
           return (
