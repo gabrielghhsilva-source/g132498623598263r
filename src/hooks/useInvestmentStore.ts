@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt } from "@/lib/types";
+import { secureGet, secureSet } from "@/lib/crypto";
 
-function loadFromStorage<T>(key: string, fallback: T): T {
+function loadSecure<T>(key: string, fallback: T): T {
   try {
-    const stored = localStorage.getItem(key);
+    const stored = secureGet(key);
     return stored ? JSON.parse(stored) : fallback;
   } catch {
     return fallback;
@@ -12,21 +13,18 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 
 export function useInvestmentStore() {
   const [areas, setAreas] = useState<InvestmentArea[]>(() => {
-    const loaded = loadFromStorage<InvestmentArea[]>("investment-areas", []);
+    const loaded = loadSecure<InvestmentArea[]>("investment-areas", []);
     return loaded.map(a => ({ ...a, debts: a.debts || [] }));
   });
 
   useEffect(() => {
-    localStorage.setItem("investment-areas", JSON.stringify(areas));
+    secureSet("investment-areas", JSON.stringify(areas));
   }, [areas]);
 
   const addArea = useCallback((name: string, color: string, logoEmoji: string) => {
     const area: InvestmentArea = {
-      id: crypto.randomUUID(),
-      name, color, logoEmoji,
-      investments: [],
-      goals: [],
-      debts: [],
+      id: crypto.randomUUID(), name, color, logoEmoji,
+      investments: [], goals: [], debts: [],
     };
     setAreas(prev => [...prev, area]);
   }, []);

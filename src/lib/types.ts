@@ -148,5 +148,14 @@ export interface InvestmentGoal {
   targetAmount: number;
 }
 
+// Stock types
+export interface StockPosition {
+  id: string;
+  symbol: string;
+  shares: number;
+  avgPrice: number;
+  purchaseDate: string;
+}
+
 // Navigation
-export type AppTab = "tasks" | "investments";
+export type AppTab = "tasks" | "investments" | "stocks";
