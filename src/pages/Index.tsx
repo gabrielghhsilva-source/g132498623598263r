@@ -127,6 +127,8 @@ const Index = () => {
               onAddContribution={investStore.addContribution}
               onAddGoal={investStore.addGoal}
               onDeleteGoal={investStore.deleteGoal}
+              onAddDebt={investStore.addDebt}
+              onDeleteDebt={investStore.deleteDebt}
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}
