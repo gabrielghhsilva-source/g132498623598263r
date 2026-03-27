@@ -86,6 +86,8 @@ export function useTaskStore() {
   const [theme, setThemeState] = useState<ThemeId>(() => loadFromStorage("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadFromStorage("task-custom-colors", DEFAULT_CUSTOM_COLORS));
   const [timezone, setTimezoneState] = useState<string>(() => loadFromStorage("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
+  const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadFromStorage("task-button-bg", "#000000"));
+  const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadFromStorage("task-button-text", "#ffffff"));
 
   useEffect(() => {
     localStorage.setItem("task-areas", JSON.stringify(areas));
