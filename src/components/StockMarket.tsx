@@ -1,116 +1,75 @@
 import { useState, useCallback } from "react";
-import { Search, TrendingUp, TrendingDown, ShoppingCart, Trash2, RefreshCw, Key, BarChart3, ArrowUpDown } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Plus, Trash2, RefreshCw, BarChart3, ArrowUpDown } from "lucide-react";
 import { StockPosition } from "@/lib/types";
 import { searchSymbols, getQuote, getDailyHistory, StockQuote, SearchResult, DailyPrice } from "@/lib/stockApi";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Props {
   positions: StockPosition[];
-  apiKey: string;
-  onSetApiKey: (key: string) => void;
-  onBuy: (symbol: string, shares: number, price: number) => void;
-  onSell: (symbol: string, shares: number) => void;
-  onDelete: (id: string) => void;
+  onAdd: (symbol: string, shares: number, price: number) => void;
+  onRemove: (id: string) => void;
 }
 
 function formatUSD(v: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 }
 
-export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onDelete }: Props) {
+export function StockMarket({ positions, onAdd, onRemove }: Props) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<StockQuote | null>(null);
   const [history, setHistory] = useState<DailyPrice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [buyQty, setBuyQty] = useState(1);
-  const [sellQty, setSellQty] = useState(1);
-  const [keyInput, setKeyInput] = useState(apiKey);
-  const [showConfig, setShowConfig] = useState(!apiKey);
+  const [addQty, setAddQty] = useState(1);
+  const [addPrice, setAddPrice] = useState("");
   const [liveQuotes, setLiveQuotes] = useState<Record<string, StockQuote>>({});
 
   const handleSearch = useCallback(async () => {
-    if (!apiKey || !search) return;
+    if (!search) return;
     setLoading(true);
     setError("");
     try {
-      const r = await searchSymbols(search, apiKey);
+      const r = await searchSymbols(search);
       setResults(r);
     } catch (e: any) {
       setError(e.message || "Erro na busca");
     }
     setLoading(false);
-  }, [search, apiKey]);
+  }, [search]);
 
   const handleSelectStock = useCallback(async (symbol: string) => {
-    if (!apiKey) return;
     setLoading(true);
     setError("");
     try {
       const [quote, daily] = await Promise.all([
-        getQuote(symbol, apiKey),
-        getDailyHistory(symbol, apiKey),
+        getQuote(symbol),
+        getDailyHistory(symbol),
       ]);
       setSelectedQuote(quote);
       setHistory(daily);
       setResults([]);
       setSearch(symbol);
+      if (quote) setAddPrice(quote.price.toFixed(2));
     } catch (e: any) {
       setError(e.message || "Erro ao carregar dados");
     }
     setLoading(false);
-  }, [apiKey]);
+  }, []);
 
   const refreshPortfolioQuotes = useCallback(async () => {
-    if (!apiKey || positions.length === 0) return;
+    if (positions.length === 0) return;
     setLoading(true);
     const quotes: Record<string, StockQuote> = {};
     for (const pos of positions) {
       try {
-        const q = await getQuote(pos.symbol, apiKey);
+        const q = await getQuote(pos.symbol);
         if (q) quotes[pos.symbol] = q;
       } catch { break; }
     }
     setLiveQuotes(quotes);
     setLoading(false);
-  }, [apiKey, positions]);
-
-  // API key config
-  if (showConfig || !apiKey) {
-    return (
-      <div className="space-y-6">
-        <div className="glass-card rounded-xl p-6 border border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <Key className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base font-semibold">Configurar Alpha Vantage API</h3>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Obtenha sua chave gratuita em{" "}
-            <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noreferrer"
-              className="underline text-primary">alphavantage.co</a>
-            . A chave será armazenada criptografada localmente.
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="password"
-              value={keyInput}
-              onChange={e => setKeyInput(e.target.value)}
-              placeholder="Sua API Key"
-              className="flex-1 px-3 py-2 rounded-lg text-sm bg-muted border border-border outline-none"
-            />
-            <button
-              onClick={() => { onSetApiKey(keyInput); setShowConfig(false); }}
-              disabled={!keyInput}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
-            >
-              Salvar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  }, [positions]);
 
   const totalInvested = positions.reduce((s, p) => s + p.avgPrice * p.shares, 0);
   const totalCurrent = positions.reduce((s, p) => {
@@ -121,38 +80,35 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
 
   return (
     <div className="space-y-6">
-      {/* Summary card */}
+      {/* Summary */}
       <div className="glass-card rounded-xl p-5 border border-border">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary" />
-            <h3 className="text-base font-semibold">Portfólio de Ações</h3>
+            <h3 className="text-base font-semibold">Acompanhamento de Ações</h3>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowConfig(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="API Key">
-              <Key className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-            <button onClick={refreshPortfolioQuotes} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Atualizar cotações">
-              <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
-            </button>
-          </div>
+          <button onClick={refreshPortfolioQuotes} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Atualizar cotações">
+            <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
+          </button>
         </div>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-xs text-muted-foreground">Investido</p>
-            <p className="text-sm font-bold">{formatUSD(totalInvested)}</p>
+        {positions.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-xs text-muted-foreground">Investido</p>
+              <p className="text-sm font-bold">{formatUSD(totalInvested)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Valor Atual</p>
+              <p className="text-sm font-bold">{formatUSD(totalCurrent)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Lucro/Prejuízo</p>
+              <p className={`text-sm font-bold ${totalPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
+                {totalPnL >= 0 ? "+" : ""}{formatUSD(totalPnL)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Valor Atual</p>
-            <p className="text-sm font-bold">{formatUSD(totalCurrent)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Lucro/Prejuízo</p>
-            <p className={`text-sm font-bold ${totalPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {totalPnL >= 0 ? "+" : ""}{formatUSD(totalPnL)}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Search */}
@@ -165,7 +121,7 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSearch()}
-            placeholder="Ex: AAPL, MSFT, GOOGL..."
+            placeholder="Ex: AAPL, MSFT, PETR4.SAO..."
             className="flex-1 px-3 py-2 rounded-lg text-sm bg-muted border border-border outline-none"
           />
           <button onClick={handleSearch} disabled={loading}
@@ -176,7 +132,7 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
 
         {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
 
-        {/* Search results */}
+        {/* Results */}
         {results.length > 0 && (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {results.map(r => (
@@ -192,7 +148,7 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
           </div>
         )}
 
-        {/* Selected stock detail */}
+        {/* Selected stock */}
         {selectedQuote && (
           <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30">
             <div className="flex items-center justify-between mb-3">
@@ -228,18 +184,29 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
               </div>
             )}
 
-            {/* Buy */}
+            {/* Add to portfolio */}
             <div className="flex items-center gap-2">
               <input
-                type="number" min={1} value={buyQty} onChange={e => setBuyQty(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-20 px-2 py-1.5 rounded-lg text-sm bg-muted border border-border outline-none text-center"
+                type="number" min={1} value={addQty} onChange={e => setAddQty(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-16 px-2 py-1.5 rounded-lg text-sm bg-muted border border-border outline-none text-center"
+                placeholder="Qtd"
+              />
+              <input
+                type="number" min={0} step={0.01} value={addPrice}
+                onChange={e => setAddPrice(e.target.value)}
+                className="w-24 px-2 py-1.5 rounded-lg text-sm bg-muted border border-border outline-none text-center"
+                placeholder="Preço médio"
               />
               <button
-                onClick={() => { onBuy(selectedQuote.symbol, buyQty, selectedQuote.price); setBuyQty(1); }}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                onClick={() => {
+                  const price = parseFloat(addPrice) || selectedQuote.price;
+                  onAdd(selectedQuote.symbol, addQty, price);
+                  setAddQty(1);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors"
               >
-                <ShoppingCart className="w-4 h-4" />
-                Comprar ({formatUSD(selectedQuote.price * buyQty)})
+                <Plus className="w-4 h-4" />
+                Adicionar ao portfólio
               </button>
             </div>
           </div>
@@ -257,7 +224,7 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
               const quote = liveQuotes[pos.symbol];
               const currentPrice = quote?.price ?? pos.avgPrice;
               const pnl = (currentPrice - pos.avgPrice) * pos.shares;
-              const pnlPct = ((currentPrice - pos.avgPrice) / pos.avgPrice) * 100;
+              const pnlPct = pos.avgPrice > 0 ? ((currentPrice - pos.avgPrice) / pos.avgPrice) * 100 : 0;
 
               return (
                 <div key={pos.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
@@ -277,14 +244,9 @@ export function StockMarket({ positions, apiKey, onSetApiKey, onBuy, onSell, onD
                         {pnl >= 0 ? "+" : ""}{formatUSD(pnl)} ({pnlPct.toFixed(1)}%)
                       </p>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <button onClick={() => onSell(pos.symbol, 1)} className="p-1 rounded hover:bg-muted" title="Vender 1">
-                        <TrendingDown className="w-3 h-3 text-orange-500" />
-                      </button>
-                      <button onClick={() => onDelete(pos.id)} className="p-1 rounded hover:bg-muted" title="Remover">
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </button>
-                    </div>
+                    <button onClick={() => onRemove(pos.id)} className="p-1.5 rounded hover:bg-muted transition-colors" title="Remover">
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </button>
                   </div>
                 </div>
               );
