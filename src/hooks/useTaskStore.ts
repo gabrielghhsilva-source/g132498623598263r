@@ -86,6 +86,8 @@ export function useTaskStore() {
   const [theme, setThemeState] = useState<ThemeId>(() => loadFromStorage("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadFromStorage("task-custom-colors", DEFAULT_CUSTOM_COLORS));
   const [timezone, setTimezoneState] = useState<string>(() => loadFromStorage("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
+  const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadFromStorage("task-button-bg", "#000000"));
+  const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadFromStorage("task-button-text", "#ffffff"));
 
   useEffect(() => {
     localStorage.setItem("task-areas", JSON.stringify(areas));
@@ -109,6 +111,14 @@ export function useTaskStore() {
   useEffect(() => {
     localStorage.setItem("task-timezone", JSON.stringify(timezone));
   }, [timezone]);
+
+  useEffect(() => {
+    localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor));
+  }, [buttonBgColor]);
+
+  useEffect(() => {
+    localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor));
+  }, [buttonTextColor]);
 
   // Recurring task generation
   useEffect(() => {
@@ -161,6 +171,8 @@ export function useTaskStore() {
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
   const setCustomColors = useCallback((colors: CustomThemeColors) => setCustomColorsState(colors), []);
   const setTimezone = useCallback((tz: string) => setTimezoneState(tz), []);
+  const setButtonBgColor = useCallback((c: string) => setButtonBgColorState(c), []);
+  const setButtonTextColor = useCallback((c: string) => setButtonTextColorState(c), []);
 
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task: Task = {
@@ -260,6 +272,7 @@ export function useTaskStore() {
   return {
     areas, theme, setTheme, customColors, setCustomColors,
     timezone, setTimezone,
+    buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,

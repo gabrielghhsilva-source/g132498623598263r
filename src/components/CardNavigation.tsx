@@ -1,5 +1,6 @@
 import { AppTab } from "@/lib/types";
 import { ClipboardList, TrendingUp } from "lucide-react";
+import { useState } from "react";
 
 const TABS: { id: AppTab; label: string; icon: typeof ClipboardList; color: string }[] = [
   { id: "tasks", label: "Tarefas", icon: ClipboardList, color: "hsl(var(--primary))" },
@@ -13,38 +14,57 @@ interface Props {
 
 export function CardNavigation({ active, onChange }: Props) {
   const activeIdx = TABS.findIndex(t => t.id === active);
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50 group/nav">
-      <div className="relative w-14 h-20">
+    <div
+      className="fixed left-3 top-1/2 -translate-y-1/2 z-50"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ width: 80, height: 140, padding: "10px 0" }}
+    >
+      <div className="relative w-full h-full">
         {TABS.map((tab, i) => {
           const isActive = tab.id === active;
           const offset = i - activeIdx;
+
+          let transform: string;
+          if (hovered) {
+            // Fan out
+            const fanY = offset * 50;
+            const fanRotate = offset * 6;
+            transform = `translateY(${fanY}px) rotate(${fanRotate}deg) scale(0.97)`;
+          } else if (isActive) {
+            transform = "translateY(0) rotate(0deg) scale(1)";
+          } else {
+            transform = `translateY(${offset * 10}px) rotate(${offset * 4}deg) scale(0.93)`;
+          }
 
           return (
             <button
               key={tab.id}
               onClick={() => onChange(tab.id)}
-              className="absolute inset-0 w-14 rounded-xl border-2 shadow-lg transition-all duration-500 ease-out flex flex-col items-center justify-center gap-1 cursor-pointer"
+              className="absolute inset-0 w-[70px] h-[90px] rounded-xl border-2 shadow-lg transition-all duration-400 ease-out flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:!scale-110 hover:!rotate-0 hover:!shadow-xl"
               style={{
                 backgroundColor: "hsl(var(--card))",
                 borderColor: isActive ? tab.color : "hsl(var(--border))",
                 zIndex: isActive ? 20 : 10 - Math.abs(offset),
-                // Stack: behind cards peek slightly
-                transform: isActive
-                  ? "translateY(0) rotate(0deg) scale(1)"
-                  : `translateY(${offset * 8}px) rotate(${offset * 4}deg) scale(0.92)`,
-                opacity: isActive ? 1 : 0.7,
-                // Fan on group hover
+                transform,
+                opacity: isActive || hovered ? 1 : 0.7,
+                top: "50%",
+                left: "50%",
+                marginTop: "-45px",
+                marginLeft: "-35px",
+                transitionDuration: "400ms",
               }}
               title={tab.label}
             >
               <tab.icon
-                className="w-5 h-5 transition-colors"
+                className="w-6 h-6 transition-colors"
                 style={{ color: isActive ? tab.color : "hsl(var(--muted-foreground))" }}
               />
               <span
-                className="text-[8px] font-semibold leading-none transition-colors"
+                className="text-[9px] font-semibold leading-none transition-colors"
                 style={{ color: isActive ? tab.color : "hsl(var(--muted-foreground))" }}
               >
                 {tab.label}
@@ -53,24 +73,6 @@ export function CardNavigation({ active, onChange }: Props) {
           );
         })}
       </div>
-
-      {/* Fan-out style applied via CSS class */}
-      <style>{`
-        .group\\/nav:hover button {
-          opacity: 1 !important;
-        }
-        .group\\/nav:hover button:nth-child(1) {
-          transform: translateY(-30px) rotate(-6deg) scale(0.95) !important;
-        }
-        .group\\/nav:hover button:nth-child(2) {
-          transform: translateY(30px) rotate(6deg) scale(0.95) !important;
-        }
-        .group\\/nav:hover button:hover {
-          transform: translateY(0) rotate(0deg) scale(1.08) !important;
-          z-index: 30 !important;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.2) !important;
-        }
-      `}</style>
     </div>
   );
 }

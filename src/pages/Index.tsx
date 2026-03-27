@@ -88,6 +88,10 @@ const Index = () => {
               onTestSound={notifStore.playTestSound}
               backgroundSettings={bgStore.settings}
               onBackgroundUpdate={bgStore.setSettings}
+              buttonBgColor={store.buttonBgColor}
+              buttonTextColor={store.buttonTextColor}
+              onButtonBgChange={store.setButtonBgColor}
+              onButtonTextChange={store.setButtonTextColor}
             />
           </div>
         </header>
@@ -123,6 +127,8 @@ const Index = () => {
               onAddContribution={investStore.addContribution}
               onAddGoal={investStore.addGoal}
               onDeleteGoal={investStore.deleteGoal}
+              onAddDebt={investStore.addDebt}
+              onDeleteDebt={investStore.deleteDebt}
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}

@@ -114,6 +114,7 @@ export interface InvestmentArea {
   logoEmoji: string;
   investments: Investment[];
   goals: InvestmentGoal[];
+  debts: Debt[];
 }
 
 export interface Investment {
@@ -133,6 +134,12 @@ export interface ContributionRecord {
   id: string;
   date: string;
   amount: number;
+}
+
+export interface Debt {
+  id: string;
+  name: string;
+  monthlyAmount: number;
 }
 
 export interface InvestmentGoal {
