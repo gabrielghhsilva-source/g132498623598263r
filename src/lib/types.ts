@@ -55,11 +55,12 @@ export interface ThemeOption {
   preview: string;
 }
 
+// Notification types
 export interface NotificationSettings {
-  advanceTimes: number[]; // minutes before due (e.g. [90, 60, 30, 15])
-  volume: number; // 0-1
+  advanceTimes: number[];
+  volume: number;
   customSoundUrl?: string;
-  popupTemplate: string; // e.g. "Opa, não esqueça de fazer {tarefas}"
+  popupTemplate: string;
   includeTaskNames: boolean;
   popupBorderColor: string;
   popupTextColor: string;
@@ -75,3 +76,70 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   popupTextColor: "#1e293b",
   popupTextSize: "base",
 };
+
+// Background types
+export type BackgroundMode = "none" | "solid" | "gradient" | "animated-gradient" | "particles" | "image";
+
+export interface BackgroundSettings {
+  mode: BackgroundMode;
+  solidColor: string;
+  gradientColors: string[];
+  gradientAngle: number;
+  animationSpeed: number;
+  animationIntensity: number;
+  particleColor: string;
+  particleDirection: "up" | "down" | "left" | "right" | "random";
+  particleCount: number;
+  imageUrl: string;
+}
+
+export const DEFAULT_BACKGROUND_SETTINGS: BackgroundSettings = {
+  mode: "none",
+  solidColor: "#1a1a2e",
+  gradientColors: ["#0f0c29", "#302b63", "#24243e"],
+  gradientAngle: 135,
+  animationSpeed: 5,
+  animationIntensity: 50,
+  particleColor: "#ffffff",
+  particleDirection: "up",
+  particleCount: 50,
+  imageUrl: "",
+};
+
+// Investment types
+export interface InvestmentArea {
+  id: string;
+  name: string;
+  color: string;
+  logoEmoji: string;
+  investments: Investment[];
+  goals: InvestmentGoal[];
+}
+
+export interface Investment {
+  id: string;
+  name: string;
+  initialValue: number;
+  previouslyInvested: number;
+  monthlyContribution: number;
+  rateOfReturn: number;
+  rateType: "monthly" | "annual";
+  passiveIncome: number;
+  startDate: string;
+  contributions: ContributionRecord[];
+}
+
+export interface ContributionRecord {
+  id: string;
+  date: string;
+  amount: number;
+}
+
+export interface InvestmentGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+}
+
+// Navigation
+export type AppTab = "tasks" | "investments";
