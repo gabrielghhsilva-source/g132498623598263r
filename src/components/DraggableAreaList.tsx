@@ -7,6 +7,7 @@ const DEFAULT_AREA_IDS = ["work", "games", "leisure", "home", "investments"];
 
 interface Props {
   areas: TaskArea[];
+  timezone: string;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onToggleCollapse: (areaId: string) => void;
   onAddTask: (areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => void;
@@ -20,7 +21,7 @@ interface Props {
 }
 
 export function DraggableAreaList({
-  areas, onReorder, onToggleCollapse, onAddTask, onUpdateStatus,
+  areas, timezone, onReorder, onToggleCollapse, onAddTask, onUpdateStatus,
   onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment
 }: Props) {
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
@@ -100,6 +101,7 @@ export function DraggableAreaList({
             >
               <TaskAreaCard
                 area={area}
+                timezone={timezone}
                 isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
                 onToggleCollapse={() => onToggleCollapse(area.id)}
                 onAddTask={(text, date, rec, time) => onAddTask(area.id, text, date, rec, time)}

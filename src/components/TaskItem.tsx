@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Task, TaskStatus, TaskTextStyle } from "@/lib/types";
+import { isTaskOverdue } from "@/lib/timeUtils";
 import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
@@ -13,6 +14,7 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; icon: typeof Check; bad
 
 interface Props {
   task: Task;
+  timezone: string;
   onStatusChange: (status: TaskStatus) => void;
   onStyleChange: (style: Partial<TaskTextStyle>) => void;
   onTextChange: (text: string) => void;
@@ -21,13 +23,13 @@ interface Props {
   onDeleteComment: (commentId: string) => void;
 }
 
-export function TaskItem({ task, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment }: Props) {
+export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment }: Props) {
   const [showStyle, setShowStyle] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const statusCfg = STATUS_CONFIG[task.status];
-  const isOverdue = task.dueDate && task.status !== "done" && new Date(task.dueDate) < new Date(new Date().toISOString().split("T")[0]);
+  const isOverdue = isTaskOverdue(task.dueDate, task.dueTime, task.status, timezone);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

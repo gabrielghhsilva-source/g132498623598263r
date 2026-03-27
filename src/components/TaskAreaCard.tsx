@@ -16,6 +16,7 @@ const DAYS_OF_WEEK = [
 
 interface Props {
   area: TaskArea;
+  timezone: string;
   isCustom?: boolean;
   onToggleCollapse: () => void;
   onAddTask: (text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => void;
@@ -28,7 +29,7 @@ interface Props {
   onDeleteComment: (taskId: string, commentId: string) => void;
 }
 
-export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
+export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
   const [newTask, setNewTask] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
@@ -108,6 +109,7 @@ export function TaskAreaCard({ area, isCustom, onToggleCollapse, onAddTask, onUp
             <TaskItem
               key={task.id}
               task={task}
+              timezone={timezone}
               onStatusChange={s => onUpdateStatus(task.id, s)}
               onStyleChange={s => onUpdateStyle(task.id, s)}
               onTextChange={t => onUpdateText(task.id, t)}
