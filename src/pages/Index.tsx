@@ -17,6 +17,7 @@ import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { ClipboardList, TrendingUp } from "lucide-react";
 import { AppTab } from "@/lib/types";
 
+// Force clean remount after hook changes
 const Index = () => {
   const store = useTaskStore();
   const notifStore = useNotificationStore();
