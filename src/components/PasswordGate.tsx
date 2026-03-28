@@ -34,20 +34,30 @@ export function PasswordGate({ onUnlocked }: Props) {
       style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)" }}
     >
       {/* Subtle animated particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full opacity-20"
-            style={{
-              backgroundColor: "#fff",
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`,
-            }}
-          />
-        ))}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        {Array.from({ length: 20 }).map((_, i) => {
+          const startX = Math.random() * 100;
+          const startY = Math.random() * 100;
+          const duration = 4 + Math.random() * 6;
+          const delay = Math.random() * 5;
+          const driftX = -30 + Math.random() * 60;
+          const driftY = -30 + Math.random() * 60;
+          return (
+            <div
+              key={i}
+              className="absolute w-1 h-1 rounded-full opacity-20"
+              style={{
+                backgroundColor: "#fff",
+                left: `${startX}%`,
+                top: `${startY}%`,
+                animation: `particle-drift-${i % 4} ${duration}s ease-in-out infinite`,
+                animationDelay: `${delay}s`,
+                ["--drift-x" as any]: `${driftX}px`,
+                ["--drift-y" as any]: `${driftY}px`,
+              }}
+            />
+          );
+        })}
       </div>
 
       <div
@@ -136,9 +146,25 @@ export function PasswordGate({ onUnlocked }: Props) {
       </div>
 
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+        @keyframes particle-drift-0 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+          25% { transform: translate(20px, -30px); opacity: 0.3; }
+          50% { transform: translate(-15px, -50px); opacity: 0.15; }
+          75% { transform: translate(25px, -20px); opacity: 0.25; }
+        }
+        @keyframes particle-drift-1 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.2; }
+          33% { transform: translate(-25px, 15px); opacity: 0.1; }
+          66% { transform: translate(30px, -25px); opacity: 0.3; }
+        }
+        @keyframes particle-drift-2 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.1; }
+          50% { transform: translate(35px, 20px); opacity: 0.25; }
+        }
+        @keyframes particle-drift-3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.25; }
+          40% { transform: translate(-20px, -35px); opacity: 0.1; }
+          80% { transform: translate(15px, 10px); opacity: 0.3; }
         }
         .animate-shake {
           animation: shake 0.6s ease-in-out;
