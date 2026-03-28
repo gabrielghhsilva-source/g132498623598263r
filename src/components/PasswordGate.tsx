@@ -146,9 +146,25 @@ export function PasswordGate({ onUnlocked }: Props) {
       </div>
 
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+        @keyframes particle-drift-0 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+          25% { transform: translate(20px, -30px); opacity: 0.3; }
+          50% { transform: translate(-15px, -50px); opacity: 0.15; }
+          75% { transform: translate(25px, -20px); opacity: 0.25; }
+        }
+        @keyframes particle-drift-1 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.2; }
+          33% { transform: translate(-25px, 15px); opacity: 0.1; }
+          66% { transform: translate(30px, -25px); opacity: 0.3; }
+        }
+        @keyframes particle-drift-2 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.1; }
+          50% { transform: translate(35px, 20px); opacity: 0.25; }
+        }
+        @keyframes particle-drift-3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.25; }
+          40% { transform: translate(-20px, -35px); opacity: 0.1; }
+          80% { transform: translate(15px, 10px); opacity: 0.3; }
         }
         .animate-shake {
           animation: shake 0.6s ease-in-out;
