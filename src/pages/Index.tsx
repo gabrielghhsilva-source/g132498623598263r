@@ -5,6 +5,7 @@ import { useNotificationSystem } from "@/hooks/useNotificationSystem";
 import { useInvestmentStore } from "@/hooks/useInvestmentStore";
 import { useBackgroundStore } from "@/hooks/useBackgroundStore";
 import { useStockStore } from "@/hooks/useStockStore";
+import { useSalaryStore } from "@/hooks/useSalaryStore";
 import { Preloader } from "@/components/Preloader";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
@@ -16,8 +17,9 @@ import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
+import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
-import { ClipboardList, TrendingUp, BarChart3 } from "lucide-react";
+import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 
@@ -27,6 +29,7 @@ const AppContent = () => {
   const investStore = useInvestmentStore();
   const bgStore = useBackgroundStore();
   const stockStore = useStockStore();
+  const salaryStore = useSalaryStore();
   const { currentEvent, dismissEvent } = useNotificationSystem(
     store.allTasksWithArea,
     notifStore.settings,
@@ -56,6 +59,7 @@ const AppContent = () => {
     tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
     investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
     stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
+    salary: { icon: Wallet, label: "Salário", color: "text-amber-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
@@ -136,6 +140,17 @@ const AppContent = () => {
               positions={stockStore.positions}
               onAdd={stockStore.addPosition}
               onRemove={stockStore.removePosition}
+            />
+          )}
+          {activeTab === "salary" && (
+            <SalaryPanel
+              salary={salaryStore.data.salary}
+              manualExpenses={salaryStore.data.manualExpenses}
+              investmentAreas={investStore.areas}
+              stockPositions={stockStore.positions}
+              onSetSalary={salaryStore.setSalary}
+              onAddExpense={salaryStore.addExpense}
+              onDeleteExpense={salaryStore.deleteExpense}
             />
           )}
         </main>
