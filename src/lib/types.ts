@@ -157,5 +157,22 @@ export interface StockPosition {
   purchaseDate: string;
 }
 
+// Salary types
+export interface ManualExpense {
+  id: string;
+  name: string;
+  amount: number;
+}
+
+export interface SalaryData {
+  salary: number;
+  manualExpenses: ManualExpense[];
+}
+
+export const DEFAULT_SALARY_DATA: SalaryData = {
+  salary: 0,
+  manualExpenses: [],
+};
+
 // Navigation
-export type AppTab = "tasks" | "investments" | "stocks";
+export type AppTab = "tasks" | "investments" | "stocks" | "salary";
