@@ -144,32 +144,29 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
         {/* Stock Grid */}
-        {initialLoading ? (
+        {loading && !selectedQuote ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            <span className="ml-2 text-sm text-muted-foreground">Carregando ações...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Carregando dados...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {filteredQuotes.map(q => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
+            {filteredStocks.map(s => (
               <button
-                key={q.symbol}
-                onClick={() => handleSelectStock(q.symbol)}
-                className="flex items-center justify-between px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-all hover:scale-[1.01] text-left group"
+                key={s.symbol}
+                onClick={() => handleSelectStock(s.symbol)}
+                className={`flex items-center justify-between px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-all hover:scale-[1.01] text-left group ${
+                  selectedQuote?.symbol === s.symbol ? "bg-primary/10 border-primary/30" : ""
+                }`}
               >
                 <div>
-                  <span className="text-sm font-bold">{q.symbol}</span>
-                  <p className="text-xs text-muted-foreground">{formatUSD(q.price)}</p>
+                  <span className="text-sm font-bold">{s.symbol}</span>
+                  <p className="text-xs text-muted-foreground">{s.name}</p>
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
-                  q.change >= 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                }`}>
-                  {q.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {q.change >= 0 ? "+" : ""}{q.changePercent.toFixed(2)}%
-                </div>
+                <Search className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             ))}
-            {filteredQuotes.length === 0 && !initialLoading && (
+            {filteredStocks.length === 0 && (
               <p className="text-sm text-muted-foreground col-span-2 text-center py-6">Nenhuma ação encontrada</p>
             )}
           </div>
