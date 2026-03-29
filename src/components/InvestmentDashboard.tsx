@@ -458,12 +458,8 @@ function GlobalSimResult({ investments, debts, targetDate }: { investments: Inve
     <div className="flex items-center gap-3 text-xs flex-wrap">
       <span className="text-muted-foreground">Investido: <span className="text-foreground font-medium">{formatCurrency(result.totalInvested)}</span></span>
       <span className="text-muted-foreground">Total: <span className="text-foreground font-bold">{formatCurrency(result.totalValue)}</span></span>
-      <span className="text-muted-foreground">Lucro: <span className={result.totalProfit >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{formatCurrency(result.totalProfit)}</span></span>
-      {result.totalDebtsPaid > 0 && (
-        <span className="text-destructive">Dívidas: -{formatCurrency(result.totalDebtsPaid)}</span>
-      )}
-      <span className={result.netProfit >= 0 ? "text-success font-bold" : "text-destructive font-bold"}>
-        Líquido: {formatCurrency(result.netProfit)}
+      <span className={result.totalProfit >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
+        Lucro: {formatCurrency(result.totalProfit)}
       </span>
     </div>
   );
