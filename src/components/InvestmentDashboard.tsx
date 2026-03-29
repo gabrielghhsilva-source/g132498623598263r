@@ -395,7 +395,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
             <option value="annual">a.a.</option>
           </select>
         </div>
-        <input type="number" value={passive} onChange={e => setPassive(e.target.value)} placeholder="Renda passiva/mês" className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
+        
       </div>
       <div className="flex justify-end gap-2">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
