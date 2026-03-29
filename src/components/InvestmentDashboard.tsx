@@ -372,14 +372,12 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [monthly, setMonthly] = useState("");
   const [rate, setRate] = useState("");
   const [rateType, setRateType] = useState<"monthly" | "annual">("monthly");
-  const [passive, setPassive] = useState("");
-
   const handleAdd = () => {
     if (!name.trim()) return;
     onAdd({
       name: name.trim(), initialValue: Number(initial) || 0, previouslyInvested: Number(prev) || 0,
       monthlyContribution: Number(monthly) || 0, rateOfReturn: Number(rate) || 0, rateType,
-      passiveIncome: Number(passive) || 0, startDate: new Date().toISOString().split("T")[0],
+      passiveIncome: 0, startDate: new Date().toISOString().split("T")[0],
     });
   };
 
