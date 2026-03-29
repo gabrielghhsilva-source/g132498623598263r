@@ -34,26 +34,23 @@ export function PasswordGate({ onUnlocked }: Props) {
       style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)" }}
     >
       {/* Subtle animated particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true" style={{ isolation: "isolate" }}>
         {Array.from({ length: 20 }).map((_, i) => {
           const startX = Math.random() * 100;
           const startY = Math.random() * 100;
           const duration = 4 + Math.random() * 6;
           const delay = Math.random() * 5;
-          const driftX = -30 + Math.random() * 60;
-          const driftY = -30 + Math.random() * 60;
           return (
             <div
               key={i}
-              className="absolute w-1 h-1 rounded-full opacity-20"
+              className="absolute w-1 h-1 rounded-full"
               style={{
                 backgroundColor: "#fff",
                 left: `${startX}%`,
                 top: `${startY}%`,
                 animation: `particle-drift-${i % 4} ${duration}s ease-in-out infinite`,
                 animationDelay: `${delay}s`,
-                ["--drift-x" as any]: `${driftX}px`,
-                ["--drift-y" as any]: `${driftY}px`,
+                willChange: "transform, opacity",
               }}
             />
           );
