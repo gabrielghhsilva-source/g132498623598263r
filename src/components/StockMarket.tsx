@@ -1,12 +1,30 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Search, TrendingUp, TrendingDown, Plus, Trash2, RefreshCw, BarChart3, ArrowUpDown, Loader2 } from "lucide-react";
 import { StockPosition } from "@/lib/types";
-import { searchSymbols, getQuote, getDailyHistory, StockQuote, SearchResult, DailyPrice } from "@/lib/stockApi";
+import { getQuote, getDailyHistory, StockQuote, DailyPrice } from "@/lib/stockApi";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const POPULAR_SYMBOLS = [
-  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX",
-  "PETR4.SAO", "VALE3.SAO", "ITUB4.SAO", "BBDC4.SAO",
+const LOCAL_STOCKS = [
+  { symbol: "AAPL", name: "Apple" },
+  { symbol: "MSFT", name: "Microsoft" },
+  { symbol: "GOOGL", name: "Alphabet (Google)" },
+  { symbol: "AMZN", name: "Amazon" },
+  { symbol: "TSLA", name: "Tesla" },
+  { symbol: "META", name: "Meta Platforms" },
+  { symbol: "NVDA", name: "NVIDIA" },
+  { symbol: "NFLX", name: "Netflix" },
+  { symbol: "AMD", name: "AMD" },
+  { symbol: "INTC", name: "Intel" },
+  { symbol: "DIS", name: "Disney" },
+  { symbol: "BA", name: "Boeing" },
+  { symbol: "JPM", name: "JPMorgan Chase" },
+  { symbol: "V", name: "Visa" },
+  { symbol: "WMT", name: "Walmart" },
+  { symbol: "PETR4.SAO", name: "Petrobras" },
+  { symbol: "VALE3.SAO", name: "Vale" },
+  { symbol: "ITUB4.SAO", name: "Itaú Unibanco" },
+  { symbol: "BBDC4.SAO", name: "Bradesco" },
+  { symbol: "ABEV3.SAO", name: "Ambev" },
 ];
 
 interface Props {
@@ -21,48 +39,21 @@ function formatUSD(v: number) {
 
 export function StockMarket({ positions, onAdd, onRemove }: Props) {
   const [search, setSearch] = useState("");
-  const [popularQuotes, setPopularQuotes] = useState<StockQuote[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<StockQuote | null>(null);
   const [history, setHistory] = useState<DailyPrice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [addQty, setAddQty] = useState(1);
   const [liveQuotes, setLiveQuotes] = useState<Record<string, StockQuote>>({});
 
-  // Auto-load popular stocks on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function loadPopular() {
-      setInitialLoading(true);
-      const quotes: StockQuote[] = [];
-      // Load in batches of 4 to respect API limits
-      for (let i = 0; i < Math.min(POPULAR_SYMBOLS.length, 8); i++) {
-        if (cancelled) break;
-        try {
-          const q = await getQuote(POPULAR_SYMBOLS[i]);
-          if (q) quotes.push(q);
-        } catch {
-          break; // API limit reached
-        }
-      }
-      if (!cancelled) {
-        setPopularQuotes(quotes);
-        setInitialLoading(false);
-      }
-    }
-    loadPopular();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Filtered list based on search
-  const filteredQuotes = useMemo(() => {
-    if (!search.trim()) return popularQuotes;
+  // Filter local list — no API call
+  const filteredStocks = useMemo(() => {
+    if (!search.trim()) return LOCAL_STOCKS;
     const q = search.toLowerCase();
-    return popularQuotes.filter(
-      s => s.symbol.toLowerCase().includes(q)
+    return LOCAL_STOCKS.filter(
+      s => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
     );
-  }, [search, popularQuotes]);
+  }, [search]);
 
   const handleSelectStock = useCallback(async (symbol: string) => {
     setLoading(true);
@@ -153,32 +144,29 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
         {/* Stock Grid */}
-        {initialLoading ? (
+        {loading && !selectedQuote ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            <span className="ml-2 text-sm text-muted-foreground">Carregando ações...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Carregando dados...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {filteredQuotes.map(q => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
+            {filteredStocks.map(s => (
               <button
-                key={q.symbol}
-                onClick={() => handleSelectStock(q.symbol)}
-                className="flex items-center justify-between px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-all hover:scale-[1.01] text-left group"
+                key={s.symbol}
+                onClick={() => handleSelectStock(s.symbol)}
+                className={`flex items-center justify-between px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-all hover:scale-[1.01] text-left group ${
+                  selectedQuote?.symbol === s.symbol ? "bg-primary/10 border-primary/30" : ""
+                }`}
               >
                 <div>
-                  <span className="text-sm font-bold">{q.symbol}</span>
-                  <p className="text-xs text-muted-foreground">{formatUSD(q.price)}</p>
+                  <span className="text-sm font-bold">{s.symbol}</span>
+                  <p className="text-xs text-muted-foreground">{s.name}</p>
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
-                  q.change >= 0 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                }`}>
-                  {q.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {q.change >= 0 ? "+" : ""}{q.changePercent.toFixed(2)}%
-                </div>
+                <Search className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             ))}
-            {filteredQuotes.length === 0 && !initialLoading && (
+            {filteredStocks.length === 0 && (
               <p className="text-sm text-muted-foreground col-span-2 text-center py-6">Nenhuma ação encontrada</p>
             )}
           </div>
