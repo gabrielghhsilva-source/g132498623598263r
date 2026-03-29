@@ -1,12 +1,30 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Search, TrendingUp, TrendingDown, Plus, Trash2, RefreshCw, BarChart3, ArrowUpDown, Loader2 } from "lucide-react";
 import { StockPosition } from "@/lib/types";
-import { searchSymbols, getQuote, getDailyHistory, StockQuote, SearchResult, DailyPrice } from "@/lib/stockApi";
+import { getQuote, getDailyHistory, StockQuote, DailyPrice } from "@/lib/stockApi";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const POPULAR_SYMBOLS = [
-  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX",
-  "PETR4.SAO", "VALE3.SAO", "ITUB4.SAO", "BBDC4.SAO",
+const LOCAL_STOCKS = [
+  { symbol: "AAPL", name: "Apple" },
+  { symbol: "MSFT", name: "Microsoft" },
+  { symbol: "GOOGL", name: "Alphabet (Google)" },
+  { symbol: "AMZN", name: "Amazon" },
+  { symbol: "TSLA", name: "Tesla" },
+  { symbol: "META", name: "Meta Platforms" },
+  { symbol: "NVDA", name: "NVIDIA" },
+  { symbol: "NFLX", name: "Netflix" },
+  { symbol: "AMD", name: "AMD" },
+  { symbol: "INTC", name: "Intel" },
+  { symbol: "DIS", name: "Disney" },
+  { symbol: "BA", name: "Boeing" },
+  { symbol: "JPM", name: "JPMorgan Chase" },
+  { symbol: "V", name: "Visa" },
+  { symbol: "WMT", name: "Walmart" },
+  { symbol: "PETR4.SAO", name: "Petrobras" },
+  { symbol: "VALE3.SAO", name: "Vale" },
+  { symbol: "ITUB4.SAO", name: "Itaú Unibanco" },
+  { symbol: "BBDC4.SAO", name: "Bradesco" },
+  { symbol: "ABEV3.SAO", name: "Ambev" },
 ];
 
 interface Props {
@@ -21,48 +39,21 @@ function formatUSD(v: number) {
 
 export function StockMarket({ positions, onAdd, onRemove }: Props) {
   const [search, setSearch] = useState("");
-  const [popularQuotes, setPopularQuotes] = useState<StockQuote[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<StockQuote | null>(null);
   const [history, setHistory] = useState<DailyPrice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [addQty, setAddQty] = useState(1);
   const [liveQuotes, setLiveQuotes] = useState<Record<string, StockQuote>>({});
 
-  // Auto-load popular stocks on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function loadPopular() {
-      setInitialLoading(true);
-      const quotes: StockQuote[] = [];
-      // Load in batches of 4 to respect API limits
-      for (let i = 0; i < Math.min(POPULAR_SYMBOLS.length, 8); i++) {
-        if (cancelled) break;
-        try {
-          const q = await getQuote(POPULAR_SYMBOLS[i]);
-          if (q) quotes.push(q);
-        } catch {
-          break; // API limit reached
-        }
-      }
-      if (!cancelled) {
-        setPopularQuotes(quotes);
-        setInitialLoading(false);
-      }
-    }
-    loadPopular();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Filtered list based on search
-  const filteredQuotes = useMemo(() => {
-    if (!search.trim()) return popularQuotes;
+  // Filter local list — no API call
+  const filteredStocks = useMemo(() => {
+    if (!search.trim()) return LOCAL_STOCKS;
     const q = search.toLowerCase();
-    return popularQuotes.filter(
-      s => s.symbol.toLowerCase().includes(q)
+    return LOCAL_STOCKS.filter(
+      s => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
     );
-  }, [search, popularQuotes]);
+  }, [search]);
 
   const handleSelectStock = useCallback(async (symbol: string) => {
     setLoading(true);
