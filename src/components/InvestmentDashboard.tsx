@@ -173,13 +173,10 @@ function InvestmentAreaCard({
 
       {!collapsed && (
         <div className="px-5 pb-5 space-y-4 animate-fade-in">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <StatBlock label="Investido" value={formatCurrency(totals.totalInvested)} color="text-muted-foreground" />
             <StatBlock label="Valor Atual" value={formatCurrency(totals.totalCurrent)} color="text-foreground" />
             <StatBlock label="Lucro" value={formatCurrency(totals.totalProfit)} color={totals.totalProfit >= 0 ? "text-success" : "text-destructive"} />
-            <StatBlock label="Renda Passiva" value={formatCurrency(totals.totalPassiveIncome)} color="text-info" />
-            <StatBlock label="Dívidas/mês" value={formatCurrency(totals.totalMonthlyDebts)} color="text-destructive" />
-            <StatBlock label="Líquido/mês" value={formatCurrency(totals.netMonthlyIncome)} color={totals.netMonthlyIncome >= 0 ? "text-success" : "text-destructive"} />
           </div>
 
           {area.investments.length > 0 && <AreaGrowthChart investments={area.investments} color={area.color} />}
