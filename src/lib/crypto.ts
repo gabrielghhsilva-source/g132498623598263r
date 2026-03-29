@@ -1,6 +1,6 @@
 // AES-GCM encryption with PBKDF2 key derivation from password
 const EXPECTED_HASH = "7f17fe7d4623c01b2b066c442d67115c9db9e408b3c2ea07bad8c86f65fc7e62";
-const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key"];
+const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key", "salary-data"];
 
 let cryptoKey: CryptoKey | null = null;
 const cache = new Map<string, string>();
