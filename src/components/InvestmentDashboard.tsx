@@ -49,13 +49,10 @@ export function InvestmentDashboard({
           <DollarSign className="w-5 h-5 text-success" />
           Patrimônio Total
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
           <StatBlock label="Valor Atual" value={formatCurrency(grandTotals.totalCurrent)} color="text-foreground" />
           <StatBlock label="Lucro" value={formatCurrency(grandTotals.totalProfit)} color={grandTotals.totalProfit >= 0 ? "text-success" : "text-destructive"} />
-          <StatBlock label="Renda Passiva/mês" value={formatCurrency(grandTotals.totalPassiveIncome)} color="text-info" />
-          <StatBlock label="Dívidas/mês" value={formatCurrency(grandTotals.totalMonthlyDebts)} color="text-destructive" />
-          <StatBlock label="Líquido/mês" value={formatCurrency(grandTotals.netMonthlyIncome)} color={grandTotals.netMonthlyIncome >= 0 ? "text-success" : "text-destructive"} />
         </div>
 
         {/* Global simulation */}
