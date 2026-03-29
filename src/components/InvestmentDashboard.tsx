@@ -342,7 +342,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution }:
             <span className="text-muted-foreground">Já investido: <span className="text-foreground font-medium">{formatCurrency(inv.previouslyInvested)}</span></span>
             <span className="text-muted-foreground">Aporte mensal: <span className="text-foreground font-medium">{formatCurrency(inv.monthlyContribution)}</span></span>
             <span className="text-muted-foreground">Taxa: <span className="text-foreground font-medium">{inv.rateOfReturn}% {inv.rateType === "monthly" ? "a.m." : "a.a."}</span></span>
-            {inv.passiveIncome > 0 && <span className="text-muted-foreground">Renda passiva: <span className="text-info font-medium">{formatCurrency(inv.passiveIncome)}/mês</span></span>}
+            
           </div>
           <div>
             <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
