@@ -49,13 +49,10 @@ export function InvestmentDashboard({
           <DollarSign className="w-5 h-5 text-success" />
           Patrimônio Total
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
           <StatBlock label="Valor Atual" value={formatCurrency(grandTotals.totalCurrent)} color="text-foreground" />
           <StatBlock label="Lucro" value={formatCurrency(grandTotals.totalProfit)} color={grandTotals.totalProfit >= 0 ? "text-success" : "text-destructive"} />
-          <StatBlock label="Renda Passiva/mês" value={formatCurrency(grandTotals.totalPassiveIncome)} color="text-info" />
-          <StatBlock label="Dívidas/mês" value={formatCurrency(grandTotals.totalMonthlyDebts)} color="text-destructive" />
-          <StatBlock label="Líquido/mês" value={formatCurrency(grandTotals.netMonthlyIncome)} color={grandTotals.netMonthlyIncome >= 0 ? "text-success" : "text-destructive"} />
         </div>
 
         {/* Global simulation */}
@@ -176,13 +173,10 @@ function InvestmentAreaCard({
 
       {!collapsed && (
         <div className="px-5 pb-5 space-y-4 animate-fade-in">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <StatBlock label="Investido" value={formatCurrency(totals.totalInvested)} color="text-muted-foreground" />
             <StatBlock label="Valor Atual" value={formatCurrency(totals.totalCurrent)} color="text-foreground" />
             <StatBlock label="Lucro" value={formatCurrency(totals.totalProfit)} color={totals.totalProfit >= 0 ? "text-success" : "text-destructive"} />
-            <StatBlock label="Renda Passiva" value={formatCurrency(totals.totalPassiveIncome)} color="text-info" />
-            <StatBlock label="Dívidas/mês" value={formatCurrency(totals.totalMonthlyDebts)} color="text-destructive" />
-            <StatBlock label="Líquido/mês" value={formatCurrency(totals.netMonthlyIncome)} color={totals.netMonthlyIncome >= 0 ? "text-success" : "text-destructive"} />
           </div>
 
           {area.investments.length > 0 && <AreaGrowthChart investments={area.investments} color={area.color} />}
@@ -348,7 +342,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution }:
             <span className="text-muted-foreground">Já investido: <span className="text-foreground font-medium">{formatCurrency(inv.previouslyInvested)}</span></span>
             <span className="text-muted-foreground">Aporte mensal: <span className="text-foreground font-medium">{formatCurrency(inv.monthlyContribution)}</span></span>
             <span className="text-muted-foreground">Taxa: <span className="text-foreground font-medium">{inv.rateOfReturn}% {inv.rateType === "monthly" ? "a.m." : "a.a."}</span></span>
-            {inv.passiveIncome > 0 && <span className="text-muted-foreground">Renda passiva: <span className="text-info font-medium">{formatCurrency(inv.passiveIncome)}/mês</span></span>}
+            
           </div>
           <div>
             <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
@@ -378,14 +372,12 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [monthly, setMonthly] = useState("");
   const [rate, setRate] = useState("");
   const [rateType, setRateType] = useState<"monthly" | "annual">("monthly");
-  const [passive, setPassive] = useState("");
-
   const handleAdd = () => {
     if (!name.trim()) return;
     onAdd({
       name: name.trim(), initialValue: Number(initial) || 0, previouslyInvested: Number(prev) || 0,
       monthlyContribution: Number(monthly) || 0, rateOfReturn: Number(rate) || 0, rateType,
-      passiveIncome: Number(passive) || 0, startDate: new Date().toISOString().split("T")[0],
+      passiveIncome: 0, startDate: new Date().toISOString().split("T")[0],
     });
   };
 
@@ -403,7 +395,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
             <option value="annual">a.a.</option>
           </select>
         </div>
-        <input type="number" value={passive} onChange={e => setPassive(e.target.value)} placeholder="Renda passiva/mês" className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
+        
       </div>
       <div className="flex justify-end gap-2">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
@@ -466,12 +458,8 @@ function GlobalSimResult({ investments, debts, targetDate }: { investments: Inve
     <div className="flex items-center gap-3 text-xs flex-wrap">
       <span className="text-muted-foreground">Investido: <span className="text-foreground font-medium">{formatCurrency(result.totalInvested)}</span></span>
       <span className="text-muted-foreground">Total: <span className="text-foreground font-bold">{formatCurrency(result.totalValue)}</span></span>
-      <span className="text-muted-foreground">Lucro: <span className={result.totalProfit >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{formatCurrency(result.totalProfit)}</span></span>
-      {result.totalDebtsPaid > 0 && (
-        <span className="text-destructive">Dívidas: -{formatCurrency(result.totalDebtsPaid)}</span>
-      )}
-      <span className={result.netProfit >= 0 ? "text-success font-bold" : "text-destructive font-bold"}>
-        Líquido: {formatCurrency(result.netProfit)}
+      <span className={result.totalProfit >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
+        Lucro: {formatCurrency(result.totalProfit)}
       </span>
     </div>
   );

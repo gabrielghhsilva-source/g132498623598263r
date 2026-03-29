@@ -46,8 +46,6 @@ export function getCurrentValue(investment: Investment): number {
 export function getAreaTotals(investments: Investment[], debts: Debt[] = []) {
   let totalInvested = 0;
   let totalCurrent = 0;
-  let totalPassiveIncome = 0;
-  const totalMonthlyDebts = debts.reduce((sum, d) => sum + d.monthlyAmount, 0);
 
   for (const inv of investments) {
     const baseInvested = inv.initialValue + inv.previouslyInvested;
@@ -58,16 +56,12 @@ export function getAreaTotals(investments: Investment[], debts: Debt[] = []) {
 
     totalInvested += baseInvested + inv.monthlyContribution * months + manualTotal;
     totalCurrent += getCurrentValue(inv);
-    totalPassiveIncome += inv.passiveIncome || 0;
   }
 
   return {
     totalInvested: Math.round(totalInvested * 100) / 100,
     totalCurrent: Math.round(totalCurrent * 100) / 100,
     totalProfit: Math.round((totalCurrent - totalInvested) * 100) / 100,
-    totalPassiveIncome: Math.round(totalPassiveIncome * 100) / 100,
-    totalMonthlyDebts: Math.round(totalMonthlyDebts * 100) / 100,
-    netMonthlyIncome: Math.round((totalPassiveIncome - totalMonthlyDebts) * 100) / 100,
   };
 }
 
