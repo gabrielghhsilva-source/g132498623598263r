@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { initSecurity } from "@/lib/crypto";
 
@@ -12,6 +12,17 @@ export function PasswordGate({ onUnlocked }: Props) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 20 }).map(() => ({
+        startX: Math.random() * 100,
+        startY: Math.random() * 100,
+        duration: 4 + Math.random() * 6,
+        delay: Math.random() * 5,
+      })),
+    []
+  );
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,21 +46,17 @@ export function PasswordGate({ onUnlocked }: Props) {
     >
       {/* Subtle animated particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true" style={{ isolation: "isolate" }}>
-        {Array.from({ length: 20 }).map((_, i) => {
-          const startX = Math.random() * 100;
-          const startY = Math.random() * 100;
-          const duration = 4 + Math.random() * 6;
-          const delay = Math.random() * 5;
+        {particles.map((particle, i) => {
           return (
             <div
               key={i}
               className="absolute w-1 h-1 rounded-full"
               style={{
                 backgroundColor: "#fff",
-                left: `${startX}%`,
-                top: `${startY}%`,
-                animation: `particle-drift-${i % 4} ${duration}s ease-in-out infinite`,
-                animationDelay: `${delay}s`,
+                left: `${particle.startX}%`,
+                top: `${particle.startY}%`,
+                animation: `particle-drift-${i % 4} ${particle.duration}s ease-in-out infinite`,
+                animationDelay: `${particle.delay}s`,
                 willChange: "transform, opacity",
               }}
             />
