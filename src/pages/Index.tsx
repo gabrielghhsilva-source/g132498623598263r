@@ -62,6 +62,7 @@ const AppContent = () => {
     investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
     stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
     salary: { icon: Wallet, label: "Salário", color: "text-amber-500" },
+    clicker: { icon: MousePointerClick, label: "Clicker", color: "text-purple-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
