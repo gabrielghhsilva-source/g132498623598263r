@@ -132,6 +132,9 @@ export function SettingsMenu({
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
           {/* Reset */}
           {path === "reset" && (
             <div className="p-3 space-y-3">
@@ -144,7 +147,6 @@ export function SettingsMenu({
                   onClick={() => {
                     localStorage.clear();
                     sessionStorage.clear();
-                    // Clear IndexedDB
                     indexedDB.databases?.().then(dbs => dbs.forEach(db => db.name && indexedDB.deleteDatabase(db.name)));
                     window.location.reload();
                   }}
@@ -155,8 +157,6 @@ export function SettingsMenu({
               </div>
             </div>
           )}
-        </div>
-      )}
         </div>
       )}
     </div>
