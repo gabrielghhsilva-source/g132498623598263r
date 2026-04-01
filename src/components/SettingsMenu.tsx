@@ -25,7 +25,7 @@ interface Props {
   onButtonTextChange: (c: string) => void;
 }
 
-type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
+type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons" | "reset";
 
 export function SettingsMenu({
   theme, onThemeChange, customColors, onCustomColorsChange,
