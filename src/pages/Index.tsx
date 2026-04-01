@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
+import { useClickerStore } from "@/hooks/useClickerStore";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
 import { useNotificationSystem } from "@/hooks/useNotificationSystem";
 import { useInvestmentStore } from "@/hooks/useInvestmentStore";
