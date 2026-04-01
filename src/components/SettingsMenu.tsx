@@ -66,6 +66,7 @@ export function SettingsMenu({
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
+              <MenuItem icon={Trash2} label="Apagar todos os dados" onClick={() => setPath("reset")} danger />
             </div>
           )}
 
