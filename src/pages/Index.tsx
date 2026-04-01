@@ -18,6 +18,7 @@ import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
+import { ClickerGame } from "@/components/ClickerGame";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
 import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
