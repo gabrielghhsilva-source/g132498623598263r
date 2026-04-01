@@ -132,8 +132,31 @@ export function SettingsMenu({
                   </button>
                 </div>
               </div>
+          {/* Reset */}
+          {path === "reset" && (
+            <div className="p-3 space-y-3">
+              <BackButton onClick={() => setPath("root")} label="Apagar dados" />
+              <div className="text-center space-y-3">
+                <Trash2 className="w-8 h-8 mx-auto text-destructive" />
+                <p className="text-sm text-muted-foreground">Isso vai apagar <strong>todos</strong> os seus dados (tarefas, investimentos, ações, salário, configurações).</p>
+                <p className="text-xs text-destructive font-semibold">Essa ação não pode ser desfeita!</p>
+                <button
+                  onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    // Clear IndexedDB
+                    indexedDB.databases?.().then(dbs => dbs.forEach(db => db.name && indexedDB.deleteDatabase(db.name)));
+                    window.location.reload();
+                  }}
+                  className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-colors"
+                >
+                  Apagar tudo e reiniciar
+                </button>
+              </div>
             </div>
           )}
+        </div>
+      )}
         </div>
       )}
     </div>
