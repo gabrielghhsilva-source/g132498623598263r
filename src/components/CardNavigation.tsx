@@ -1,5 +1,5 @@
 import { AppTab } from "@/lib/types";
-import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
+import { ClipboardList, TrendingUp, BarChart3, Wallet, MousePointerClick } from "lucide-react";
 import { useState } from "react";
 
 const TABS: { id: AppTab; label: string; icon: typeof ClipboardList; color: string }[] = [
