@@ -175,4 +175,4 @@ export const DEFAULT_SALARY_DATA: SalaryData = {
 };
 
 // Navigation
-export type AppTab = "tasks" | "investments" | "stocks" | "salary";
+export type AppTab = "tasks" | "investments" | "stocks" | "salary" | "clicker";
