@@ -156,6 +156,7 @@ const AppContent = () => {
               onDeleteExpense={salaryStore.deleteExpense}
             />
           )}
+          {activeTab === "clicker" && <ClickerGame />}
         </main>
 
         <TodayPanel
