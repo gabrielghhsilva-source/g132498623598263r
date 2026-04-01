@@ -21,7 +21,7 @@ import { StockMarket } from "@/components/StockMarket";
 import { ClickerGame } from "@/components/ClickerGame";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
-import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
+import { ClipboardList, TrendingUp, BarChart3, Wallet, MousePointerClick } from "lucide-react";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 
