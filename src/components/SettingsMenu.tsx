@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
@@ -25,7 +25,7 @@ interface Props {
   onButtonTextChange: (c: string) => void;
 }
 
-type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
+type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons" | "reset";
 
 export function SettingsMenu({
   theme, onThemeChange, customColors, onCustomColorsChange,
@@ -66,6 +66,7 @@ export function SettingsMenu({
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
+              <MenuItem icon={Trash2} label="Apagar todos os dados" onClick={() => setPath("reset")} />
             </div>
           )}
 
@@ -130,6 +131,29 @@ export function SettingsMenu({
                     Exemplo de botão
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reset */}
+          {path === "reset" && (
+            <div className="p-3 space-y-3">
+              <BackButton onClick={() => setPath("root")} label="Apagar dados" />
+              <div className="text-center space-y-3">
+                <Trash2 className="w-8 h-8 mx-auto text-destructive" />
+                <p className="text-sm text-muted-foreground">Isso vai apagar <strong>todos</strong> os seus dados (tarefas, investimentos, ações, salário, configurações).</p>
+                <p className="text-xs text-destructive font-semibold">Essa ação não pode ser desfeita!</p>
+                <button
+                  onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    indexedDB.databases?.().then(dbs => dbs.forEach(db => db.name && indexedDB.deleteDatabase(db.name)));
+                    window.location.reload();
+                  }}
+                  className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-colors"
+                >
+                  Apagar tudo e reiniciar
+                </button>
               </div>
             </div>
           )}
