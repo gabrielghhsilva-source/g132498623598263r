@@ -10,8 +10,8 @@ export interface Upgrade {
   costScale: number; // multiplicador por nível
   level: number;
   maxLevel: number;
-  effect: "flat" | "multiply" | "unlock";
-  value: number; // flat: +N/s, multiply: xN, unlock: id do upgrade desbloqueado
+  effect: "flat" | "multiply" | "unlock" | "synergy" | "tempo" | "compound" | "echo" | "fragscale";
+  value: number;
   unlockId?: string; // upgrade que este desbloqueia
   unlocked: boolean;
   icon: string;
@@ -35,19 +35,27 @@ export interface GameState {
 /* ── Default upgrades (árvore simples) ── */
 
 const DEFAULT_UPGRADES: Upgrade[] = [
-  // Tier 1 — sempre desbloqueados
-  { id: "gen1",    name: "Gerador I",       description: "+1 energia/s",         baseCost: 10,     costScale: 1.15, level: 0, maxLevel: 50,  effect: "flat",     value: 1,   unlockId: "gen2",    unlocked: true,  icon: "⚡" },
-  { id: "amp1",    name: "Amplificador I",   description: "x1.5 produção",        baseCost: 75,     costScale: 1.3,  level: 0, maxLevel: 10,  effect: "multiply", value: 1.5, unlockId: "amp2",    unlocked: true,  icon: "🔋" },
-  // Tier 2
-  { id: "gen2",    name: "Gerador II",       description: "+5 energia/s",         baseCost: 200,    costScale: 1.18, level: 0, maxLevel: 50,  effect: "flat",     value: 5,   unlockId: "gen3",    unlocked: false, icon: "⚙️" },
-  { id: "amp2",    name: "Amplificador II",  description: "x2 produção",          baseCost: 1000,   costScale: 1.35, level: 0, maxLevel: 10,  effect: "multiply", value: 2,   unlockId: "amp3",    unlocked: false, icon: "🔌" },
-  // Tier 3
-  { id: "gen3",    name: "Gerador III",      description: "+25 energia/s",        baseCost: 5000,   costScale: 1.2,  level: 0, maxLevel: 50,  effect: "flat",     value: 25,  unlockId: "gen4",    unlocked: false, icon: "🔬" },
-  { id: "amp3",    name: "Amplificador III", description: "x3 produção",          baseCost: 25000,  costScale: 1.4,  level: 0, maxLevel: 5,   effect: "multiply", value: 3,                        unlocked: false, icon: "🧪" },
-  // Tier 4
-  { id: "gen4",    name: "Gerador IV",       description: "+100 energia/s",       baseCost: 100000, costScale: 1.22, level: 0, maxLevel: 50,  effect: "flat",     value: 100, unlockId: "gen5",    unlocked: false, icon: "🌀" },
-  // Tier 5
-  { id: "gen5",    name: "Gerador V",        description: "+500 energia/s",       baseCost: 1e6,    costScale: 1.25, level: 0, maxLevel: 50,  effect: "flat",     value: 500,                      unlocked: false, icon: "💎" },
+  // ── Tier 1 — sempre desbloqueados ──
+  { id: "gen1",    name: "Gerador I",        description: "+1 energia/s",                          baseCost: 15,      costScale: 1.12, level: 0, maxLevel: 50,  effect: "flat",     value: 1,    unlockId: "gen2",    unlocked: true,  icon: "⚡" },
+  { id: "amp1",    name: "Amplificador I",   description: "x1.3 produção",                         baseCost: 50,      costScale: 1.28, level: 0, maxLevel: 10,  effect: "multiply", value: 1.3,  unlockId: "syn1",    unlocked: true,  icon: "🔋" },
+  // ── Tier 2 ──
+  { id: "gen2",    name: "Gerador II",       description: "+4 energia/s",                          baseCost: 120,     costScale: 1.14, level: 0, maxLevel: 50,  effect: "flat",     value: 4,    unlockId: "gen3",    unlocked: false, icon: "⚙️" },
+  { id: "syn1",    name: "Sinergia",         description: "+0.5/s por nível de Gerador I",         baseCost: 200,     costScale: 1.25, level: 0, maxLevel: 15,  effect: "synergy",  value: 0.5,  unlockId: "amp2",    unlocked: false, icon: "🔗" },
+  // ── Tier 3 ──
+  { id: "gen3",    name: "Gerador III",      description: "+15 energia/s",                         baseCost: 800,     costScale: 1.16, level: 0, maxLevel: 50,  effect: "flat",     value: 15,   unlockId: "tempo1",  unlocked: false, icon: "🔬" },
+  { id: "amp2",    name: "Amplificador II",  description: "x1.5 produção",                         baseCost: 1500,    costScale: 1.32, level: 0, maxLevel: 8,   effect: "multiply", value: 1.5,  unlockId: "comp1",   unlocked: false, icon: "🔌" },
+  // ── Tier 4 — mecânicas especiais ──
+  { id: "tempo1",  name: "Acelerador",       description: "+2/s por minuto neste loop (max 30min)", baseCost: 3000,    costScale: 1.35, level: 0, maxLevel: 5,   effect: "tempo",    value: 2,    unlockId: "gen4",    unlocked: false, icon: "⏱️" },
+  { id: "comp1",   name: "Juros Compostos",  description: "energia^0.03 adicionado ao /s",         baseCost: 5000,    costScale: 1.4,  level: 0, maxLevel: 5,   effect: "compound", value: 0.03, unlockId: "amp3",    unlocked: false, icon: "📈" },
+  // ── Tier 5 ──
+  { id: "gen4",    name: "Gerador IV",       description: "+60 energia/s",                         baseCost: 12000,   costScale: 1.18, level: 0, maxLevel: 50,  effect: "flat",     value: 60,   unlockId: "gen5",    unlocked: false, icon: "🌀" },
+  { id: "amp3",    name: "Amplificador III", description: "x2 produção",                           baseCost: 30000,   costScale: 1.45, level: 0, maxLevel: 5,   effect: "multiply", value: 2,    unlockId: "echo1",   unlocked: false, icon: "🧪" },
+  // ── Tier 6 — late game ──
+  { id: "gen5",    name: "Gerador V",        description: "+250 energia/s",                        baseCost: 100000,  costScale: 1.2,  level: 0, maxLevel: 50,  effect: "flat",     value: 250,  unlockId: "gen6",    unlocked: false, icon: "💎" },
+  { id: "echo1",   name: "Eco de Loop",      description: "+5/s por loop completado",              baseCost: 150000,  costScale: 1.5,  level: 0, maxLevel: 5,   effect: "echo",     value: 5,    unlockId: "frag1",   unlocked: false, icon: "🔁" },
+  // ── Tier 7 ──
+  { id: "gen6",    name: "Gerador VI",       description: "+1000 energia/s",                       baseCost: 500000,  costScale: 1.22, level: 0, maxLevel: 50,  effect: "flat",     value: 1000,                      unlocked: false, icon: "🌟" },
+  { id: "frag1",   name: "Ressonância",      description: "+20/s por fragmento",                   baseCost: 1e6,     costScale: 1.55, level: 0, maxLevel: 3,   effect: "fragscale",value: 20,                        unlocked: false, icon: "✨" },
 ];
 
 const DEFAULT_STATE: GameState = {
@@ -65,12 +73,19 @@ function getUpgradeCost(u: Upgrade): number {
   return Math.floor(u.baseCost * Math.pow(u.costScale, u.level));
 }
 
-function recalcPerSecond(upgrades: Upgrade[], loop: LoopData): number {
-  let flat = 0;
+function recalcPerSecond(upgrades: Upgrade[], loop: LoopData, energy: number = 0): number {
+  let flat = 1; // começa com 1/s base
   let mult = 1;
+  const gen1Level = upgrades.find(u => u.id === "gen1")?.level ?? 0;
   for (const u of upgrades) {
     if (u.effect === "flat") flat += u.value * u.level;
     if (u.effect === "multiply" && u.level > 0) mult *= Math.pow(u.value, u.level);
+    if (u.effect === "synergy" && u.level > 0) flat += u.value * u.level * gen1Level;
+    if (u.effect === "echo" && u.level > 0) flat += u.value * u.level * loop.totalLoops;
+    if (u.effect === "fragscale" && u.level > 0) flat += u.value * u.level * loop.fragments;
+    if (u.effect === "compound" && u.level > 0 && energy > 0) {
+      flat += Math.pow(energy, u.value * u.level);
+    }
   }
   return Math.floor(flat * mult * loop.bonusMultiplier);
 }
@@ -86,7 +101,7 @@ function loadState(): GameState {
         return saved ? { ...def, level: saved.level, unlocked: saved.unlocked } : def;
       });
       const loop = parsed.loop ?? DEFAULT_STATE.loop;
-      const perSecond = recalcPerSecond(upgrades, loop);
+      const perSecond = recalcPerSecond(upgrades, loop, parsed.energy ?? 0);
       return {
         energy: parsed.energy ?? 0,
         totalEnergy: parsed.totalEnergy ?? 0,
@@ -97,7 +112,9 @@ function loadState(): GameState {
       };
     }
   } catch {}
-  return { ...DEFAULT_STATE, upgrades: DEFAULT_UPGRADES.map(u => ({ ...u })) };
+  const freshState = { ...DEFAULT_STATE, upgrades: DEFAULT_UPGRADES.map(u => ({ ...u })) };
+  freshState.perSecond = 1; // 1/s base
+  return freshState;
 }
 
 function getFragmentGain(totalEnergy: number): number {
@@ -118,12 +135,25 @@ export function useClickerStore() {
 
   // Tick de produção (100ms)
   useEffect(() => {
+    const startTime = Date.now();
     const interval = setInterval(() => {
       setState(prev => {
-        if (prev.perSecond <= 0) return prev;
-        const gain = prev.perSecond / 10;
+        // Recalcular perSecond com compound (depende de energy)
+        const ps = recalcPerSecond(prev.upgrades, prev.loop, prev.energy);
+
+        // Bônus de tempo do Acelerador
+        const minutesInLoop = Math.min((Date.now() - startTime) / 60000, 30);
+        const tempoUpgrade = prev.upgrades.find(u => u.id === "tempo1");
+        const tempoBonus = tempoUpgrade && tempoUpgrade.level > 0
+          ? tempoUpgrade.value * tempoUpgrade.level * Math.floor(minutesInLoop)
+          : 0;
+
+        const totalPs = ps + tempoBonus;
+        if (totalPs <= 0) return prev;
+        const gain = totalPs / 10;
         return {
           ...prev,
+          perSecond: totalPs,
           energy: prev.energy + gain,
           totalEnergy: prev.totalEnergy + gain,
           allTimeEnergy: prev.allTimeEnergy + gain,
@@ -150,7 +180,7 @@ export function useClickerStore() {
         return u;
       });
 
-      const perSecond = recalcPerSecond(newUpgrades, prev.loop);
+      const perSecond = recalcPerSecond(newUpgrades, prev.loop, prev.energy - cost);
       return {
         ...prev,
         energy: prev.energy - cost,
