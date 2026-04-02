@@ -10,8 +10,8 @@ export interface Upgrade {
   costScale: number; // multiplicador por nível
   level: number;
   maxLevel: number;
-  effect: "flat" | "multiply" | "unlock";
-  value: number; // flat: +N/s, multiply: xN, unlock: id do upgrade desbloqueado
+  effect: "flat" | "multiply" | "unlock" | "synergy" | "tempo" | "compound" | "echo" | "fragscale";
+  value: number;
   unlockId?: string; // upgrade que este desbloqueia
   unlocked: boolean;
   icon: string;
