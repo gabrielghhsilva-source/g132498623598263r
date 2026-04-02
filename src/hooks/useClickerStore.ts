@@ -112,7 +112,9 @@ function loadState(): GameState {
       };
     }
   } catch {}
-  return { ...DEFAULT_STATE, upgrades: DEFAULT_UPGRADES.map(u => ({ ...u })) };
+  const freshState = { ...DEFAULT_STATE, upgrades: DEFAULT_UPGRADES.map(u => ({ ...u })) };
+  freshState.perSecond = 1; // 1/s base
+  return freshState;
 }
 
 function getFragmentGain(totalEnergy: number): number {
