@@ -1,5 +1,5 @@
 import { AppTab } from "@/lib/types";
-import { ClipboardList, TrendingUp, BarChart3, Wallet, MousePointerClick } from "lucide-react";
+import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
 import { useState } from "react";
 
 const TABS: { id: AppTab; label: string; icon: typeof ClipboardList; color: string }[] = [
@@ -7,7 +7,6 @@ const TABS: { id: AppTab; label: string; icon: typeof ClipboardList; color: stri
   { id: "investments", label: "Investimentos", icon: TrendingUp, color: "hsl(142, 71%, 45%)" },
   { id: "stocks", label: "Ações", icon: BarChart3, color: "hsl(217, 91%, 60%)" },
   { id: "salary", label: "Salário", icon: Wallet, color: "hsl(38, 92%, 50%)" },
-  { id: "clicker", label: "Clicker", icon: MousePointerClick, color: "hsl(271, 91%, 65%)" },
 ];
 
 interface Props {

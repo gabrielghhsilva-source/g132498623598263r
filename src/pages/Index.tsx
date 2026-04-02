@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
-import { useClickerStore } from "@/hooks/useClickerStore";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
 import { useNotificationSystem } from "@/hooks/useNotificationSystem";
 import { useInvestmentStore } from "@/hooks/useInvestmentStore";
@@ -18,10 +17,9 @@ import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
-import { ClickerGame } from "@/components/ClickerGame";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
-import { ClipboardList, TrendingUp, BarChart3, Wallet, MousePointerClick } from "lucide-react";
+import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 
@@ -62,7 +60,6 @@ const AppContent = () => {
     investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
     stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
     salary: { icon: Wallet, label: "Salário", color: "text-amber-500" },
-    clicker: { icon: MousePointerClick, label: "Clicker", color: "text-purple-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
@@ -156,7 +153,6 @@ const AppContent = () => {
               onDeleteExpense={salaryStore.deleteExpense}
             />
           )}
-          {activeTab === "clicker" && <ClickerGame />}
         </main>
 
         <TodayPanel
