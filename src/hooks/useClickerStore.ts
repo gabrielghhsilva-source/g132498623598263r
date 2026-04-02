@@ -180,7 +180,7 @@ export function useClickerStore() {
         return u;
       });
 
-      const perSecond = recalcPerSecond(newUpgrades, prev.loop);
+      const perSecond = recalcPerSecond(newUpgrades, prev.loop, prev.energy - cost);
       return {
         ...prev,
         energy: prev.energy - cost,
