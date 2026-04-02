@@ -73,12 +73,19 @@ function getUpgradeCost(u: Upgrade): number {
   return Math.floor(u.baseCost * Math.pow(u.costScale, u.level));
 }
 
-function recalcPerSecond(upgrades: Upgrade[], loop: LoopData): number {
-  let flat = 0;
+function recalcPerSecond(upgrades: Upgrade[], loop: LoopData, energy: number = 0): number {
+  let flat = 1; // começa com 1/s base
   let mult = 1;
+  const gen1Level = upgrades.find(u => u.id === "gen1")?.level ?? 0;
   for (const u of upgrades) {
     if (u.effect === "flat") flat += u.value * u.level;
     if (u.effect === "multiply" && u.level > 0) mult *= Math.pow(u.value, u.level);
+    if (u.effect === "synergy" && u.level > 0) flat += u.value * u.level * gen1Level;
+    if (u.effect === "echo" && u.level > 0) flat += u.value * u.level * loop.totalLoops;
+    if (u.effect === "fragscale" && u.level > 0) flat += u.value * u.level * loop.fragments;
+    if (u.effect === "compound" && u.level > 0 && energy > 0) {
+      flat += Math.pow(energy, u.value * u.level);
+    }
   }
   return Math.floor(flat * mult * loop.bonusMultiplier);
 }
