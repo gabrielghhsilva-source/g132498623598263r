@@ -101,7 +101,7 @@ function loadState(): GameState {
         return saved ? { ...def, level: saved.level, unlocked: saved.unlocked } : def;
       });
       const loop = parsed.loop ?? DEFAULT_STATE.loop;
-      const perSecond = recalcPerSecond(upgrades, loop);
+      const perSecond = recalcPerSecond(upgrades, loop, parsed.energy ?? 0);
       return {
         energy: parsed.energy ?? 0,
         totalEnergy: parsed.totalEnergy ?? 0,
