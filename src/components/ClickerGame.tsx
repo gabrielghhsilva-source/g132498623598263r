@@ -148,11 +148,14 @@ function UpgradeRow({
   onBuy: () => void;
 }) {
   const effectLabel =
-    upgrade.effect === "flat"
-      ? `+${upgrade.value}/s`
-      : upgrade.effect === "multiply"
-      ? `x${upgrade.value}`
-      : "🔓";
+    upgrade.effect === "flat"     ? `+${upgrade.value}/s` :
+    upgrade.effect === "multiply" ? `x${upgrade.value}` :
+    upgrade.effect === "synergy"  ? `+${upgrade.value}/s·Lv` :
+    upgrade.effect === "tempo"    ? `+${upgrade.value}/s·min` :
+    upgrade.effect === "compound" ? `E^${upgrade.value}` :
+    upgrade.effect === "echo"     ? `+${upgrade.value}/s·loop` :
+    upgrade.effect === "fragscale"? `+${upgrade.value}/s·frag` :
+    "🔓";
 
   return (
     <button
