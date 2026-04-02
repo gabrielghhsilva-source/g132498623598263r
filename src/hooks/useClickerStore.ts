@@ -1,163 +1,197 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
-export interface ClickerUpgrade {
+/* ── Types ── */
+
+export interface Upgrade {
   id: string;
   name: string;
   description: string;
   baseCost: number;
-  costMultiplier: number;
+  costScale: number; // multiplicador por nível
   level: number;
-  type: "click" | "auto";
-  power: number; // per level
+  maxLevel: number;
+  effect: "flat" | "multiply" | "unlock";
+  value: number; // flat: +N/s, multiply: xN, unlock: id do upgrade desbloqueado
+  unlockId?: string; // upgrade que este desbloqueia
+  unlocked: boolean;
   icon: string;
 }
 
-export interface PrestigeData {
-  totalPrestiges: number;
-  prestigePoints: number;
-  multiplier: number; // 1 + 0.1 * prestigePoints
+export interface LoopData {
+  totalLoops: number;
+  fragments: number;
+  bonusMultiplier: number; // 1 + 0.1 * fragments
 }
 
-export interface ClickerState {
-  points: number;
-  totalPoints: number;
-  clickPower: number;
-  autoPerSecond: number;
-  upgrades: ClickerUpgrade[];
-  prestige: PrestigeData;
+export interface GameState {
+  energy: number;
+  totalEnergy: number; // acumulado lifetime (resetado por loop)
+  allTimeEnergy: number; // acumulado geral (nunca reseta)
+  perSecond: number;
+  upgrades: Upgrade[];
+  loop: LoopData;
 }
 
-const DEFAULT_UPGRADES: ClickerUpgrade[] = [
-  { id: "cursor", name: "Cursor", description: "+1 por clique", baseCost: 10, costMultiplier: 1.15, level: 0, type: "click", power: 1, icon: "👆" },
-  { id: "boost", name: "Impulso", description: "+5 por clique", baseCost: 100, costMultiplier: 1.18, level: 0, type: "click", power: 5, icon: "⚡" },
-  { id: "surge", name: "Onda", description: "+25 por clique", baseCost: 1000, costMultiplier: 1.2, level: 0, type: "click", power: 25, icon: "🌊" },
-  { id: "bot", name: "Bot", description: "+1/s automático", baseCost: 50, costMultiplier: 1.15, level: 0, type: "auto", power: 1, icon: "🤖" },
-  { id: "farm", name: "Fazenda", description: "+5/s automático", baseCost: 500, costMultiplier: 1.18, level: 0, type: "auto", power: 5, icon: "🌾" },
-  { id: "factory", name: "Fábrica", description: "+20/s automático", baseCost: 3000, costMultiplier: 1.2, level: 0, type: "auto", power: 20, icon: "🏭" },
-  { id: "lab", name: "Laboratório", description: "+100/s automático", baseCost: 20000, costMultiplier: 1.22, level: 0, type: "auto", power: 100, icon: "🔬" },
-  { id: "portal", name: "Portal", description: "+500/s automático", baseCost: 200000, costMultiplier: 1.25, level: 0, type: "auto", power: 500, icon: "🌀" },
+/* ── Default upgrades (árvore simples) ── */
+
+const DEFAULT_UPGRADES: Upgrade[] = [
+  // Tier 1 — sempre desbloqueados
+  { id: "gen1",    name: "Gerador I",       description: "+1 energia/s",         baseCost: 10,     costScale: 1.15, level: 0, maxLevel: 50,  effect: "flat",     value: 1,   unlockId: "gen2",    unlocked: true,  icon: "⚡" },
+  { id: "amp1",    name: "Amplificador I",   description: "x1.5 produção",        baseCost: 75,     costScale: 1.3,  level: 0, maxLevel: 10,  effect: "multiply", value: 1.5, unlockId: "amp2",    unlocked: true,  icon: "🔋" },
+  // Tier 2
+  { id: "gen2",    name: "Gerador II",       description: "+5 energia/s",         baseCost: 200,    costScale: 1.18, level: 0, maxLevel: 50,  effect: "flat",     value: 5,   unlockId: "gen3",    unlocked: false, icon: "⚙️" },
+  { id: "amp2",    name: "Amplificador II",  description: "x2 produção",          baseCost: 1000,   costScale: 1.35, level: 0, maxLevel: 10,  effect: "multiply", value: 2,   unlockId: "amp3",    unlocked: false, icon: "🔌" },
+  // Tier 3
+  { id: "gen3",    name: "Gerador III",      description: "+25 energia/s",        baseCost: 5000,   costScale: 1.2,  level: 0, maxLevel: 50,  effect: "flat",     value: 25,  unlockId: "gen4",    unlocked: false, icon: "🔬" },
+  { id: "amp3",    name: "Amplificador III", description: "x3 produção",          baseCost: 25000,  costScale: 1.4,  level: 0, maxLevel: 5,   effect: "multiply", value: 3,                        unlocked: false, icon: "🧪" },
+  // Tier 4
+  { id: "gen4",    name: "Gerador IV",       description: "+100 energia/s",       baseCost: 100000, costScale: 1.22, level: 0, maxLevel: 50,  effect: "flat",     value: 100, unlockId: "gen5",    unlocked: false, icon: "🌀" },
+  // Tier 5
+  { id: "gen5",    name: "Gerador V",        description: "+500 energia/s",       baseCost: 1e6,    costScale: 1.25, level: 0, maxLevel: 50,  effect: "flat",     value: 500,                      unlocked: false, icon: "💎" },
 ];
 
-const DEFAULT_STATE: ClickerState = {
-  points: 0,
-  totalPoints: 0,
-  clickPower: 1,
-  autoPerSecond: 0,
+const DEFAULT_STATE: GameState = {
+  energy: 0,
+  totalEnergy: 0,
+  allTimeEnergy: 0,
+  perSecond: 0,
   upgrades: DEFAULT_UPGRADES,
-  prestige: { totalPrestiges: 0, prestigePoints: 0, multiplier: 1 },
+  loop: { totalLoops: 0, fragments: 0, bonusMultiplier: 1 },
 };
 
-function loadState(): ClickerState {
+/* ── Helpers ── */
+
+function getUpgradeCost(u: Upgrade): number {
+  return Math.floor(u.baseCost * Math.pow(u.costScale, u.level));
+}
+
+function recalcPerSecond(upgrades: Upgrade[], loop: LoopData): number {
+  let flat = 0;
+  let mult = 1;
+  for (const u of upgrades) {
+    if (u.effect === "flat") flat += u.value * u.level;
+    if (u.effect === "multiply" && u.level > 0) mult *= Math.pow(u.value, u.level);
+  }
+  return Math.floor(flat * mult * loop.bonusMultiplier);
+}
+
+function loadState(): GameState {
   try {
-    const stored = localStorage.getItem("clicker-save");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge with defaults to handle new upgrades
+    const raw = localStorage.getItem("loop-game-save");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // merge com defaults para upgrades novos
       const upgrades = DEFAULT_UPGRADES.map(def => {
-        const saved = parsed.upgrades?.find((u: ClickerUpgrade) => u.id === def.id);
-        return saved ? { ...def, level: saved.level } : def;
+        const saved = parsed.upgrades?.find((u: Upgrade) => u.id === def.id);
+        return saved ? { ...def, level: saved.level, unlocked: saved.unlocked } : def;
       });
-      return { ...DEFAULT_STATE, ...parsed, upgrades };
+      const loop = parsed.loop ?? DEFAULT_STATE.loop;
+      const perSecond = recalcPerSecond(upgrades, loop);
+      return {
+        energy: parsed.energy ?? 0,
+        totalEnergy: parsed.totalEnergy ?? 0,
+        allTimeEnergy: parsed.allTimeEnergy ?? 0,
+        perSecond,
+        upgrades,
+        loop,
+      };
     }
   } catch {}
-  return DEFAULT_STATE;
+  return { ...DEFAULT_STATE, upgrades: DEFAULT_UPGRADES.map(u => ({ ...u })) };
 }
 
-function getUpgradeCost(upgrade: ClickerUpgrade): number {
-  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
+function getFragmentGain(totalEnergy: number): number {
+  return Math.floor(Math.sqrt(totalEnergy / 10000));
 }
 
-function recalcStats(upgrades: ClickerUpgrade[], prestige: PrestigeData) {
-  let clickPower = 1;
-  let autoPerSecond = 0;
-  for (const u of upgrades) {
-    if (u.type === "click") clickPower += u.power * u.level;
-    else autoPerSecond += u.power * u.level;
-  }
-  clickPower = Math.floor(clickPower * prestige.multiplier);
-  autoPerSecond = Math.floor(autoPerSecond * prestige.multiplier);
-  return { clickPower, autoPerSecond };
-}
+/* ── Hook ── */
 
 export function useClickerStore() {
-  const [state, setState] = useState<ClickerState>(loadState);
+  const [state, setState] = useState<GameState>(loadState);
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Save to localStorage on change
+  // Salvar no localStorage
   useEffect(() => {
-    localStorage.setItem("clicker-save", JSON.stringify(state));
+    localStorage.setItem("loop-game-save", JSON.stringify(state));
   }, [state]);
 
-  // Auto-production tick
+  // Tick de produção (100ms)
   useEffect(() => {
     const interval = setInterval(() => {
       setState(prev => {
-        if (prev.autoPerSecond <= 0) return prev;
-        const gain = prev.autoPerSecond / 10; // 100ms tick
+        if (prev.perSecond <= 0) return prev;
+        const gain = prev.perSecond / 10;
         return {
           ...prev,
-          points: prev.points + gain,
-          totalPoints: prev.totalPoints + gain,
+          energy: prev.energy + gain,
+          totalEnergy: prev.totalEnergy + gain,
+          allTimeEnergy: prev.allTimeEnergy + gain,
         };
       });
     }, 100);
     return () => clearInterval(interval);
   }, []);
 
-  const click = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      points: prev.points + prev.clickPower,
-      totalPoints: prev.totalPoints + prev.clickPower,
-    }));
-  }, []);
-
   const buyUpgrade = useCallback((upgradeId: string) => {
     setState(prev => {
       const upgrade = prev.upgrades.find(u => u.id === upgradeId);
-      if (!upgrade) return prev;
+      if (!upgrade || !upgrade.unlocked) return prev;
+      if (upgrade.level >= upgrade.maxLevel) return prev;
       const cost = getUpgradeCost(upgrade);
-      if (prev.points < cost) return prev;
+      if (prev.energy < cost) return prev;
 
-      const newUpgrades = prev.upgrades.map(u =>
-        u.id === upgradeId ? { ...u, level: u.level + 1 } : u
-      );
-      const stats = recalcStats(newUpgrades, prev.prestige);
+      const newUpgrades = prev.upgrades.map(u => {
+        if (u.id === upgradeId) return { ...u, level: u.level + 1 };
+        // Desbloquear próximo upgrade quando o anterior chega no nível 1
+        if (upgrade.unlockId && u.id === upgrade.unlockId && upgrade.level === 0) {
+          return { ...u, unlocked: true };
+        }
+        return u;
+      });
+
+      const perSecond = recalcPerSecond(newUpgrades, prev.loop);
       return {
         ...prev,
-        points: prev.points - cost,
+        energy: prev.energy - cost,
         upgrades: newUpgrades,
-        ...stats,
+        perSecond,
       };
     });
   }, []);
 
-  const getPrestigeGain = useCallback(() => {
-    const tp = stateRef.current.totalPoints;
-    return Math.floor(Math.sqrt(tp / 1000000));
-  }, []);
-
-  const prestige = useCallback(() => {
-    const gain = getPrestigeGain();
+  const doLoop = useCallback(() => {
+    const gain = getFragmentGain(stateRef.current.totalEnergy);
     if (gain <= 0) return;
     setState(prev => {
-      const newPP = prev.prestige.prestigePoints + gain;
-      const newPrestige: PrestigeData = {
-        totalPrestiges: prev.prestige.totalPrestiges + 1,
-        prestigePoints: newPP,
-        multiplier: 1 + 0.1 * newPP,
+      const newFragments = prev.loop.fragments + gain;
+      const newLoop: LoopData = {
+        totalLoops: prev.loop.totalLoops + 1,
+        fragments: newFragments,
+        bonusMultiplier: 1 + 0.1 * newFragments,
       };
-      const resetUpgrades = prev.upgrades.map(u => ({ ...u, level: 0 }));
-      const stats = recalcStats(resetUpgrades, newPrestige);
+      const resetUpgrades = prev.upgrades.map(u => ({
+        ...u,
+        level: 0,
+        // Tier 1 sempre desbloqueado, resto bloqueia
+        unlocked: u.id === "gen1" || u.id === "amp1",
+      }));
       return {
-        ...DEFAULT_STATE,
+        energy: 0,
+        totalEnergy: 0,
+        allTimeEnergy: prev.allTimeEnergy,
+        perSecond: 0,
         upgrades: resetUpgrades,
-        prestige: newPrestige,
-        ...stats,
+        loop: newLoop,
       };
     });
-  }, [getPrestigeGain]);
+  }, []);
 
-  return { state, click, buyUpgrade, getUpgradeCost: (u: ClickerUpgrade) => getUpgradeCost(u), getPrestigeGain, prestige };
+  return {
+    state,
+    buyUpgrade,
+    getUpgradeCost: (u: Upgrade) => getUpgradeCost(u),
+    getFragmentGain: () => getFragmentGain(stateRef.current.totalEnergy),
+    doLoop,
+  };
 }
