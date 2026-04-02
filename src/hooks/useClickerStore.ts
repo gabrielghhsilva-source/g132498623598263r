@@ -135,12 +135,25 @@ export function useClickerStore() {
 
   // Tick de produção (100ms)
   useEffect(() => {
+    const startTime = Date.now();
     const interval = setInterval(() => {
       setState(prev => {
-        if (prev.perSecond <= 0) return prev;
-        const gain = prev.perSecond / 10;
+        // Recalcular perSecond com compound (depende de energy)
+        const ps = recalcPerSecond(prev.upgrades, prev.loop, prev.energy);
+
+        // Bônus de tempo do Acelerador
+        const minutesInLoop = Math.min((Date.now() - startTime) / 60000, 30);
+        const tempoUpgrade = prev.upgrades.find(u => u.id === "tempo1");
+        const tempoBonus = tempoUpgrade && tempoUpgrade.level > 0
+          ? tempoUpgrade.value * tempoUpgrade.level * Math.floor(minutesInLoop)
+          : 0;
+
+        const totalPs = ps + tempoBonus;
+        if (totalPs <= 0) return prev;
+        const gain = totalPs / 10;
         return {
           ...prev,
+          perSecond: totalPs,
           energy: prev.energy + gain,
           totalEnergy: prev.totalEnergy + gain,
           allTimeEnergy: prev.allTimeEnergy + gain,
