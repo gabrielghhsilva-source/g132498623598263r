@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt } from "@/lib/types";
+import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt, MonthlyOverride } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
 
 function loadSecure<T>(key: string, fallback: T): T {
