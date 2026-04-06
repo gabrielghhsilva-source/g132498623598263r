@@ -352,7 +352,36 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
             <span className="text-muted-foreground">Já investido: <span className="text-foreground font-medium">{formatCurrency(inv.previouslyInvested)}</span></span>
             <span className="text-muted-foreground">Aporte mensal: <span className="text-foreground font-medium">{formatCurrency(inv.monthlyContribution)}</span></span>
             <span className="text-muted-foreground">Taxa: <span className="text-foreground font-medium">{inv.rateOfReturn}% {inv.rateType === "monthly" ? "a.m." : "a.a."}</span></span>
-            
+          </div>
+
+          {/* Monthly Override */}
+          <div className="bg-accent/30 rounded-lg p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">
+                Aporte este mês: <span className={hasActiveOverride ? "text-amber-500" : "text-foreground"}>{formatCurrency(effectiveMonthly)}</span>
+                {hasActiveOverride && <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500">EXCEÇÃO</span>}
+              </span>
+              <div className="flex gap-1">
+                {hasActiveOverride && (
+                  <button onClick={() => onSetOverride(undefined)} className="text-[10px] px-2 py-0.5 rounded bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    Resetar
+                  </button>
+                )}
+                <button onClick={() => { setShowOverride(!showOverride); setOverrideAmount(effectiveMonthly.toString()); }} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                  {hasActiveOverride ? "Editar" : "Alterar este mês"}
+                </button>
+              </div>
+            </div>
+            {showOverride && (
+              <div className="flex gap-2 animate-fade-in">
+                <input type="number" value={overrideAmount} onChange={e => setOverrideAmount(e.target.value)} placeholder="Valor deste mês" className="flex-1 bg-secondary/60 rounded px-2 py-1 text-xs border border-border outline-none" autoFocus />
+                <button onClick={() => {
+                  onSetOverride({ month: now.getMonth(), year: now.getFullYear(), amount: Number(overrideAmount) || 0 });
+                  setShowOverride(false);
+                }} className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90">✓</button>
+                <button onClick={() => setShowOverride(false)} className="px-2 py-1 text-xs rounded hover:bg-muted text-muted-foreground">✕</button>
+              </div>
+            )}
           </div>
           <div>
             <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
