@@ -17,6 +17,7 @@ interface Props {
   onDeleteGoal: (areaId: string, goalId: string) => void;
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
   onDeleteDebt: (areaId: string, debtId: string) => void;
+  onSetMonthlyOverride: (areaId: string, investmentId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
   onCreateTaskReminder?: (text: string) => void;
 }
 
