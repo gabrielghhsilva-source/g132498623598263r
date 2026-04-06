@@ -309,17 +309,24 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onSetOverride }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
+  onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [contDate, setContDate] = useState("");
   const [contAmount, setContAmount] = useState("");
+  const [showOverride, setShowOverride] = useState(false);
+  const [overrideAmount, setOverrideAmount] = useState("");
   const currentVal = getCurrentValue(inv);
   const baseInvested = inv.initialValue + inv.previouslyInvested;
   const profit = currentVal - baseInvested;
+
+  const now = new Date();
+  const hasActiveOverride = inv.monthlyOverride && inv.monthlyOverride.month === now.getMonth() && inv.monthlyOverride.year === now.getFullYear();
+  const effectiveMonthly = hasActiveOverride ? inv.monthlyOverride!.amount : inv.monthlyContribution;
 
   return (
     <div className="bg-secondary/30 rounded-lg border border-border p-3">
