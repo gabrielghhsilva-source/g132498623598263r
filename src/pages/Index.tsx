@@ -147,11 +147,14 @@ const AppContent = () => {
             <SalaryPanel
               salary={salaryStore.data.salary}
               manualExpenses={salaryStore.data.manualExpenses}
+              manualIncomes={salaryStore.data.manualIncomes || []}
               investmentAreas={investStore.areas}
               stockPositions={stockStore.positions}
               onSetSalary={salaryStore.setSalary}
               onAddExpense={salaryStore.addExpense}
               onDeleteExpense={salaryStore.deleteExpense}
+              onAddIncome={salaryStore.addIncome}
+              onDeleteIncome={salaryStore.deleteIncome}
             />
           )}
         </main>
