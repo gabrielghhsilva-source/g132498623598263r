@@ -84,5 +84,16 @@ export function useInvestmentStore() {
     ));
   }, []);
 
-  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt };
+  const setMonthlyOverride = useCallback((areaId: string, investmentId: string, override: MonthlyOverride | undefined) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? {
+        ...a,
+        investments: a.investments.map(i =>
+          i.id === investmentId ? { ...i, monthlyOverride: override } : i
+        ),
+      } : a
+    ));
+  }, []);
+
+  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
 }
