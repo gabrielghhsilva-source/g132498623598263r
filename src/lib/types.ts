@@ -117,6 +117,12 @@ export interface InvestmentArea {
   debts: Debt[];
 }
 
+export interface MonthlyOverride {
+  month: number; // 0-11
+  year: number;
+  amount: number;
+}
+
 export interface Investment {
   id: string;
   name: string;
@@ -128,6 +134,7 @@ export interface Investment {
   passiveIncome: number;
   startDate: string;
   contributions: ContributionRecord[];
+  monthlyOverride?: MonthlyOverride;
 }
 
 export interface ContributionRecord {
