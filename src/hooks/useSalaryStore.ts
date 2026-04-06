@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { SalaryData, ManualExpense, DEFAULT_SALARY_DATA } from "@/lib/types";
+import { SalaryData, ManualExpense, ManualIncome, DEFAULT_SALARY_DATA } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
 
 function loadSecure<T>(key: string, fallback: T): T {
@@ -12,9 +12,10 @@ function loadSecure<T>(key: string, fallback: T): T {
 }
 
 export function useSalaryStore() {
-  const [data, setData] = useState<SalaryData>(() =>
-    loadSecure("salary-data", DEFAULT_SALARY_DATA)
-  );
+  const [data, setData] = useState<SalaryData>(() => {
+    const loaded = loadSecure("salary-data", DEFAULT_SALARY_DATA);
+    return { ...loaded, manualIncomes: loaded.manualIncomes || [] };
+  });
 
   useEffect(() => {
     secureSet("salary-data", JSON.stringify(data));
@@ -39,5 +40,20 @@ export function useSalaryStore() {
     }));
   }, []);
 
-  return { data, setSalary, addExpense, deleteExpense };
+  const addIncome = useCallback((name: string, amount: number) => {
+    const income: ManualIncome = { id: crypto.randomUUID(), name, amount };
+    setData(prev => ({
+      ...prev,
+      manualIncomes: [...(prev.manualIncomes || []), income],
+    }));
+  }, []);
+
+  const deleteIncome = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      manualIncomes: (prev.manualIncomes || []).filter(i => i.id !== id),
+    }));
+  }, []);
+
+  return { data, setSalary, addExpense, deleteExpense, addIncome, deleteIncome };
 }

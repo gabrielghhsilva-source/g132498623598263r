@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt } from "@/lib/types";
+import { InvestmentArea, Investment, InvestmentGoal, ContributionRecord, Debt, MonthlyOverride } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
 
 function loadSecure<T>(key: string, fallback: T): T {
@@ -84,5 +84,16 @@ export function useInvestmentStore() {
     ));
   }, []);
 
-  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt };
+  const setMonthlyOverride = useCallback((areaId: string, investmentId: string, override: MonthlyOverride | undefined) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? {
+        ...a,
+        investments: a.investments.map(i =>
+          i.id === investmentId ? { ...i, monthlyOverride: override } : i
+        ),
+      } : a
+    ));
+  }, []);
+
+  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
 }

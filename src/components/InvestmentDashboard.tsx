@@ -17,12 +17,13 @@ interface Props {
   onDeleteGoal: (areaId: string, goalId: string) => void;
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
   onDeleteDebt: (areaId: string, debtId: string) => void;
+  onSetMonthlyOverride: (areaId: string, investmentId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
   onCreateTaskReminder?: (text: string) => void;
 }
 
 export function InvestmentDashboard({
   areas, onAddArea, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onCreateTaskReminder,
+  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: Props) {
   const [showAddArea, setShowAddArea] = useState(false);
   const [newAreaName, setNewAreaName] = useState("");
@@ -82,6 +83,7 @@ export function InvestmentDashboard({
           onDeleteGoal={goalId => onDeleteGoal(area.id, goalId)}
           onAddDebt={(name, amount) => onAddDebt(area.id, name, amount)}
           onDeleteDebt={debtId => onDeleteDebt(area.id, debtId)}
+          onSetMonthlyOverride={(invId, override) => onSetMonthlyOverride(area.id, invId, override)}
           onCreateTaskReminder={onCreateTaskReminder}
         />
       ))}
@@ -128,7 +130,7 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
 
 function InvestmentAreaCard({
   area, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onCreateTaskReminder,
+  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
@@ -139,6 +141,7 @@ function InvestmentAreaCard({
   onDeleteGoal: (goalId: string) => void;
   onAddDebt: (name: string, amount: number) => void;
   onDeleteDebt: (debtId: string) => void;
+  onSetMonthlyOverride: (invId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
   onCreateTaskReminder?: (text: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -183,7 +186,7 @@ function InvestmentAreaCard({
 
           {/* Investments */}
           {area.investments.map(inv => (
-            <InvestmentItem key={inv.id} investment={inv} color={area.color} onDelete={() => onDeleteInvestment(inv.id)} onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)} />
+            <InvestmentItem key={inv.id} investment={inv} color={area.color} onDelete={() => onDeleteInvestment(inv.id)} onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)} onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)} />
           ))}
           {showAddInv ? (
             <AddInvestmentForm onAdd={inv => { onAddInvestment(inv); setShowAddInv(false); }} onCancel={() => setShowAddInv(false)} />
@@ -306,17 +309,24 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onSetOverride }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
+  onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [contDate, setContDate] = useState("");
   const [contAmount, setContAmount] = useState("");
+  const [showOverride, setShowOverride] = useState(false);
+  const [overrideAmount, setOverrideAmount] = useState("");
   const currentVal = getCurrentValue(inv);
   const baseInvested = inv.initialValue + inv.previouslyInvested;
   const profit = currentVal - baseInvested;
+
+  const now = new Date();
+  const hasActiveOverride = inv.monthlyOverride && inv.monthlyOverride.month === now.getMonth() && inv.monthlyOverride.year === now.getFullYear();
+  const effectiveMonthly = hasActiveOverride ? inv.monthlyOverride!.amount : inv.monthlyContribution;
 
   return (
     <div className="bg-secondary/30 rounded-lg border border-border p-3">
@@ -342,7 +352,36 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution }:
             <span className="text-muted-foreground">Já investido: <span className="text-foreground font-medium">{formatCurrency(inv.previouslyInvested)}</span></span>
             <span className="text-muted-foreground">Aporte mensal: <span className="text-foreground font-medium">{formatCurrency(inv.monthlyContribution)}</span></span>
             <span className="text-muted-foreground">Taxa: <span className="text-foreground font-medium">{inv.rateOfReturn}% {inv.rateType === "monthly" ? "a.m." : "a.a."}</span></span>
-            
+          </div>
+
+          {/* Monthly Override */}
+          <div className="bg-accent/30 rounded-lg p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">
+                Aporte este mês: <span className={hasActiveOverride ? "text-amber-500" : "text-foreground"}>{formatCurrency(effectiveMonthly)}</span>
+                {hasActiveOverride && <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500">EXCEÇÃO</span>}
+              </span>
+              <div className="flex gap-1">
+                {hasActiveOverride && (
+                  <button onClick={() => onSetOverride(undefined)} className="text-[10px] px-2 py-0.5 rounded bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    Resetar
+                  </button>
+                )}
+                <button onClick={() => { setShowOverride(!showOverride); setOverrideAmount(effectiveMonthly.toString()); }} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                  {hasActiveOverride ? "Editar" : "Alterar este mês"}
+                </button>
+              </div>
+            </div>
+            {showOverride && (
+              <div className="flex gap-2 animate-fade-in">
+                <input type="number" value={overrideAmount} onChange={e => setOverrideAmount(e.target.value)} placeholder="Valor deste mês" className="flex-1 bg-secondary/60 rounded px-2 py-1 text-xs border border-border outline-none" autoFocus />
+                <button onClick={() => {
+                  onSetOverride({ month: now.getMonth(), year: now.getFullYear(), amount: Number(overrideAmount) || 0 });
+                  setShowOverride(false);
+                }} className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90">✓</button>
+                <button onClick={() => setShowOverride(false)} className="px-2 py-1 text-xs rounded hover:bg-muted text-muted-foreground">✕</button>
+              </div>
+            )}
           </div>
           <div>
             <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
