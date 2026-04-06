@@ -171,14 +171,22 @@ export interface ManualExpense {
   amount: number;
 }
 
+export interface ManualIncome {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 export interface SalaryData {
   salary: number;
   manualExpenses: ManualExpense[];
+  manualIncomes: ManualIncome[];
 }
 
 export const DEFAULT_SALARY_DATA: SalaryData = {
   salary: 0,
   manualExpenses: [],
+  manualIncomes: [],
 };
 
 // Navigation
