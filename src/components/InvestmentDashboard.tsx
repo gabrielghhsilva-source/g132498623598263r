@@ -83,6 +83,7 @@ export function InvestmentDashboard({
           onDeleteGoal={goalId => onDeleteGoal(area.id, goalId)}
           onAddDebt={(name, amount) => onAddDebt(area.id, name, amount)}
           onDeleteDebt={debtId => onDeleteDebt(area.id, debtId)}
+          onSetMonthlyOverride={(invId, override) => onSetMonthlyOverride(area.id, invId, override)}
           onCreateTaskReminder={onCreateTaskReminder}
         />
       ))}
