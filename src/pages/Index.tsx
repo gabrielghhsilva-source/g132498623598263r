@@ -132,6 +132,7 @@ const AppContent = () => {
               onDeleteGoal={investStore.deleteGoal}
               onAddDebt={investStore.addDebt}
               onDeleteDebt={investStore.deleteDebt}
+              onSetMonthlyOverride={investStore.setMonthlyOverride}
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}
