@@ -130,7 +130,7 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
 
 function InvestmentAreaCard({
   area, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onCreateTaskReminder,
+  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
@@ -141,6 +141,7 @@ function InvestmentAreaCard({
   onDeleteGoal: (goalId: string) => void;
   onAddDebt: (name: string, amount: number) => void;
   onDeleteDebt: (debtId: string) => void;
+  onSetMonthlyOverride: (invId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
   onCreateTaskReminder?: (text: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
