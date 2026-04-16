@@ -22,6 +22,21 @@ export function useNotificationSystem(
   const [currentEvent, setCurrentEvent] = useState<NotificationEvent | null>(null);
   const firedRef = useRef<Set<string>>(new Set());
 
+  const showNotification = useCallback((title: string, body: string, tag: string) => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    // Prefere o Service Worker (entrega melhor em background); fallback para Notification API
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: "SHOW_NOTIFICATION",
+        payload: { title, body, icon: "/icon-192.png", tag },
+      });
+    } else {
+      try {
+        new Notification(title, { body, icon: "/icon-192.png", tag });
+      } catch {}
+    }
+  }, []);
+
   const playSound = useCallback((volume: number, customUrl?: string) => {
     if (customUrl) {
       const audio = new Audio(customUrl);
@@ -70,14 +85,11 @@ export function useNotificationSystem(
         }
 
         if (matching.length > 0) {
-          // Browser notification
-          if ("Notification" in window && Notification.permission === "granted") {
-            const body = matchingNames.join(", ");
-            new Notification(`⏰ Tarefa em ${advMin} minuto${advMin !== 1 ? "s" : ""}`, {
-              body,
-              icon: "/placeholder.svg",
-            });
-          }
+          showNotification(
+            `⏰ Tarefa em ${advMin} minuto${advMin !== 1 ? "s" : ""}`,
+            matchingNames.join(", "),
+            `advance-${advMin}-${Date.now()}`
+          );
 
           // Sound
           playSound(settings.volume, settings.customSoundUrl);
@@ -107,12 +119,7 @@ export function useNotificationSystem(
       }
 
       if (dueNow.length > 0) {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("⏰ Tarefa agora!", {
-            body: dueNowNames.join(", "),
-            icon: "/placeholder.svg",
-          });
-        }
+        showNotification("⏰ Tarefa agora!", dueNowNames.join(", "), `due-now-${Date.now()}`);
         playSound(settings.volume, settings.customSoundUrl);
         setCurrentEvent({
           id: `${Date.now()}-now`,
@@ -125,7 +132,7 @@ export function useNotificationSystem(
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
-  }, [allTasks, settings, timezone, playSound]);
+  }, [allTasks, settings, timezone, playSound, showNotification]);
 
   // Request notification permission on mount
   useEffect(() => {
