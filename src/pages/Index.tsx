@@ -112,6 +112,7 @@ const AppContent = () => {
                 onUpdateStatus={store.updateTaskStatus}
                 onUpdateStyle={store.updateTaskStyle}
                 onUpdateText={store.updateTaskText}
+                onUpdateTime={store.updateTaskTime}
                 onDeleteTask={store.deleteTask}
                 onDeleteArea={store.deleteArea}
                 onAddComment={store.addComment}
@@ -162,6 +163,7 @@ const AppContent = () => {
         <TodayPanel
           tasks={store.todayTasks}
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+          onUpdateTime={store.updateTaskTime}
         />
 
         <NotificationPopup
