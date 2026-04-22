@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Task } from "@/lib/types";
-import { Bell, ChevronRight, ChevronLeft, Check, Clock3, GripVertical } from "lucide-react";
+import { Bell, Check, Clock3, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 
 interface TodayTask extends Task {
   areaName: string;
@@ -14,11 +14,14 @@ interface Props {
   onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
 }
 
-// Timeline configuration: 30-minute slots from 00:00 to 23:30
+// Horizontal timeline configuration: 30-minute slots from 00:00 to 23:30
 const SLOT_MINUTES = 30;
 const SLOTS_PER_DAY = (24 * 60) / SLOT_MINUTES; // 48
-const SLOT_HEIGHT = 56; // px per 30-min slot — drives vertical interpolation
-const TIMELINE_HEIGHT = SLOTS_PER_DAY * SLOT_HEIGHT;
+const SLOT_WIDTH = 90; // px per 30-min slot — drives horizontal interpolation
+const TIMELINE_WIDTH = SLOTS_PER_DAY * SLOT_WIDTH;
+
+const MIN_PANEL_HEIGHT = 200;
+const DEFAULT_PANEL_HEIGHT = Math.round(typeof window !== "undefined" ? window.innerHeight * 0.5 : 400);
 
 function minutesToTimeStr(mins: number): string {
   const clamped = Math.max(0, Math.min(24 * 60 - 1, mins));
@@ -37,6 +40,8 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
   const [notified, setNotified] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [hoverMinutes, setHoverMinutes] = useState<number | null>(null);
+  const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
+  const [resizing, setResizing] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // Browser notification on mount if there are tasks due today
@@ -68,19 +73,40 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     }
   }, [tasks.length, notified]);
 
-  // Split tasks: those without dueTime go to "Sem horário", others to timeline
+  // Resize handler
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: MouseEvent) => {
+      const newHeight = window.innerHeight - e.clientY;
+      const max = window.innerHeight - 60;
+      setPanelHeight(Math.max(MIN_PANEL_HEIGHT, Math.min(max, newHeight)));
+    };
+    const onUp = () => setResizing(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "ns-resize";
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, [resizing]);
+
+  // Split tasks
   const untimedTasks = tasks.filter(t => !t.dueTime);
   const timedTasks = tasks
     .filter(t => !!t.dueTime)
     .sort((a, b) => timeStrToMinutes(a.dueTime!) - timeStrToMinutes(b.dueTime!));
 
-  // Convert pointer Y to minutes-of-day based on timeline position
-  const yToMinutes = useCallback((clientY: number): number => {
+  // Convert pointer X to minutes-of-day based on timeline position
+  const xToMinutes = useCallback((clientX: number): number => {
     const el = timelineRef.current;
     if (!el) return 0;
     const rect = el.getBoundingClientRect();
-    const offset = clientY - rect.top + el.scrollTop;
-    const ratio = offset / TIMELINE_HEIGHT;
+    const offset = clientX - rect.left + el.scrollLeft;
+    const ratio = offset / TIMELINE_WIDTH;
     const mins = Math.round(ratio * 24 * 60);
     return Math.max(0, Math.min(24 * 60 - 1, mins));
   }, []);
@@ -88,7 +114,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggingId) return;
-    setHoverMinutes(yToMinutes(e.clientY));
+    setHoverMinutes(xToMinutes(e.clientX));
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -96,7 +122,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     if (!draggingId) return;
     const task = tasks.find(t => t.id === draggingId);
     if (task) {
-      const mins = yToMinutes(e.clientY);
+      const mins = xToMinutes(e.clientX);
       onUpdateTime(task.areaId, task.id, minutesToTimeStr(mins), task.dueDate);
     }
     setDraggingId(null);
@@ -114,44 +140,73 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     setHoverMinutes(null);
   };
 
+  // Bookmark tab button — sits at bottom when closed, on top edge of panel when open
+  const TabButton = (
+    <button
+      onClick={() => setOpen(!open)}
+      className={`absolute left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-2 rounded-t-2xl border border-b-0 border-border bg-card shadow-lg transition-all hover:bg-accent ${
+        tasks.length > 0 && !open ? "animate-pulse" : ""
+      }`}
+      style={{ bottom: "100%" }}
+      title="Tarefas de hoje"
+    >
+      <Bell className="w-4 h-4 text-primary" />
+      <span className="text-sm font-semibold">Hoje</span>
+      {tasks.length > 0 && (
+        <span className="min-w-5 h-5 px-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+          {tasks.length}
+        </span>
+      )}
+      {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+    </button>
+  );
+
   return (
     <>
-      {/* Toggle button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className={`fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-center gap-1 px-2 py-3 rounded-l-xl border border-r-0 border-border bg-card shadow-lg transition-all hover:bg-accent ${
-          tasks.length > 0 ? "animate-pulse" : ""
-        }`}
-        title="Tarefas de hoje"
-      >
-        <Bell className="w-4 h-4" />
-        {tasks.length > 0 && (
-          <span className="absolute -top-1 -left-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-            {tasks.length}
-          </span>
-        )}
-        {open ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-      </button>
+      {/* Closed state: floating tab button at bottom center */}
+      {!open && (
+        <div className="fixed bottom-0 left-0 right-0 h-0 z-40 pointer-events-none">
+          <div className="relative w-full h-full pointer-events-auto">
+            {TabButton}
+          </div>
+        </div>
+      )}
 
-      {/* Panel */}
+      {/* Open state: bottom panel with resize handle and tab on top */}
       {open && (
-        <div className="fixed right-0 top-0 h-full w-96 max-w-[90vw] bg-card border-l border-border shadow-2xl z-40 animate-slide-in-right flex flex-col">
-          <div className="px-4 py-4 border-b border-border">
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-40 flex flex-col"
+          style={{ height: panelHeight }}
+        >
+          {/* Resize handle on top edge */}
+          <div
+            onMouseDown={() => setResizing(true)}
+            className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-primary/30 transition-colors group"
+            title="Arraste para ajustar altura"
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-1 rounded-full bg-border group-hover:bg-primary/60" />
+          </div>
+
+          {/* Bookmark tab — relative to panel, positioned above its top edge */}
+          <div className="relative">{TabButton}</div>
+
+          {/* Header */}
+          <div className="px-4 pt-3 pb-2 border-b border-border">
             <h3 className="font-semibold flex items-center gap-2">
               <Bell className="w-4 h-4 text-primary" />
               Tarefas de Hoje
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {tasks.length === 0
                 ? "Nenhuma tarefa para hoje 🎉"
                 : `${tasks.length} tarefa${tasks.length > 1 ? "s" : ""} pendente${tasks.length > 1 ? "s" : ""} • Arraste para ajustar o horário`}
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* "Sem horário" section */}
             <div
-              className="px-4 py-3 border-b border-border bg-muted/30"
+              className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0 max-h-[35%] overflow-y-auto"
               onDragOver={(e) => { e.preventDefault(); }}
               onDrop={handleDropUntimed}
             >
@@ -162,89 +217,102 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
               {untimedTasks.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">Arraste tarefas aqui para remover horário</p>
               ) : (
-                <div className="space-y-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {untimedTasks.map(t => (
-                    <TaskCard
-                      key={t.id}
-                      task={t}
-                      onMarkDone={() => onMarkDone(t.areaId, t.id)}
-                      onDragStart={() => setDraggingId(t.id)}
-                      onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
-                      isDragging={draggingId === t.id}
-                    />
+                    <div key={t.id} className="w-64">
+                      <TaskCard
+                        task={t}
+                        onMarkDone={() => onMarkDone(t.areaId, t.id)}
+                        onDragStart={() => setDraggingId(t.id)}
+                        onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
+                        isDragging={draggingId === t.id}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Timeline */}
-            <div
-              ref={timelineRef}
-              className="relative"
-              style={{ height: TIMELINE_HEIGHT }}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragLeave={() => setHoverMinutes(null)}
-            >
-              {/* Hour/half-hour markers */}
-              {Array.from({ length: SLOTS_PER_DAY }).map((_, i) => {
-                const mins = i * SLOT_MINUTES;
-                const isHour = mins % 60 === 0;
-                return (
-                  <div
-                    key={i}
-                    className="absolute left-0 right-0 flex items-start gap-2 px-4"
-                    style={{ top: i * SLOT_HEIGHT, height: SLOT_HEIGHT }}
-                  >
-                    <span
-                      className={`text-[10px] font-mono w-10 flex-shrink-0 pt-0.5 ${
-                        isHour ? "text-foreground/70 font-semibold" : "text-muted-foreground/50"
-                      }`}
-                    >
-                      {minutesToTimeStr(mins)}
-                    </span>
+            {/* Horizontal timeline */}
+            <div className="flex-1 overflow-x-auto overflow-y-hidden">
+              <div
+                ref={timelineRef}
+                className="relative h-full"
+                style={{ width: TIMELINE_WIDTH, minHeight: 180 }}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragLeave={() => setHoverMinutes(null)}
+              >
+                {/* Hour/half-hour vertical markers */}
+                {Array.from({ length: SLOTS_PER_DAY }).map((_, i) => {
+                  const mins = i * SLOT_MINUTES;
+                  const isHour = mins % 60 === 0;
+                  return (
                     <div
-                      className={`flex-1 border-t ${
-                        isHour ? "border-border" : "border-border/40 border-dashed"
-                      }`}
-                    />
-                  </div>
-                );
-              })}
+                      key={i}
+                      className="absolute top-0 bottom-0 flex flex-col items-start"
+                      style={{ left: i * SLOT_WIDTH, width: SLOT_WIDTH }}
+                    >
+                      <span
+                        className={`text-[10px] font-mono px-1 pt-1 ${
+                          isHour ? "text-foreground/70 font-semibold" : "text-muted-foreground/50"
+                        }`}
+                      >
+                        {minutesToTimeStr(mins)}
+                      </span>
+                      <div
+                        className={`absolute top-0 bottom-0 left-0 border-l ${
+                          isHour ? "border-border" : "border-border/40 border-dashed"
+                        }`}
+                      />
+                    </div>
+                  );
+                })}
 
-              {/* Drop indicator */}
-              {draggingId && hoverMinutes !== null && (
-                <div
-                  className="absolute left-14 right-2 h-0.5 bg-primary rounded-full pointer-events-none z-10 transition-all"
-                  style={{ top: (hoverMinutes / (24 * 60)) * TIMELINE_HEIGHT }}
-                >
-                  <span className="absolute -top-3 right-0 text-[10px] font-mono text-primary bg-card px-1 rounded">
-                    {minutesToTimeStr(hoverMinutes)}
-                  </span>
-                </div>
-              )}
-
-              {/* Timed tasks positioned by dueTime */}
-              {timedTasks.map(t => {
-                const mins = timeStrToMinutes(t.dueTime!);
-                const top = (mins / (24 * 60)) * TIMELINE_HEIGHT;
-                return (
+                {/* Drop indicator (vertical line) */}
+                {draggingId && hoverMinutes !== null && (
                   <div
-                    key={t.id}
-                    className="absolute left-14 right-2"
-                    style={{ top: top + 4 }}
+                    className="absolute top-6 bottom-2 w-0.5 bg-primary rounded-full pointer-events-none z-10 transition-all"
+                    style={{ left: (hoverMinutes / (24 * 60)) * TIMELINE_WIDTH }}
                   >
-                    <TaskCard
-                      task={t}
-                      onMarkDone={() => onMarkDone(t.areaId, t.id)}
-                      onDragStart={() => setDraggingId(t.id)}
-                      onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
-                      isDragging={draggingId === t.id}
-                      showTime
-                    />
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-mono text-primary bg-card px-1 rounded whitespace-nowrap">
+                      {minutesToTimeStr(hoverMinutes)}
+                    </span>
                   </div>
-                );
-              })}
+                )}
+
+                {/* Timed tasks positioned by dueTime — stacked vertically when overlapping */}
+                {timedTasks.map((t, idx) => {
+                  const mins = timeStrToMinutes(t.dueTime!);
+                  const left = (mins / (24 * 60)) * TIMELINE_WIDTH;
+                  // Simple stacking: count earlier tasks within the same 30-min slot
+                  const slotIdx = Math.floor(mins / SLOT_MINUTES);
+                  const stackIndex = timedTasks
+                    .slice(0, idx)
+                    .filter(o => Math.floor(timeStrToMinutes(o.dueTime!) / SLOT_MINUTES) === slotIdx).length;
+                  return (
+                    <div
+                      key={t.id}
+                      className="absolute"
+                      style={{
+                        left: left + 2,
+                        top: 24 + stackIndex * 56,
+                        width: SLOT_WIDTH - 6,
+                      }}
+                    >
+                      <TaskCard
+                        task={t}
+                        onMarkDone={() => onMarkDone(t.areaId, t.id)}
+                        onDragStart={() => setDraggingId(t.id)}
+                        onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
+                        isDragging={draggingId === t.id}
+                        showTime
+                        compact
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -260,37 +328,37 @@ interface TaskCardProps {
   onDragEnd: () => void;
   isDragging: boolean;
   showTime?: boolean;
+  compact?: boolean;
 }
 
-function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime }: TaskCardProps) {
+function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact }: TaskCardProps) {
   return (
     <div
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = "move";
-        // Some browsers require setData to initiate drag
         try { e.dataTransfer.setData("text/plain", task.id); } catch {}
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      className={`flex items-start gap-2 p-2.5 rounded-lg border bg-background/80 backdrop-blur-sm shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+      className={`flex items-start gap-1.5 ${compact ? "p-1.5" : "p-2.5"} rounded-lg border bg-background/90 backdrop-blur-sm shadow-sm transition-all cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-40 scale-95" : "hover:border-primary/40"
       } border-border`}
     >
-      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 mt-1 flex-shrink-0" />
+      <GripVertical className="w-3 h-3 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
       <button
         onClick={onMarkDone}
-        className="mt-0.5 w-5 h-5 rounded-full border-2 border-muted-foreground flex items-center justify-center hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 group/check"
+        className="mt-0.5 w-4 h-4 rounded-full border-2 border-muted-foreground flex items-center justify-center hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 group/check"
         title="Marcar como feita"
       >
-        <Check className="w-3 h-3 opacity-0 group-hover/check:opacity-100 text-success" />
+        <Check className="w-2.5 h-2.5 opacity-0 group-hover/check:opacity-100 text-success" />
       </button>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{task.text}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-          <span>{task.areaIcon} {task.areaName}</span>
+        <p className={`${compact ? "text-xs" : "text-sm"} font-medium truncate`}>{task.text}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+          <span className="truncate">{task.areaIcon} {task.areaName}</span>
           {showTime && task.dueTime && (
-            <span className="font-mono text-primary">• {task.dueTime}</span>
+            <span className="font-mono text-primary flex-shrink-0">• {task.dueTime}</span>
           )}
         </p>
       </div>
