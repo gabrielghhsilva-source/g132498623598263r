@@ -205,16 +205,39 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
           <div className="relative">{TabButton}</div>
 
           {/* Header */}
-          <div className="px-4 pt-3 pb-2 border-b border-border">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" />
-              Tarefas de Hoje
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {tasks.length === 0
-                ? "Nenhuma tarefa para hoje 🎉"
-                : `${tasks.length} tarefa${tasks.length > 1 ? "s" : ""} pendente${tasks.length > 1 ? "s" : ""} • Arraste para ajustar o horário`}
-            </p>
+          <div className="px-4 pt-3 pb-2 border-b border-border flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary" />
+                Tarefas de Hoje
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {tasks.length === 0
+                  ? "Nenhuma tarefa para hoje 🎉"
+                  : `${tasks.length} tarefa${tasks.length > 1 ? "s" : ""} pendente${tasks.length > 1 ? "s" : ""} • Arraste para ajustar o horário`}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => setSlotWidth(w => Math.max(MIN_SLOT_WIDTH, w - SLOT_WIDTH_STEP))}
+                disabled={slotWidth <= MIN_SLOT_WIDTH}
+                className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Diminuir espaçamento"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono text-muted-foreground w-10 text-center tabular-nums">
+                {Math.round((slotWidth / DEFAULT_SLOT_WIDTH) * 100)}%
+              </span>
+              <button
+                onClick={() => setSlotWidth(w => Math.min(MAX_SLOT_WIDTH, w + SLOT_WIDTH_STEP))}
+                disabled={slotWidth >= MAX_SLOT_WIDTH}
+                className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Aumentar espaçamento"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
