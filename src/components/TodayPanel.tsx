@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Task } from "@/lib/types";
-import { Bell, Check, Clock3, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Bell, Check, Clock3, GripVertical, ChevronUp, ChevronDown, ZoomIn, ZoomOut } from "lucide-react";
 
 interface TodayTask extends Task {
   areaName: string;
@@ -17,8 +17,11 @@ interface Props {
 // Horizontal timeline configuration: 30-minute slots from 00:00 to 23:30
 const SLOT_MINUTES = 30;
 const SLOTS_PER_DAY = (24 * 60) / SLOT_MINUTES; // 48
-const SLOT_WIDTH = 90; // px per 30-min slot — drives horizontal interpolation
-const TIMELINE_WIDTH = SLOTS_PER_DAY * SLOT_WIDTH;
+const MIN_SLOT_WIDTH = 90;
+const MAX_SLOT_WIDTH = 360;
+const DEFAULT_SLOT_WIDTH = 180; // px per 30-min slot — drives horizontal interpolation
+const SLOT_WIDTH_STEP = 30;
+const SLOT_WIDTH_STORAGE_KEY = "today-panel-slot-width";
 
 const MIN_PANEL_HEIGHT = 200;
 const DEFAULT_PANEL_HEIGHT = Math.round(typeof window !== "undefined" ? window.innerHeight * 0.5 : 400);
@@ -42,7 +45,18 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
   const [hoverMinutes, setHoverMinutes] = useState<number | null>(null);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
   const [resizing, setResizing] = useState(false);
+  const [slotWidth, setSlotWidth] = useState<number>(() => {
+    if (typeof window === "undefined") return DEFAULT_SLOT_WIDTH;
+    const saved = Number(localStorage.getItem(SLOT_WIDTH_STORAGE_KEY));
+    if (!saved || Number.isNaN(saved)) return DEFAULT_SLOT_WIDTH;
+    return Math.max(MIN_SLOT_WIDTH, Math.min(MAX_SLOT_WIDTH, saved));
+  });
   const timelineRef = useRef<HTMLDivElement>(null);
+  const TIMELINE_WIDTH = SLOTS_PER_DAY * slotWidth;
+
+  useEffect(() => {
+    try { localStorage.setItem(SLOT_WIDTH_STORAGE_KEY, String(slotWidth)); } catch {}
+  }, [slotWidth]);
 
   // Browser notification on mount if there are tasks due today
   useEffect(() => {
@@ -109,7 +123,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     const ratio = offset / TIMELINE_WIDTH;
     const mins = Math.round(ratio * 24 * 60);
     return Math.max(0, Math.min(24 * 60 - 1, mins));
-  }, []);
+  }, [TIMELINE_WIDTH]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
