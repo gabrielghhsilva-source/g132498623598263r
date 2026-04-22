@@ -1,4 +1,4 @@
-import { TaskArea, RecurrenceRule, TaskStatus, TaskTextStyle } from "@/lib/types";
+import { TaskArea, RecurrenceRule } from "@/lib/types";
 import { TaskItem } from "./TaskItem";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
