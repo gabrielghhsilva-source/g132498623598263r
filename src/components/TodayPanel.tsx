@@ -288,7 +288,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                     <div
                       key={i}
                       className="absolute top-0 bottom-0 flex flex-col items-start"
-                      style={{ left: i * SLOT_WIDTH, width: SLOT_WIDTH }}
+                      style={{ left: i * slotWidth, width: slotWidth }}
                     >
                       <span
                         className={`text-[10px] font-mono px-1 pt-1 ${
@@ -334,7 +334,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                       style={{
                         left: left + 2,
                         top: 24 + stackIndex * 56,
-                        width: SLOT_WIDTH - 6,
+                        width: slotWidth - 6,
                       }}
                     >
                       <TaskCard
