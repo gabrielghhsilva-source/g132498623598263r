@@ -30,7 +30,7 @@ interface Props {
   onUpdateTime?: (taskId: string, dueTime: string | undefined, dueDate?: string) => void;
 }
 
-export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
+export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment, onUpdateTime }: Props) {
   const [newTask, setNewTask] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
