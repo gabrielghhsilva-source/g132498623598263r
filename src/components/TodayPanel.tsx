@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Task } from "@/lib/types";
-import { Bell, Check, Clock3, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Bell, Check, Clock3, GripVertical, ChevronUp, ChevronDown, ZoomIn, ZoomOut } from "lucide-react";
 
 interface TodayTask extends Task {
   areaName: string;
@@ -17,8 +17,11 @@ interface Props {
 // Horizontal timeline configuration: 30-minute slots from 00:00 to 23:30
 const SLOT_MINUTES = 30;
 const SLOTS_PER_DAY = (24 * 60) / SLOT_MINUTES; // 48
-const SLOT_WIDTH = 90; // px per 30-min slot — drives horizontal interpolation
-const TIMELINE_WIDTH = SLOTS_PER_DAY * SLOT_WIDTH;
+const MIN_SLOT_WIDTH = 90;
+const MAX_SLOT_WIDTH = 360;
+const DEFAULT_SLOT_WIDTH = 180; // px per 30-min slot — drives horizontal interpolation
+const SLOT_WIDTH_STEP = 30;
+const SLOT_WIDTH_STORAGE_KEY = "today-panel-slot-width";
 
 const MIN_PANEL_HEIGHT = 200;
 const DEFAULT_PANEL_HEIGHT = Math.round(typeof window !== "undefined" ? window.innerHeight * 0.5 : 400);
@@ -42,7 +45,18 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
   const [hoverMinutes, setHoverMinutes] = useState<number | null>(null);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
   const [resizing, setResizing] = useState(false);
+  const [slotWidth, setSlotWidth] = useState<number>(() => {
+    if (typeof window === "undefined") return DEFAULT_SLOT_WIDTH;
+    const saved = Number(localStorage.getItem(SLOT_WIDTH_STORAGE_KEY));
+    if (!saved || Number.isNaN(saved)) return DEFAULT_SLOT_WIDTH;
+    return Math.max(MIN_SLOT_WIDTH, Math.min(MAX_SLOT_WIDTH, saved));
+  });
   const timelineRef = useRef<HTMLDivElement>(null);
+  const TIMELINE_WIDTH = SLOTS_PER_DAY * slotWidth;
+
+  useEffect(() => {
+    try { localStorage.setItem(SLOT_WIDTH_STORAGE_KEY, String(slotWidth)); } catch {}
+  }, [slotWidth]);
 
   // Browser notification on mount if there are tasks due today
   useEffect(() => {
@@ -109,7 +123,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     const ratio = offset / TIMELINE_WIDTH;
     const mins = Math.round(ratio * 24 * 60);
     return Math.max(0, Math.min(24 * 60 - 1, mins));
-  }, []);
+  }, [TIMELINE_WIDTH]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -191,16 +205,39 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
           <div className="relative">{TabButton}</div>
 
           {/* Header */}
-          <div className="px-4 pt-3 pb-2 border-b border-border">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" />
-              Tarefas de Hoje
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {tasks.length === 0
-                ? "Nenhuma tarefa para hoje 🎉"
-                : `${tasks.length} tarefa${tasks.length > 1 ? "s" : ""} pendente${tasks.length > 1 ? "s" : ""} • Arraste para ajustar o horário`}
-            </p>
+          <div className="px-4 pt-3 pb-2 border-b border-border flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary" />
+                Tarefas de Hoje
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {tasks.length === 0
+                  ? "Nenhuma tarefa para hoje 🎉"
+                  : `${tasks.length} tarefa${tasks.length > 1 ? "s" : ""} pendente${tasks.length > 1 ? "s" : ""} • Arraste para ajustar o horário`}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => setSlotWidth(w => Math.max(MIN_SLOT_WIDTH, w - SLOT_WIDTH_STEP))}
+                disabled={slotWidth <= MIN_SLOT_WIDTH}
+                className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Diminuir espaçamento"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono text-muted-foreground w-10 text-center tabular-nums">
+                {Math.round((slotWidth / DEFAULT_SLOT_WIDTH) * 100)}%
+              </span>
+              <button
+                onClick={() => setSlotWidth(w => Math.min(MAX_SLOT_WIDTH, w + SLOT_WIDTH_STEP))}
+                disabled={slotWidth >= MAX_SLOT_WIDTH}
+                className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Aumentar espaçamento"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
@@ -251,7 +288,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                     <div
                       key={i}
                       className="absolute top-0 bottom-0 flex flex-col items-start"
-                      style={{ left: i * SLOT_WIDTH, width: SLOT_WIDTH }}
+                      style={{ left: i * slotWidth, width: slotWidth }}
                     >
                       <span
                         className={`text-[10px] font-mono px-1 pt-1 ${
@@ -297,7 +334,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                       style={{
                         left: left + 2,
                         top: 24 + stackIndex * 56,
-                        width: SLOT_WIDTH - 6,
+                        width: slotWidth - 6,
                       }}
                     >
                       <TaskCard
