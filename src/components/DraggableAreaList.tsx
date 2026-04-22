@@ -14,6 +14,7 @@ interface Props {
   onUpdateStatus: (areaId: string, taskId: string, status: TaskStatus) => void;
   onUpdateStyle: (areaId: string, taskId: string, style: Partial<TaskTextStyle>) => void;
   onUpdateText: (areaId: string, taskId: string, text: string) => void;
+  onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
   onDeleteTask: (areaId: string, taskId: string) => void;
   onDeleteArea: (areaId: string) => void;
   onAddComment: (areaId: string, taskId: string, text: string) => void;
@@ -22,7 +23,7 @@ interface Props {
 
 export function DraggableAreaList({
   areas, timezone, onReorder, onToggleCollapse, onAddTask, onUpdateStatus,
-  onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment
+  onUpdateStyle, onUpdateText, onUpdateTime, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment
 }: Props) {
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -108,6 +109,7 @@ export function DraggableAreaList({
                 onUpdateStatus={(taskId, s) => onUpdateStatus(area.id, taskId, s)}
                 onUpdateStyle={(taskId, s) => onUpdateStyle(area.id, taskId, s)}
                 onUpdateText={(taskId, t) => onUpdateText(area.id, taskId, t)}
+                onUpdateTime={(taskId, time, date) => onUpdateTime(area.id, taskId, time, date)}
                 onDeleteTask={taskId => onDeleteTask(area.id, taskId)}
                 onDeleteArea={!DEFAULT_AREA_IDS.includes(area.id) ? () => onDeleteArea(area.id) : undefined}
                 onAddComment={(taskId, text) => onAddComment(area.id, taskId, text)}

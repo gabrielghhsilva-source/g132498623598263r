@@ -27,9 +27,10 @@ interface Props {
   onDeleteArea?: () => void;
   onAddComment: (taskId: string, text: string) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
+  onUpdateTime?: (taskId: string, dueTime: string | undefined, dueDate?: string) => void;
 }
 
-export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
+export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment, onUpdateTime }: Props) {
   const [newTask, setNewTask] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
@@ -116,6 +117,7 @@ export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAdd
               onDelete={() => onDeleteTask(task.id)}
               onAddComment={text => onAddComment(task.id, text)}
               onDeleteComment={commentId => onDeleteComment(task.id, commentId)}
+              onTimeChange={onUpdateTime ? (time, date) => onUpdateTime(task.id, time, date) : undefined}
             />
           ))}
 

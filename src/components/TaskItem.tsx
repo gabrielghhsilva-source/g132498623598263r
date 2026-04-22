@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Task, TaskStatus, TaskTextStyle } from "@/lib/types";
-import { isTaskOverdue } from "@/lib/timeUtils";
-import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X } from "lucide-react";
+import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
+import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X, Clock3 } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
@@ -21,12 +21,14 @@ interface Props {
   onDelete: () => void;
   onAddComment: (text: string) => void;
   onDeleteComment: (commentId: string) => void;
+  onTimeChange?: (dueTime: string | undefined, dueDate?: string) => void;
 }
 
-export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment }: Props) {
+export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment, onTimeChange }: Props) {
   const [showStyle, setShowStyle] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showTime, setShowTime] = useState(false);
   const [newComment, setNewComment] = useState("");
   const statusCfg = STATUS_CONFIG[task.status];
   const isOverdue = isTaskOverdue(task.dueDate, task.dueTime, task.status, timezone);
@@ -35,6 +37,12 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
     if (!newComment.trim()) return;
     onAddComment(newComment.trim());
     setNewComment("");
+  };
+
+  const handleTimeChange = (time: string) => {
+    if (!onTimeChange) return;
+    const date = task.dueDate || getNowInTimezone(timezone).date;
+    onTimeChange(time || undefined, date);
   };
 
   return (
@@ -102,6 +110,11 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {onTimeChange && (
+            <button onClick={() => setShowTime(!showTime)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Definir horário">
+              <Clock3 className={`w-3.5 h-3.5 ${task.dueTime ? "text-primary" : "text-muted-foreground"}`} />
+            </button>
+          )}
           <button onClick={() => setShowComments(!showComments)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários">
             <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -113,6 +126,33 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
           </button>
         </div>
       </div>
+
+      {/* Time editor */}
+      {showTime && onTimeChange && (
+        <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-3 animate-fade-in">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock3 className="w-3 h-3" />
+            <span>Horário:</span>
+            <input
+              type="time"
+              value={task.dueTime || ""}
+              onChange={e => handleTimeChange(e.target.value)}
+              className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground"
+            />
+            {task.dueTime && (
+              <button
+                onClick={() => onTimeChange(undefined, task.dueDate)}
+                className="text-xs text-destructive hover:underline"
+              >
+                Remover
+              </button>
+            )}
+          </div>
+          {!task.dueDate && (
+            <span className="text-xs text-muted-foreground">Definir horário também marcará a data como hoje.</span>
+          )}
+        </div>
+      )}
 
       {/* Style editor */}
       {showStyle && (

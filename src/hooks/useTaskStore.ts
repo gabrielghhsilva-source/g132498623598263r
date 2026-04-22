@@ -200,6 +200,19 @@ export function useTaskStore() {
     ));
   }, []);
 
+  const updateTaskTime = useCallback((areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? {
+        ...a,
+        tasks: a.tasks.map(t => t.id === taskId ? {
+          ...t,
+          dueTime: dueTime || undefined,
+          dueDate: dueDate !== undefined ? (dueDate || undefined) : t.dueDate,
+        } : t)
+      } : a
+    ));
+  }, []);
+
   const deleteTask = useCallback((areaId: string, taskId: string) => {
     setAreas(prev => prev.map(a =>
       a.id === areaId ? { ...a, tasks: a.tasks.filter(t => t.id !== taskId) } : a
@@ -253,7 +266,9 @@ export function useTaskStore() {
   const now = getNowInTimezone(timezone);
   const todayStr = now.date;
   const todayTasks = areas.flatMap(a =>
-    a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+    a.tasks
+      .filter(t => t.status !== "done" && (t.dueDate === todayStr || !t.dueDate))
+      .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
   );
 
   const allTasksWithArea = areas.flatMap(a =>
@@ -264,7 +279,7 @@ export function useTaskStore() {
     areas, theme, setTheme, customColors, setCustomColors,
     timezone, setTimezone,
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
-    addTask, updateTaskStatus, updateTaskStyle, updateTaskText, deleteTask,
+    addTask, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, deleteTask,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
     stats, todayTasks, allTasksWithArea,
