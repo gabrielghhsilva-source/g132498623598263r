@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Task, TaskStatus, TaskTextStyle } from "@/lib/types";
-import { isTaskOverdue } from "@/lib/timeUtils";
-import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X } from "lucide-react";
+import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
+import { Check, Clock, Pause, Trash2, ChevronDown, Type, Bold, Paintbrush, MessageSquare, Send, X, Clock3 } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
@@ -21,12 +21,14 @@ interface Props {
   onDelete: () => void;
   onAddComment: (text: string) => void;
   onDeleteComment: (commentId: string) => void;
+  onTimeChange?: (dueTime: string | undefined, dueDate?: string) => void;
 }
 
-export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment }: Props) {
+export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onTextChange, onDelete, onAddComment, onDeleteComment, onTimeChange }: Props) {
   const [showStyle, setShowStyle] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showTime, setShowTime] = useState(false);
   const [newComment, setNewComment] = useState("");
   const statusCfg = STATUS_CONFIG[task.status];
   const isOverdue = isTaskOverdue(task.dueDate, task.dueTime, task.status, timezone);
@@ -35,6 +37,12 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
     if (!newComment.trim()) return;
     onAddComment(newComment.trim());
     setNewComment("");
+  };
+
+  const handleTimeChange = (time: string) => {
+    if (!onTimeChange) return;
+    const date = task.dueDate || getNowInTimezone(timezone).date;
+    onTimeChange(time || undefined, date);
   };
 
   return (
