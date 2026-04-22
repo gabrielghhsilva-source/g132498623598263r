@@ -110,6 +110,11 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {onTimeChange && (
+            <button onClick={() => setShowTime(!showTime)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Definir horário">
+              <Clock3 className={`w-3.5 h-3.5 ${task.dueTime ? "text-primary" : "text-muted-foreground"}`} />
+            </button>
+          )}
           <button onClick={() => setShowComments(!showComments)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários">
             <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -121,6 +126,33 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
           </button>
         </div>
       </div>
+
+      {/* Time editor */}
+      {showTime && onTimeChange && (
+        <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-3 animate-fade-in">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock3 className="w-3 h-3" />
+            <span>Horário:</span>
+            <input
+              type="time"
+              value={task.dueTime || ""}
+              onChange={e => handleTimeChange(e.target.value)}
+              className="bg-secondary rounded-md px-2 py-1 text-xs border-none outline-none text-foreground"
+            />
+            {task.dueTime && (
+              <button
+                onClick={() => onTimeChange(undefined, task.dueDate)}
+                className="text-xs text-destructive hover:underline"
+              >
+                Remover
+              </button>
+            )}
+          </div>
+          {!task.dueDate && (
+            <span className="text-xs text-muted-foreground">Definir horário também marcará a data como hoje.</span>
+          )}
+        </div>
+      )}
 
       {/* Style editor */}
       {showStyle && (
