@@ -1,4 +1,4 @@
-import { TaskArea, RecurrenceRule } from "@/lib/types";
+import { TaskArea, RecurrenceRule, TaskStatus, TaskTextStyle } from "@/lib/types";
 import { TaskItem } from "./TaskItem";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -27,6 +27,7 @@ interface Props {
   onDeleteArea?: () => void;
   onAddComment: (taskId: string, text: string) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
+  onUpdateTime?: (taskId: string, dueTime: string | undefined, dueDate?: string) => void;
 }
 
 export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAddTask, onUpdateStatus, onUpdateStyle, onUpdateText, onDeleteTask, onDeleteArea, onAddComment, onDeleteComment }: Props) {
@@ -116,6 +117,7 @@ export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAdd
               onDelete={() => onDeleteTask(task.id)}
               onAddComment={text => onAddComment(task.id, text)}
               onDeleteComment={commentId => onDeleteComment(task.id, commentId)}
+              onTimeChange={onUpdateTime ? (time, date) => onUpdateTime(task.id, time, date) : undefined}
             />
           ))}
 
