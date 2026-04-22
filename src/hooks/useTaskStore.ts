@@ -266,7 +266,9 @@ export function useTaskStore() {
   const now = getNowInTimezone(timezone);
   const todayStr = now.date;
   const todayTasks = areas.flatMap(a =>
-    a.tasks.filter(t => t.dueDate === todayStr && t.status !== "done").map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+    a.tasks
+      .filter(t => t.status !== "done" && (t.dueDate === todayStr || !t.dueDate))
+      .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
   );
 
   const allTasksWithArea = areas.flatMap(a =>
