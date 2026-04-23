@@ -68,10 +68,12 @@ const AppContent = () => {
   return (
     <>
       {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
+      {/* Base background color always present so theme decorations sit above it */}
+      <div className="fixed inset-0 -z-20 bg-background" />
       <BackgroundLayer settings={bgStore.settings} />
       <ThemeDecorations theme={store.theme} enabled={store.showThemeDecorations} />
 
-      <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"} ${bgStore.settings.mode !== "none" ? "" : "bg-background"}`}>
+      <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"}`}>
         <CardNavigation active={activeTab} onChange={setActiveTab} />
 
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
