@@ -14,6 +14,7 @@ import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
 import { NotificationPopup } from "@/components/NotificationPopup";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
+import { ThemeDecorations } from "@/components/ThemeDecorations";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
@@ -68,6 +69,7 @@ const AppContent = () => {
     <>
       {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
       <BackgroundLayer settings={bgStore.settings} />
+      <ThemeDecorations theme={store.theme} enabled={store.showThemeDecorations} />
 
       <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"} ${bgStore.settings.mode !== "none" ? "" : "bg-background"}`}>
         <CardNavigation active={activeTab} onChange={setActiveTab} />
@@ -95,6 +97,8 @@ const AppContent = () => {
               buttonTextColor={store.buttonTextColor}
               onButtonBgChange={store.setButtonBgColor}
               onButtonTextChange={store.setButtonTextColor}
+              showThemeDecorations={store.showThemeDecorations}
+              onShowThemeDecorationsChange={store.setShowThemeDecorations}
             />
           </div>
         </header>

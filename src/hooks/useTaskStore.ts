@@ -99,6 +99,7 @@ export function useTaskStore() {
   const [timezone, setTimezoneState] = useState<string>(() => loadPlain("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
   const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadPlain("task-button-bg", "#000000"));
   const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadPlain("task-button-text", "#ffffff"));
+  const [showThemeDecorations, setShowThemeDecorationsState] = useState<boolean>(() => loadPlain("task-theme-decorations", true));
 
   useEffect(() => {
     secureSet("task-areas", JSON.stringify(areas));
@@ -119,6 +120,7 @@ export function useTaskStore() {
   useEffect(() => { localStorage.setItem("task-timezone", JSON.stringify(timezone)); }, [timezone]);
   useEffect(() => { localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor)); }, [buttonBgColor]);
   useEffect(() => { localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor)); }, [buttonTextColor]);
+  useEffect(() => { localStorage.setItem("task-theme-decorations", JSON.stringify(showThemeDecorations)); }, [showThemeDecorations]);
 
   // Recurring task generation
   useEffect(() => {
@@ -173,6 +175,7 @@ export function useTaskStore() {
   const setTimezone = useCallback((tz: string) => setTimezoneState(tz), []);
   const setButtonBgColor = useCallback((c: string) => setButtonBgColorState(c), []);
   const setButtonTextColor = useCallback((c: string) => setButtonTextColorState(c), []);
+  const setShowThemeDecorations = useCallback((v: boolean) => setShowThemeDecorationsState(v), []);
 
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task: Task = {
@@ -279,6 +282,7 @@ export function useTaskStore() {
     areas, theme, setTheme, customColors, setCustomColors,
     timezone, setTimezone,
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
+    showThemeDecorations, setShowThemeDecorations,
     addTask, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, deleteTask,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,

@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
@@ -23,6 +23,8 @@ interface Props {
   buttonTextColor: string;
   onButtonBgChange: (c: string) => void;
   onButtonTextChange: (c: string) => void;
+  showThemeDecorations: boolean;
+  onShowThemeDecorationsChange: (v: boolean) => void;
 }
 
 type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
@@ -33,6 +35,7 @@ export function SettingsMenu({
   notificationSettings, onNotificationUpdate, onToggleAdvanceTime, onTestSound,
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
+  showThemeDecorations, onShowThemeDecorationsChange,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -75,6 +78,18 @@ export function SettingsMenu({
               <BackButton onClick={() => setPath("root")} label="Temas" />
               <MenuItem icon={Palette} label="Cores" onClick={() => setPath("themes-colors")} hasSubmenu />
               <MenuItem icon={ImageIcon} label="Background" onClick={() => setPath("themes-bg")} hasSubmenu />
+              <button
+                onClick={() => onShowThemeDecorationsChange(!showThemeDecorations)}
+                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm hover:bg-accent transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                  <span>Elementos do tema</span>
+                </div>
+                <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${showThemeDecorations ? "bg-primary" : "bg-muted"}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow transition-transform ${showThemeDecorations ? "translate-x-4" : "translate-x-0.5"}`} />
+                </span>
+              </button>
             </div>
           )}
           {path === "themes-colors" && (
