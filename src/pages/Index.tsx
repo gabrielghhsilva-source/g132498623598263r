@@ -14,6 +14,7 @@ import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
 import { NotificationPopup } from "@/components/NotificationPopup";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
+import { ThemeDecorations } from "@/components/ThemeDecorations";
 import { CardNavigation } from "@/components/CardNavigation";
 import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
