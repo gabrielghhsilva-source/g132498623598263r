@@ -99,6 +99,7 @@ export function useTaskStore() {
   const [timezone, setTimezoneState] = useState<string>(() => loadPlain("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
   const [buttonBgColor, setButtonBgColorState] = useState<string>(() => loadPlain("task-button-bg", "#000000"));
   const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadPlain("task-button-text", "#ffffff"));
+  const [showThemeDecorations, setShowThemeDecorationsState] = useState<boolean>(() => loadPlain("task-theme-decorations", true));
 
   useEffect(() => {
     secureSet("task-areas", JSON.stringify(areas));
