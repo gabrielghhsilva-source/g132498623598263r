@@ -120,6 +120,7 @@ export function useTaskStore() {
   useEffect(() => { localStorage.setItem("task-timezone", JSON.stringify(timezone)); }, [timezone]);
   useEffect(() => { localStorage.setItem("task-button-bg", JSON.stringify(buttonBgColor)); }, [buttonBgColor]);
   useEffect(() => { localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor)); }, [buttonTextColor]);
+  useEffect(() => { localStorage.setItem("task-theme-decorations", JSON.stringify(showThemeDecorations)); }, [showThemeDecorations]);
 
   // Recurring task generation
   useEffect(() => {
