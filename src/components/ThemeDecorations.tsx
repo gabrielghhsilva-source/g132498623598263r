@@ -1,6 +1,5 @@
 import { ThemeId } from "@/lib/types";
 import cthulhuImg from "@/assets/abyssal-cthulhu.jpg";
-import seaweedImg from "@/assets/abyssal-seaweed.png";
 
 interface Props {
   theme: ThemeId;
@@ -9,84 +8,41 @@ interface Props {
 
 /**
  * Decorative theme-specific elements rendered behind content.
- * For "cyan" (Abissal): glowing Cthulhu fused into background + bubbles
- * + scattered seaweed strands evoking deep-sea ruins.
+ * For "cyan" (Abissal): faint Cthulhu silhouette + bubbles + anchors at bottom.
+ * Seaweed border decorations are injected via a global CSS class on cards (handled in index.css).
  */
 export function ThemeDecorations({ theme, enabled }: Props) {
   if (!enabled) return null;
-  if (theme === "cyan") return <AbyssalDecorations />;
+
+  if (theme === "cyan") {
+    return <AbyssalDecorations />;
+  }
+
   return null;
 }
 
-// Pre-scattered seaweed positions — evokes drifting deep-sea flora
-const SEAWEED_PIECES = [
-  { top: "8%",  left: "-3%",  size: 220, rot: -15, opacity: 0.55, delay: 0,   dur: 9,  flip: false },
-  { top: "18%", right: "-4%", size: 280, rot: 25,  opacity: 0.6,  delay: 1.5, dur: 11, flip: true  },
-  { top: "42%", left: "8%",   size: 180, rot: 35,  opacity: 0.45, delay: 3,   dur: 10, flip: false },
-  { top: "55%", right: "12%", size: 240, rot: -20, opacity: 0.55, delay: 0.8, dur: 12, flip: true  },
-  { top: "72%", left: "20%",  size: 260, rot: 10,  opacity: 0.5,  delay: 2.2, dur: 10, flip: false },
-  { top: "85%", right: "6%",  size: 300, rot: -10, opacity: 0.6,  delay: 1,   dur: 13, flip: true  },
-  { top: "30%", left: "45%",  size: 160, rot: 60,  opacity: 0.35, delay: 4,   dur: 11, flip: false },
-  { top: "65%", left: "55%",  size: 200, rot: -30, opacity: 0.4,  delay: 2.8, dur: 9,  flip: true  },
-];
-
 function AbyssalDecorations() {
-  // Bubbles — generated once with stable pseudo-random props
-  const bubbles = Array.from({ length: 22 }, (_, i) => ({
+  // Bubbles — generated once with stable random props
+  const bubbles = Array.from({ length: 18 }, (_, i) => ({
     id: i,
-    left: (i * 47) % 100,
-    size: 5 + ((i * 7) % 20),
-    delay: (i * 1.1) % 14,
-    duration: 14 + ((i * 3) % 14),
-    opacity: 0.18 + ((i * 0.07) % 0.3),
+    left: (i * 53) % 100,
+    size: 6 + ((i * 7) % 18),
+    delay: (i * 1.3) % 12,
+    duration: 14 + ((i * 3) % 12),
+    opacity: 0.15 + ((i * 0.07) % 0.25),
   }));
 
   return (
     <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden">
-      {/* Outer cyan glow halo behind Cthulhu — extends the aura */}
+      {/* Cthulhu silhouette — centered, very faint */}
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(120vw,1400px)] h-[min(120vh,1400px)] rounded-full"
-        style={{
-          background: "radial-gradient(circle, hsl(180 90% 45% / 0.18) 0%, hsl(180 90% 40% / 0.08) 30%, transparent 65%)",
-          filter: "blur(40px)",
-        }}
-      />
-
-      {/* Cthulhu — large, fused with background via screen blend */}
-      <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(110vw,1200px)] h-[min(110vh,1200px)] bg-no-repeat bg-center bg-contain animate-cthulhu-pulse"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,900px)] h-[min(90vh,900px)] bg-no-repeat bg-center bg-contain animate-cthulhu-pulse mix-blend-screen"
         style={{
           backgroundImage: `url(${cthulhuImg})`,
-          mixBlendMode: "screen",
-          opacity: 0.85,
+          opacity: 0.18,
+          filter: "blur(0.5px)",
         }}
       />
-
-      {/* Scattered seaweed — drifting in the current */}
-      {SEAWEED_PIECES.map((sw, i) => (
-        <img
-          key={i}
-          src={seaweedImg}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          className="absolute animate-seaweed-drift"
-          style={{
-            top: sw.top,
-            left: (sw as any).left,
-            right: (sw as any).right,
-            width: `${sw.size}px`,
-            height: "auto",
-            opacity: sw.opacity,
-            transform: `rotate(${sw.rot}deg)${sw.flip ? " scaleX(-1)" : ""}`,
-            transformOrigin: "center",
-            animationDelay: `${sw.delay}s`,
-            animationDuration: `${sw.dur}s`,
-            filter: "hue-rotate(140deg) saturate(0.7) brightness(0.55) drop-shadow(0 0 12px hsl(180 80% 40% / 0.4))",
-            mixBlendMode: "screen",
-          }}
-        />
-      ))}
 
       {/* Rising bubbles */}
       {bubbles.map(b => (
@@ -107,13 +63,45 @@ function AbyssalDecorations() {
         />
       ))}
 
-      {/* Subtle dark vignette to deepen the abyss feel */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "radial-gradient(ellipse at center, transparent 40%, hsl(195 50% 4% / 0.6) 100%)",
-        }}
-      />
+      {/* Anchors row at the very bottom */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-around items-end px-8 opacity-[0.18]">
+        <AnchorSvg className="w-10 h-10 text-primary" />
+        <AnchorSvg className="w-14 h-14 text-primary -translate-y-2" />
+        <AnchorSvg className="w-8 h-8 text-primary" />
+        <AnchorSvg className="w-12 h-12 text-primary -translate-y-1" />
+        <AnchorSvg className="w-9 h-9 text-primary" />
+        <AnchorSvg className="w-14 h-14 text-primary -translate-y-3" />
+        <AnchorSvg className="w-10 h-10 text-primary" />
+      </div>
+
+      {/* Seaweed strands at the bottom edges */}
+      <SeaweedSvg className="absolute bottom-0 left-2 w-24 h-48 opacity-[0.22] animate-seaweed-sway origin-bottom" />
+      <SeaweedSvg className="absolute bottom-0 left-32 w-20 h-40 opacity-[0.18] animate-seaweed-sway-alt origin-bottom" />
+      <SeaweedSvg className="absolute bottom-0 right-4 w-28 h-52 opacity-[0.22] animate-seaweed-sway origin-bottom scale-x-[-1]" />
+      <SeaweedSvg className="absolute bottom-0 right-36 w-20 h-40 opacity-[0.18] animate-seaweed-sway-alt origin-bottom scale-x-[-1]" />
     </div>
+  );
+}
+
+function AnchorSvg({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="32" cy="10" r="4" />
+      <line x1="32" y1="14" x2="32" y2="54" />
+      <line x1="24" y1="22" x2="40" y2="22" />
+      <path d="M14 40 Q14 54 32 54 Q50 54 50 40" />
+      <line x1="10" y1="40" x2="18" y2="40" />
+      <line x1="46" y1="40" x2="54" y2="40" />
+    </svg>
+  );
+}
+
+function SeaweedSvg({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 200" fill="none" stroke="hsl(160 70% 45%)" strokeWidth="3" strokeLinecap="round" className={className}>
+      <path d="M50 200 Q40 160 55 130 Q70 100 45 70 Q25 45 50 10" />
+      <path d="M40 200 Q30 170 45 145 Q60 115 35 85 Q20 60 40 25" opacity="0.7" />
+      <path d="M60 200 Q70 165 55 140 Q40 110 65 80 Q80 55 60 20" opacity="0.6" />
+    </svg>
   );
 }

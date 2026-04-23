@@ -245,14 +245,19 @@
   100% { transform: translateY(-105vh) translateX(-8px); opacity: 0; }
 }
 
-@keyframes seaweed-drift {
-  0%, 100% { filter: hue-rotate(140deg) saturate(0.7) brightness(0.55) drop-shadow(0 0 12px hsl(180 80% 40% / 0.4)); }
-  50%      { filter: hue-rotate(150deg) saturate(0.8) brightness(0.65) drop-shadow(0 0 18px hsl(180 90% 50% / 0.55)); }
+@keyframes seaweed-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(4deg); }
+}
+
+@keyframes seaweed-sway-alt {
+  0%, 100% { transform: rotate(3deg); }
+  50%      { transform: rotate(-4deg); }
 }
 
 @keyframes cthulhu-pulse {
-  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-  50%      { opacity: 0.95; transform: translate(-50%, -50%) scale(1.03); }
+  0%, 100% { opacity: 0.14; }
+  50%      { opacity: 0.22; }
 }
 
 .animate-bubble-rise {
@@ -261,12 +266,14 @@
   animation-iteration-count: infinite;
 }
 
-.animate-seaweed-drift {
-  animation-name: seaweed-drift;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+.animate-seaweed-sway {
+  animation: seaweed-sway 6s ease-in-out infinite;
+}
+
+.animate-seaweed-sway-alt {
+  animation: seaweed-sway-alt 7s ease-in-out infinite;
 }
 
 .animate-cthulhu-pulse {
-  animation: cthulhu-pulse 10s ease-in-out infinite;
+  animation: cthulhu-pulse 8s ease-in-out infinite;
 }
