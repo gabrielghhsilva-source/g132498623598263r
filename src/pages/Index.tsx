@@ -69,6 +69,7 @@ const AppContent = () => {
     <>
       {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
       <BackgroundLayer settings={bgStore.settings} />
+      <ThemeDecorations theme={store.theme} enabled={store.showThemeDecorations} />
 
       <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"} ${bgStore.settings.mode !== "none" ? "" : "bg-background"}`}>
         <CardNavigation active={activeTab} onChange={setActiveTab} />
