@@ -2,12 +2,12 @@ import { ThemeId, ThemeOption, CustomThemeColors } from "@/lib/types";
 import { useState } from "react";
 
 const THEMES: ThemeOption[] = [
-  { id: "mono-light", name: "Claro", preview: "#f7f7f7" },
-  { id: "mono-dark", name: "Escuro", preview: "#1a1a1a" },
-  { id: "beige", name: "Bege", preview: "#e8dcc8" },
-  { id: "cyan", name: "Ciano", preview: "#0ea5c7" },
-  { id: "lavender", name: "Lavanda", preview: "#8b5cf6" },
-  { id: "rose", name: "Rosa", preview: "#e11d63" },
+  { id: "mono-light", name: "Claro", preview: "#fafafa" },
+  { id: "mono-dark", name: "Escuro", preview: "#0a0a0a" },
+  { id: "beige", name: "Sépia", preview: "#b85a2e" },
+  { id: "cyan", name: "Abissal", preview: "#0d2a33" },
+  { id: "lavender", name: "Galáctico", preview: "#a855f7" },
+  { id: "rose", name: "Coral", preview: "#e11d63" },
   { id: "custom", name: "Personalizado", preview: "linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1)" },
 ];
 
