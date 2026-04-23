@@ -35,6 +35,7 @@ export function SettingsMenu({
   notificationSettings, onNotificationUpdate, onToggleAdvanceTime, onTestSound,
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
+  showThemeDecorations, onShowThemeDecorationsChange,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
   const ref = useRef<HTMLDivElement>(null);
