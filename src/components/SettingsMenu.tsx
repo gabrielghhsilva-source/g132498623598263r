@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
@@ -23,6 +23,8 @@ interface Props {
   buttonTextColor: string;
   onButtonBgChange: (c: string) => void;
   onButtonTextChange: (c: string) => void;
+  showThemeDecorations: boolean;
+  onShowThemeDecorationsChange: (v: boolean) => void;
 }
 
 type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
