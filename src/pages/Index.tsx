@@ -95,6 +95,8 @@ const AppContent = () => {
               buttonTextColor={store.buttonTextColor}
               onButtonBgChange={store.setButtonBgColor}
               onButtonTextChange={store.setButtonTextColor}
+              showThemeDecorations={store.showThemeDecorations}
+              onShowThemeDecorationsChange={store.setShowThemeDecorations}
             />
           </div>
         </header>
