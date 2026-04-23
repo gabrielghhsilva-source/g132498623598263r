@@ -34,17 +34,13 @@ function AbyssalDecorations() {
 
   return (
     <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden">
-      {/* Cthulhu silhouette — fades into the background via radial mask + lighten blend */}
+      {/* Cthulhu silhouette — centered, very faint */}
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(95vw,1000px)] h-[min(95vh,1000px)] bg-no-repeat bg-center bg-contain animate-cthulhu-pulse mix-blend-lighten"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,900px)] h-[min(90vh,900px)] bg-no-repeat bg-center bg-contain animate-cthulhu-pulse mix-blend-screen"
         style={{
           backgroundImage: `url(${cthulhuImg})`,
-          opacity: 0.22,
-          filter: "blur(2px) contrast(1.1)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at center, black 30%, rgba(0,0,0,0.6) 55%, transparent 78%)",
-          maskImage:
-            "radial-gradient(ellipse at center, black 30%, rgba(0,0,0,0.6) 55%, transparent 78%)",
+          opacity: 0.18,
+          filter: "blur(0.5px)",
         }}
       />
 
