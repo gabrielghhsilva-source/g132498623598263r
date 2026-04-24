@@ -2,6 +2,9 @@ import { ThemeId } from "@/lib/types";
 import cthulhuImg from "@/assets/abyssal-cthulhu.jpg";
 import seaweed1 from "@/assets/seaweed-1.png";
 import seaweed2 from "@/assets/seaweed-2.png";
+import galacticVideo from "@/assets/galactic-bg.mp4";
+import planetPurple from "@/assets/planet-purple.png";
+import moonLavender from "@/assets/moon-lavender.png";
 
 interface Props {
   theme: ThemeId;
@@ -10,12 +13,13 @@ interface Props {
 
 /**
  * Decorative theme-specific elements rendered behind content.
- * Abissal (cyan): full-bleed Cthulhu background image + realistic seaweed
- * tucked into the page corners (top-right, bottom-left, bottom-right).
+ * - Abissal (cyan): Cthulhu background + realistic seaweed at the bottom.
+ * - Galáctico (lavender): full-bleed black hole video + floating planets.
  */
 export function ThemeDecorations({ theme, enabled }: Props) {
   if (!enabled) return null;
   if (theme === "cyan") return <AbyssalDecorations />;
+  if (theme === "lavender") return <GalacticDecorations />;
   return null;
 }
 
@@ -78,6 +82,69 @@ function AbyssalDecorations() {
           style={{
             filter: "drop-shadow(0 0 18px hsl(170 90% 30% / 0.45)) brightness(0.85) saturate(1.1)",
             opacity: 0.9,
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+function GalacticDecorations() {
+  return (
+    <>
+      {/* Full-bleed black hole video. We use object-cover + a slight scale
+          so the singularity doesn't dominate the screen and the starfield
+          fills every edge — even on ultra-wide viewports. */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="fixed inset-0 -z-10 w-full h-full object-cover scale-[1.35]"
+        style={{ transformOrigin: "center" }}
+        aria-hidden
+      >
+        <source src={galacticVideo} type="video/mp4" />
+      </video>
+
+      {/* Subtle vignette so UI text stays readable over the bright core */}
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, hsl(270 40% 4% / 0) 30%, hsl(270 40% 4% / 0.55) 100%)",
+        }}
+        aria-hidden
+      />
+
+      {/* Floating planets/moons */}
+      <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden" aria-hidden>
+        {/* Top-right ringed purple planet */}
+        <img
+          src={planetPurple}
+          alt=""
+          loading="lazy"
+          width={512}
+          height={512}
+          className="absolute top-16 -right-10 w-44 h-auto animate-planet-float"
+          style={{
+            filter: "drop-shadow(0 0 24px hsl(280 90% 60% / 0.55))",
+            opacity: 0.92,
+          }}
+        />
+
+        {/* Bottom-left lavender moon — smaller, slower */}
+        <img
+          src={moonLavender}
+          alt=""
+          loading="lazy"
+          width={512}
+          height={512}
+          className="absolute bottom-24 -left-8 w-32 h-auto animate-planet-float-alt"
+          style={{
+            filter: "drop-shadow(0 0 20px hsl(250 80% 70% / 0.5))",
+            opacity: 0.88,
           }}
         />
       </div>
