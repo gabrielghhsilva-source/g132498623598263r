@@ -255,6 +255,16 @@
   50%      { transform: rotate(-4deg); }
 }
 
+@keyframes seaweed-sway-soft {
+  0%, 100% { transform: rotate(-1deg); }
+  50%      { transform: rotate(1.2deg); }
+}
+
+@keyframes seaweed-sway-soft-alt {
+  0%, 100% { transform: rotate(1deg); }
+  50%      { transform: rotate(-1.2deg); }
+}
+
 @keyframes cthulhu-pulse {
   0%, 100% { opacity: 0.14; }
   50%      { opacity: 0.22; }
@@ -272,6 +282,14 @@
 
 .animate-seaweed-sway-alt {
   animation: seaweed-sway-alt 7s ease-in-out infinite;
+}
+
+.animate-seaweed-sway-soft {
+  animation: seaweed-sway-soft 9s ease-in-out infinite;
+}
+
+.animate-seaweed-sway-soft-alt {
+  animation: seaweed-sway-soft-alt 11s ease-in-out infinite;
 }
 
 .animate-cthulhu-pulse {

@@ -37,44 +37,44 @@ function AbyssalDecorations() {
         aria-hidden
       />
 
-      {/* Realistic seaweed in page corners */}
+      {/* Realistic seaweed anchored to the bottom of the screen */}
       <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden" aria-hidden>
-        {/* Top-right — tall vertical kelp, hanging from above */}
+        {/* Bottom-left — tall kelp strand rooted at floor */}
         <img
           src={seaweed1}
           alt=""
           loading="lazy"
           width={1024}
           height={1024}
-          className="absolute -top-16 -right-12 w-64 h-auto rotate-180 origin-top-right animate-seaweed-sway"
+          className="absolute -bottom-8 -left-10 w-56 h-auto origin-bottom animate-seaweed-sway-soft"
           style={{
             filter: "drop-shadow(0 0 18px hsl(170 90% 30% / 0.45)) brightness(0.85) saturate(1.1)",
             opacity: 0.9,
           }}
         />
 
-        {/* Bottom-left — bushy cluster rising from the floor */}
+        {/* Bottom-center-left — bushy cluster */}
         <img
           src={seaweed2}
           alt=""
           loading="lazy"
           width={1024}
           height={1024}
-          className="absolute -bottom-10 -left-16 w-80 h-auto origin-bottom-left animate-seaweed-sway-alt"
+          className="absolute -bottom-12 left-1/4 w-72 h-auto origin-bottom animate-seaweed-sway-soft-alt"
           style={{
             filter: "drop-shadow(0 0 20px hsl(170 90% 30% / 0.5)) brightness(0.85) saturate(1.15)",
-            opacity: 0.92,
+            opacity: 0.85,
           }}
         />
 
-        {/* Bottom-right — tall kelp strand */}
+        {/* Bottom-right — tall kelp strand mirrored */}
         <img
           src={seaweed1}
           alt=""
           loading="lazy"
           width={1024}
           height={1024}
-          className="absolute -bottom-12 -right-10 w-72 h-auto origin-bottom-right animate-seaweed-sway scale-x-[-1]"
+          className="absolute -bottom-8 -right-10 w-60 h-auto origin-bottom animate-seaweed-sway-soft scale-x-[-1]"
           style={{
             filter: "drop-shadow(0 0 18px hsl(170 90% 30% / 0.45)) brightness(0.85) saturate(1.1)",
             opacity: 0.9,
