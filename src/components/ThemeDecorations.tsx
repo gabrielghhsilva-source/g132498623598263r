@@ -5,6 +5,8 @@ import seaweed2 from "@/assets/seaweed-2.png";
 import galacticVideo from "@/assets/galactic-bg.mp4";
 import planetPurple from "@/assets/planet-purple.png";
 import moonLavender from "@/assets/moon-lavender.png";
+import sepiaMap from "@/assets/sepia-map.jpg";
+import sepiaCompass from "@/assets/sepia-compass.png";
 
 interface Props {
   theme: ThemeId;
@@ -15,11 +17,13 @@ interface Props {
  * Decorative theme-specific elements rendered behind content.
  * - Abissal (cyan): Cthulhu background + realistic seaweed at the bottom.
  * - Galáctico (lavender): full-bleed black hole video + floating planets.
+ * - Sépia (beige): aged explorer map + slowly rotating compass rose.
  */
 export function ThemeDecorations({ theme, enabled }: Props) {
   if (!enabled) return null;
   if (theme === "cyan") return <AbyssalDecorations />;
   if (theme === "lavender") return <GalacticDecorations />;
+  if (theme === "beige") return <SepiaDecorations />;
   return null;
 }
 
