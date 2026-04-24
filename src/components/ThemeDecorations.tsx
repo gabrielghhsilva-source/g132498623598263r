@@ -155,3 +155,43 @@ function GalacticDecorations() {
     </>
   );
 }
+
+function SepiaDecorations() {
+  return (
+    <>
+      {/* Full-bleed aged map background */}
+      <div
+        className="fixed inset-0 -z-10 bg-no-repeat bg-center bg-cover"
+        style={{ backgroundImage: `url(${sepiaMap})` }}
+        aria-hidden
+      />
+
+      {/* Warm sepia overlay so cards/text stay readable on the busy map */}
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(36 40% 88% / 0.55) 0%, hsl(36 40% 88% / 0.35) 50%, hsl(28 35% 78% / 0.55) 100%)",
+        }}
+        aria-hidden
+      />
+
+      {/* Translucent compass rose slowly rotating in a corner */}
+      <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden" aria-hidden>
+        <img
+          src={sepiaCompass}
+          alt=""
+          loading="lazy"
+          width={1024}
+          height={1024}
+          className="absolute -bottom-16 -right-16 w-80 h-auto animate-compass-spin"
+          style={{
+            opacity: 0.18,
+            filter: "sepia(0.6) saturate(1.2) brightness(0.85)",
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
