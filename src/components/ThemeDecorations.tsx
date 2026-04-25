@@ -7,6 +7,9 @@ import planetPurple from "@/assets/planet-purple.png";
 import moonLavender from "@/assets/moon-lavender.png";
 import sepiaMap from "@/assets/sepia-map.jpg";
 import sepiaCompass from "@/assets/sepia-compass.png";
+import coralReefBg from "@/assets/coral-reef-bg.jpg";
+import coralPetal1 from "@/assets/coral-petal-1.png";
+import coralPetal2 from "@/assets/coral-petal-2.png";
 
 interface Props {
   theme: ThemeId;
@@ -18,12 +21,14 @@ interface Props {
  * - Abissal (cyan): Cthulhu background + realistic seaweed at the bottom.
  * - Galáctico (lavender): full-bleed black hole video + floating planets.
  * - Sépia (beige): aged explorer map + slowly rotating compass rose.
+ * - Coral (rose): tropical reef sunset + falling hibiscus petals + warm glow.
  */
 export function ThemeDecorations({ theme, enabled }: Props) {
   if (!enabled) return null;
   if (theme === "cyan") return <AbyssalDecorations />;
   if (theme === "lavender") return <GalacticDecorations />;
   if (theme === "beige") return <SepiaDecorations />;
+  if (theme === "rose") return <CoralDecorations />;
   return null;
 }
 
