@@ -73,25 +73,25 @@ export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAdd
       <div className="flex items-center">
         <button
           onClick={onToggleCollapse}
-          className="flex-1 flex items-center justify-between px-5 py-4 hover:bg-accent/30 transition-colors"
+          className="flex-1 flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 hover:bg-accent/30 transition-colors min-w-0"
         >
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{area.icon}</span>
-            <h2 className="text-lg font-semibold">{area.name}</h2>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="text-xl flex-shrink-0">{area.icon}</span>
+            <h2 className="text-base sm:text-lg font-semibold truncate">{area.name}</h2>
             {totalCount > 0 && (
-              <span className="text-xs bg-secondary px-2 py-0.5 rounded-full text-muted-foreground font-medium">
+              <span className="text-xs bg-secondary px-2 py-0.5 rounded-full text-muted-foreground font-medium flex-shrink-0">
                 {doneCount}/{totalCount}
               </span>
             )}
           </div>
           {area.collapsed ? (
-            <ChevronRight className="w-5 h-5 text-muted-foreground transition-transform" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground transition-transform flex-shrink-0" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform flex-shrink-0" />
           )}
         </button>
         {isCustom && onDeleteArea && (
-          <button onClick={onDeleteArea} className="px-3 py-2 mr-2 rounded-md hover:bg-destructive/10 transition-colors" title="Excluir área">
+          <button onClick={onDeleteArea} className="px-3 py-2 mr-1 sm:mr-2 rounded-md hover:bg-destructive/10 transition-colors flex-shrink-0" title="Excluir área" aria-label="Excluir área">
             <Trash2 className="w-4 h-4 text-destructive" />
           </button>
         )}
@@ -99,7 +99,7 @@ export function TaskAreaCard({ area, timezone, isCustom, onToggleCollapse, onAdd
 
       {/* Content */}
       {!area.collapsed && (
-        <div className="px-5 pb-4 space-y-2 animate-fade-in">
+        <div className="px-3 sm:px-5 pb-4 space-y-2 animate-fade-in">
           {area.tasks.length === 0 && !showAdd && (
             <p className="text-sm text-muted-foreground py-3 text-center">
               Nenhuma tarefa ainda
