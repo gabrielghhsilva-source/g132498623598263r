@@ -186,10 +186,10 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
         </div>
       )}
 
-      {/* Open state: bottom panel with resize handle and tab on top */}
+      {/* Open state: bottom panel with resize handle and tab on top — hidden on mobile */}
       {open && (
         <div
-          className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-40 flex flex-col"
+          className="hidden md:flex fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-40 flex-col"
           style={{ height: panelHeight }}
         >
           {/* Resize handle on top edge */}
