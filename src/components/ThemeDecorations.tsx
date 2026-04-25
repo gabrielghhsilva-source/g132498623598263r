@@ -202,15 +202,23 @@ function SepiaDecorations() {
 
 function CoralDecorations() {
   // Distribute petals across the screen with varied delays/durations/sizes
-  // so the falling effect looks organic instead of mechanical.
+  // so the falling effect looks organic instead of mechanical. Single petals
+  // (not full flowers) feel lighter and more atmospheric, like a real breeze.
   const petals = [
-    { src: coralPetal1, left: "8%",  size: 56, delay: "0s",   dur: "20s", alt: false },
-    { src: coralPetal2, left: "22%", size: 44, delay: "6s",   dur: "24s", alt: true  },
-    { src: coralPetal1, left: "38%", size: 36, delay: "12s",  dur: "18s", alt: false },
-    { src: coralPetal2, left: "52%", size: 60, delay: "3s",   dur: "26s", alt: true  },
-    { src: coralPetal1, left: "68%", size: 40, delay: "9s",   dur: "21s", alt: false },
-    { src: coralPetal2, left: "82%", size: 50, delay: "15s",  dur: "23s", alt: true  },
-    { src: coralPetal1, left: "92%", size: 32, delay: "2s",   dur: "19s", alt: false },
+    { src: coralPetal1, left: "4%",  size: 32, delay: "0s",   dur: "22s", alt: false },
+    { src: coralPetal2, left: "11%", size: 24, delay: "8s",   dur: "26s", alt: true  },
+    { src: coralPetal1, left: "18%", size: 38, delay: "14s",  dur: "20s", alt: false },
+    { src: coralPetal2, left: "26%", size: 28, delay: "4s",   dur: "24s", alt: true  },
+    { src: coralPetal1, left: "33%", size: 22, delay: "11s",  dur: "19s", alt: false },
+    { src: coralPetal2, left: "41%", size: 36, delay: "17s",  dur: "27s", alt: true  },
+    { src: coralPetal1, left: "48%", size: 26, delay: "2s",   dur: "21s", alt: false },
+    { src: coralPetal2, left: "56%", size: 34, delay: "9s",   dur: "25s", alt: true  },
+    { src: coralPetal1, left: "63%", size: 28, delay: "15s",  dur: "23s", alt: false },
+    { src: coralPetal2, left: "71%", size: 40, delay: "5s",   dur: "28s", alt: true  },
+    { src: coralPetal1, left: "78%", size: 24, delay: "12s",  dur: "20s", alt: false },
+    { src: coralPetal2, left: "85%", size: 32, delay: "19s",  dur: "26s", alt: true  },
+    { src: coralPetal1, left: "92%", size: 28, delay: "7s",   dur: "22s", alt: false },
+    { src: coralPetal2, left: "97%", size: 22, delay: "13s",  dur: "24s", alt: true  },
   ];
 
   return (
