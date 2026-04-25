@@ -155,27 +155,27 @@ function InvestmentAreaCard({
   return (
     <div className="glass-card rounded-xl overflow-hidden animate-fade-in" style={{ borderLeft: `3px solid ${area.color}` }}>
       <div className="flex items-center">
-        <button onClick={() => setCollapsed(!collapsed)} className="flex-1 flex items-center justify-between px-5 py-4 hover:bg-accent/30 transition-colors">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{area.logoEmoji}</span>
-            <h3 className="text-lg font-semibold">{area.name}</h3>
-            <span className="text-xs bg-secondary px-2 py-0.5 rounded-full text-muted-foreground">{area.investments.length} inv.</span>
+        <button onClick={() => setCollapsed(!collapsed)} className="flex-1 flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 hover:bg-accent/30 transition-colors min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <span className="text-xl flex-shrink-0">{area.logoEmoji}</span>
+            <h3 className="text-base sm:text-lg font-semibold truncate">{area.name}</h3>
+            <span className="hidden sm:inline text-xs bg-secondary px-2 py-0.5 rounded-full text-muted-foreground flex-shrink-0">{area.investments.length} inv.</span>
             {(area.debts?.length || 0) > 0 && (
-              <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">{area.debts.length} dív.</span>
+              <span className="hidden sm:inline text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full flex-shrink-0">{area.debts.length} dív.</span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold" style={{ color: area.color }}>{formatCurrency(totals.totalCurrent)}</span>
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <span className="text-xs sm:text-sm font-bold whitespace-nowrap" style={{ color: area.color }}>{formatCurrency(totals.totalCurrent)}</span>
             {collapsed ? <ChevronRight className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
           </div>
         </button>
-        <button onClick={onDeleteArea} className="px-3 py-2 mr-2 rounded-md hover:bg-destructive/10 transition-colors">
+        <button onClick={onDeleteArea} className="px-3 py-2 mr-1 sm:mr-2 rounded-md hover:bg-destructive/10 transition-colors flex-shrink-0" aria-label="Excluir área">
           <Trash2 className="w-4 h-4 text-destructive" />
         </button>
       </div>
 
       {!collapsed && (
-        <div className="px-5 pb-5 space-y-4 animate-fade-in">
+        <div className="px-3 sm:px-5 pb-5 space-y-4 animate-fade-in">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <StatBlock label="Investido" value={formatCurrency(totals.totalInvested)} color="text-muted-foreground" />
             <StatBlock label="Valor Atual" value={formatCurrency(totals.totalCurrent)} color="text-foreground" />
