@@ -43,14 +43,14 @@ export function InvestmentDashboard({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Grand total card */}
-      <div className="glass-card rounded-xl p-5">
-        <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+      <div className="glass-card rounded-xl p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-success" />
           Patrimônio Total
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
           <StatBlock label="Valor Atual" value={formatCurrency(grandTotals.totalCurrent)} color="text-foreground" />
           <StatBlock label="Lucro" value={formatCurrency(grandTotals.totalProfit)} color={grandTotals.totalProfit >= 0 ? "text-success" : "text-destructive"} />
@@ -59,7 +59,7 @@ export function InvestmentDashboard({
         {/* Global simulation */}
         <div className="mt-4 pt-3 border-t border-border">
           <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
-            <BarChart3 className="w-4 h-4 text-primary" /> Simulação Global (todos investimentos + dívidas)
+            <BarChart3 className="w-4 h-4 text-primary" /> <span className="truncate">Simulação Global</span>
           </h4>
           <div className="flex items-center gap-2 flex-wrap">
             <input type="date" value={globalSimDate} onChange={e => setGlobalSimDate(e.target.value)}
