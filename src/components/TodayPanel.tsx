@@ -177,9 +177,9 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
 
   return (
     <>
-      {/* Closed state: floating tab button at bottom center */}
+      {/* Closed state: floating tab button at bottom center — hidden on mobile */}
       {!open && (
-        <div className="fixed bottom-0 left-0 right-0 h-0 z-40 pointer-events-none">
+        <div className="hidden md:block fixed bottom-0 left-0 right-0 h-0 z-40 pointer-events-none">
           <div className="relative w-full h-full pointer-events-auto">
             {TabButton}
           </div>
