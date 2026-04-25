@@ -46,18 +46,18 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
   };
 
   return (
-    <div className={`group rounded-lg border px-4 py-3 transition-all duration-200 animate-fade-in ${
+    <div className={`group rounded-lg border px-3 sm:px-4 py-3 transition-all duration-200 animate-fade-in ${
       task.status === "done" ? "border-success/20 bg-success/5" : isOverdue ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"
     }`}>
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2 sm:gap-3">
         {/* Status toggle */}
-        <div className="relative mt-0.5">
+        <div className="relative mt-0.5 flex-shrink-0">
           <button
             onClick={() => setStatusOpen(!statusOpen)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${statusCfg.badgeClass}`}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${statusCfg.badgeClass}`}
           >
             <statusCfg.icon className="w-3 h-3" />
-            {statusCfg.label}
+            <span className="hidden sm:inline">{statusCfg.label}</span>
             <ChevronDown className="w-3 h-3" />
           </button>
           {statusOpen && (
@@ -108,21 +108,21 @@ export function TaskItem({ task, timezone, onStatusChange, onStyleChange, onText
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* Actions — always visible on mobile (no hover), fade-in on desktop hover */}
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
           {onTimeChange && (
-            <button onClick={() => setShowTime(!showTime)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Definir horário">
-              <Clock3 className={`w-3.5 h-3.5 ${task.dueTime ? "text-primary" : "text-muted-foreground"}`} />
+            <button onClick={() => setShowTime(!showTime)} className="p-2 sm:p-1.5 rounded-md hover:bg-accent transition-colors" title="Definir horário" aria-label="Definir horário">
+              <Clock3 className={`w-4 h-4 sm:w-3.5 sm:h-3.5 ${task.dueTime ? "text-primary" : "text-muted-foreground"}`} />
             </button>
           )}
-          <button onClick={() => setShowComments(!showComments)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários">
-            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+          <button onClick={() => setShowComments(!showComments)} className="p-2 sm:p-1.5 rounded-md hover:bg-accent transition-colors" title="Comentários" aria-label="Comentários">
+            <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
           </button>
-          <button onClick={() => setShowStyle(!showStyle)} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Estilo">
-            <Type className="w-3.5 h-3.5 text-muted-foreground" />
+          <button onClick={() => setShowStyle(!showStyle)} className="p-2 sm:p-1.5 rounded-md hover:bg-accent transition-colors" title="Estilo" aria-label="Estilo">
+            <Type className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
           </button>
-          <button onClick={onDelete} className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors" title="Excluir">
-            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+          <button onClick={onDelete} className="p-2 sm:p-1.5 rounded-md hover:bg-destructive/10 transition-colors" title="Excluir" aria-label="Excluir">
+            <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-destructive" />
           </button>
         </div>
       </div>

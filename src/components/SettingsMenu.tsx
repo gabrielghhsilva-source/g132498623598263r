@@ -54,15 +54,16 @@ export function SettingsMenu({
     <div ref={ref} className="relative flex items-center">
       <button
         onClick={toggleRoot}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors text-sm font-medium ${path ? "bg-accent" : ""}`}
+        className={`flex items-center gap-2 px-2.5 sm:px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors text-sm font-medium ${path ? "bg-accent" : ""}`}
         style={buttonBgColor !== "#000000" || buttonTextColor !== "#ffffff" ? { backgroundColor: buttonBgColor, color: buttonTextColor, borderColor: buttonBgColor } : {}}
+        aria-label="Configurações"
       >
         <Settings className="w-4 h-4" />
         <span className="hidden sm:inline">Configurações</span>
       </button>
 
       {path && (
-        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg z-50 animate-scale-in min-w-[280px] max-h-[75vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg z-50 animate-scale-in w-[calc(100vw-1.5rem)] sm:w-auto sm:min-w-[280px] max-w-[340px] max-h-[80vh] overflow-y-auto">
           {/* Root menu */}
           {path === "root" && (
             <div className="p-2 space-y-0.5">

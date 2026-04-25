@@ -77,10 +77,10 @@ const AppContent = () => {
         <CardNavigation active={activeTab} onChange={setActiveTab} />
 
         <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between pl-20">
-            <div className="flex items-center gap-3">
-              <ActiveIcon className={`w-6 h-6 ${tabMeta[activeTab].color}`} />
-              <h1 className="text-xl font-bold tracking-tight">{tabMeta[activeTab].label}</h1>
+          <div className="max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 pl-16 sm:pl-20">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
+              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">{tabMeta[activeTab].label}</h1>
             </div>
             <SettingsMenu
               theme={store.theme}
@@ -105,7 +105,7 @@ const AppContent = () => {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pl-20 pr-12 sm:pr-6">
+        <main className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-3 sm:pr-6">
           {activeTab === "tasks" && (
             <>
               <StatsBar stats={store.stats} />
