@@ -8,8 +8,8 @@ import moonLavender from "@/assets/moon-lavender.png";
 import sepiaMap from "@/assets/sepia-map.jpg";
 import sepiaCompass from "@/assets/sepia-compass.png";
 import coralReefBg from "@/assets/coral-reef-bg.jpg";
-import coralPetal1 from "@/assets/coral-petal-1.png";
-import coralPetal2 from "@/assets/coral-petal-2.png";
+import coralPetal1 from "@/assets/coral-petal-single-1.png";
+import coralPetal2 from "@/assets/coral-petal-single-3.png";
 
 interface Props {
   theme: ThemeId;
