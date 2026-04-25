@@ -323,3 +323,32 @@
   animation: compass-spin 120s linear infinite;
   transform-origin: center;
 }
+
+/* Coral / Rose — pétalas de hibisco caindo lentamente com leve balanço */
+@keyframes petal-fall {
+  0%   { transform: translate3d(0, -10vh, 0) rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.85; }
+  50%  { transform: translate3d(40px, 50vh, 0) rotate(180deg); }
+  90%  { opacity: 0.85; }
+  100% { transform: translate3d(-30px, 110vh, 0) rotate(360deg); opacity: 0; }
+}
+
+@keyframes petal-fall-alt {
+  0%   { transform: translate3d(0, -10vh, 0) rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.8; }
+  50%  { transform: translate3d(-50px, 50vh, 0) rotate(-200deg); }
+  90%  { opacity: 0.8; }
+  100% { transform: translate3d(35px, 110vh, 0) rotate(-400deg); opacity: 0; }
+}
+
+.animate-petal-fall      { animation: petal-fall 18s linear infinite; }
+.animate-petal-fall-alt  { animation: petal-fall-alt 22s linear infinite; }
+
+/* Brilho dourado pulsante na parte de baixo (reflexo do pôr do sol na água) */
+@keyframes coral-glow-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.75; }
+}
+.animate-coral-glow {
+  animation: coral-glow-pulse 8s ease-in-out infinite;
+}

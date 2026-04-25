@@ -7,6 +7,9 @@ import planetPurple from "@/assets/planet-purple.png";
 import moonLavender from "@/assets/moon-lavender.png";
 import sepiaMap from "@/assets/sepia-map.jpg";
 import sepiaCompass from "@/assets/sepia-compass.png";
+import coralReefBg from "@/assets/coral-reef-bg.jpg";
+import coralPetal1 from "@/assets/coral-petal-1.png";
+import coralPetal2 from "@/assets/coral-petal-2.png";
 
 interface Props {
   theme: ThemeId;
@@ -18,12 +21,14 @@ interface Props {
  * - Abissal (cyan): Cthulhu background + realistic seaweed at the bottom.
  * - Galáctico (lavender): full-bleed black hole video + floating planets.
  * - Sépia (beige): aged explorer map + slowly rotating compass rose.
+ * - Coral (rose): tropical reef sunset + falling hibiscus petals + warm glow.
  */
 export function ThemeDecorations({ theme, enabled }: Props) {
   if (!enabled) return null;
   if (theme === "cyan") return <AbyssalDecorations />;
   if (theme === "lavender") return <GalacticDecorations />;
   if (theme === "beige") return <SepiaDecorations />;
+  if (theme === "rose") return <CoralDecorations />;
   return null;
 }
 
@@ -190,6 +195,73 @@ function SepiaDecorations() {
             filter: "sepia(0.6) saturate(1.2) brightness(0.85)",
           }}
         />
+      </div>
+    </>
+  );
+}
+
+function CoralDecorations() {
+  // Distribute petals across the screen with varied delays/durations/sizes
+  // so the falling effect looks organic instead of mechanical.
+  const petals = [
+    { src: coralPetal1, left: "8%",  size: 56, delay: "0s",   dur: "20s", alt: false },
+    { src: coralPetal2, left: "22%", size: 44, delay: "6s",   dur: "24s", alt: true  },
+    { src: coralPetal1, left: "38%", size: 36, delay: "12s",  dur: "18s", alt: false },
+    { src: coralPetal2, left: "52%", size: 60, delay: "3s",   dur: "26s", alt: true  },
+    { src: coralPetal1, left: "68%", size: 40, delay: "9s",   dur: "21s", alt: false },
+    { src: coralPetal2, left: "82%", size: 50, delay: "15s",  dur: "23s", alt: true  },
+    { src: coralPetal1, left: "92%", size: 32, delay: "2s",   dur: "19s", alt: false },
+  ];
+
+  return (
+    <>
+      {/* Full-bleed tropical reef sunset background */}
+      <div
+        className="fixed inset-0 -z-10 bg-no-repeat bg-center bg-cover"
+        style={{ backgroundImage: `url(${coralReefBg})` }}
+        aria-hidden
+      />
+
+      {/* Warm coral overlay so cards/text stay readable on the busy reef */}
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(350 70% 88% / 0.45) 0%, hsl(350 70% 88% / 0.25) 45%, hsl(15 60% 70% / 0.55) 100%)",
+        }}
+        aria-hidden
+      />
+
+      {/* Golden sunset glow pulsing softly at the bottom (water reflection) */}
+      <div
+        className="fixed inset-x-0 bottom-0 h-1/3 -z-[6] pointer-events-none animate-coral-glow"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 100%, hsl(25 95% 70% / 0.55) 0%, hsl(15 80% 65% / 0.25) 40%, transparent 75%)",
+        }}
+        aria-hidden
+      />
+
+      {/* Falling hibiscus petals */}
+      <div className="fixed inset-0 -z-[5] pointer-events-none overflow-hidden" aria-hidden>
+        {petals.map((p, i) => (
+          <img
+            key={i}
+            src={p.src}
+            alt=""
+            loading="lazy"
+            width={512}
+            height={512}
+            className={`absolute top-0 h-auto ${p.alt ? "animate-petal-fall-alt" : "animate-petal-fall"}`}
+            style={{
+              left: p.left,
+              width: `${p.size}px`,
+              animationDelay: p.delay,
+              animationDuration: p.dur,
+              filter: "drop-shadow(0 4px 8px hsl(350 60% 40% / 0.25))",
+            }}
+          />
+        ))}
       </div>
     </>
   );
