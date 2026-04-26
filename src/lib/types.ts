@@ -1,5 +1,15 @@
 export type TaskStatus = "todo" | "in-progress" | "done";
 
+export type TaskPriority = "none" | "low" | "medium" | "high" | "urgent";
+
+export const PRIORITY_META: Record<TaskPriority, { label: string; color: string; order: number }> = {
+  urgent: { label: "Urgente", color: "#ef4444", order: 0 },
+  high:   { label: "Alta",    color: "#f97316", order: 1 },
+  medium: { label: "Média",   color: "#eab308", order: 2 },
+  low:    { label: "Baixa",   color: "#3b82f6", order: 3 },
+  none:   { label: "Nenhuma", color: "#94a3b8", order: 4 },
+};
+
 export interface TaskTextStyle {
   size: "sm" | "base" | "lg" | "xl";
   weight: "light" | "normal" | "medium" | "semibold" | "bold";
@@ -10,6 +20,18 @@ export interface TaskComment {
   id: string;
   text: string;
   createdAt: string;
+}
+
+export interface TaskTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface Subtask {
+  id: string;
+  text: string;
+  done: boolean;
 }
 
 export interface RecurrenceRule {
@@ -30,6 +52,9 @@ export interface Task {
   comments: TaskComment[];
   recurrence?: RecurrenceRule;
   recurrenceSourceId?: string;
+  priority?: TaskPriority;
+  tagIds?: string[];
+  subtasks?: Subtask[];
 }
 
 export interface TaskArea {
