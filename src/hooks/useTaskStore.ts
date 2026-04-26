@@ -1,9 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
-import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskComment } from "@/lib/types";
+import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskTag, TaskPriority, Subtask } from "@/lib/types";
 import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
 import { secureGet, secureSet } from "@/lib/crypto";
-
-const DEFAULT_STYLE: TaskTextStyle = { size: "base", weight: "normal", color: "#000000" };
+import {
+  AddTaskInput, makeTask, normalizeTask,
+  addTaskToArea, updateTaskInAreas, removeTaskFromArea, moveTaskBetweenAreas,
+  addSubtask, toggleSubtask, deleteSubtask, updateSubtaskText,
+  addCommentToTask, deleteCommentFromTask,
+} from "@/lib/taskOperations";
 
 const DEFAULT_AREAS: TaskArea[] = [
   { id: "work", name: "Trabalho", icon: "💼", tasks: [], collapsed: false },
@@ -12,6 +16,8 @@ const DEFAULT_AREAS: TaskArea[] = [
   { id: "home", name: "Afazeres Domésticos", icon: "🏠", tasks: [], collapsed: false },
   { id: "investments", name: "Investimentos", icon: "📈", tasks: [], collapsed: false },
 ];
+
+const DEFAULT_TAGS: TaskTag[] = [];
 
 const DEFAULT_CUSTOM_COLORS: CustomThemeColors = {
   background: "#f7f7f7",
@@ -85,15 +91,15 @@ function clearCustomColors() {
   props.forEach(p => root.style.removeProperty(p));
 }
 
-// Force clean remount after hook changes
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
     const loaded = loadSecure("task-areas", DEFAULT_AREAS);
     return loaded.map(a => ({
       ...a,
-      tasks: a.tasks.map(t => ({ ...t, comments: t.comments || [] }))
+      tasks: a.tasks.map(normalizeTask),
     }));
   });
+  const [tags, setTags] = useState<TaskTag[]>(() => loadSecure("task-tags", DEFAULT_TAGS));
   const [theme, setThemeState] = useState<ThemeId>(() => loadPlain("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadPlain("task-custom-colors", DEFAULT_CUSTOM_COLORS));
   const [timezone, setTimezoneState] = useState<string>(() => loadPlain("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone));
@@ -101,9 +107,8 @@ export function useTaskStore() {
   const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadPlain("task-button-text", "#ffffff"));
   const [showThemeDecorations, setShowThemeDecorationsState] = useState<boolean>(() => loadPlain("task-theme-decorations", true));
 
-  useEffect(() => {
-    secureSet("task-areas", JSON.stringify(areas));
-  }, [areas]);
+  useEffect(() => { secureSet("task-areas", JSON.stringify(areas)); }, [areas]);
+  useEffect(() => { secureSet("task-tags", JSON.stringify(tags)); }, [tags]);
 
   useEffect(() => {
     localStorage.setItem("task-theme", JSON.stringify(theme));
@@ -139,7 +144,6 @@ export function useTaskStore() {
           for (const date of nextDates) {
             const advDate = new Date(date);
             advDate.setDate(advDate.getDate() - rule.advanceDays);
-            const advStr = advDate.toISOString().split("T")[0];
             const todayDate = new Date(today);
             if (advDate <= todayDate) {
               const dateStr = date.toISOString().split("T")[0];
@@ -147,17 +151,15 @@ export function useTaskStore() {
                 t.recurrenceSourceId === template.id && t.dueDate === dateStr
               );
               if (!exists) {
-                const newTask: Task = {
-                  id: crypto.randomUUID(),
+                const newTask = makeTask({
                   text: template.text,
-                  status: "todo",
-                  style: { ...template.style },
                   dueDate: dateStr,
                   dueTime: template.dueTime,
-                  createdAt: new Date().toISOString(),
-                  comments: [],
-                  recurrenceSourceId: template.id,
-                };
+                  priority: template.priority,
+                  tagIds: template.tagIds,
+                });
+                newTask.recurrenceSourceId = template.id;
+                newTask.style = { ...template.style };
                 const areaIdx = updated.findIndex(a => a.id === area.id);
                 updated[areaIdx] = { ...updated[areaIdx], tasks: [...updated[areaIdx].tasks, newTask] };
               }
@@ -177,51 +179,76 @@ export function useTaskStore() {
   const setButtonTextColor = useCallback((c: string) => setButtonTextColorState(c), []);
   const setShowThemeDecorations = useCallback((v: boolean) => setShowThemeDecorationsState(v), []);
 
+  // Task CRUD
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
-    const task: Task = {
-      id: crypto.randomUUID(), text, status: "todo", style: { ...DEFAULT_STYLE },
-      dueDate, dueTime, createdAt: new Date().toISOString(), comments: [], recurrence,
-    };
-    setAreas(prev => prev.map(a => a.id === areaId ? { ...a, tasks: [...a.tasks, task] } : a));
+    const task = makeTask({ text, dueDate, dueTime, recurrence });
+    setAreas(prev => addTaskToArea(prev, areaId, task));
+  }, []);
+
+  const addTaskFull = useCallback((areaId: string, input: AddTaskInput) => {
+    const task = makeTask(input);
+    setAreas(prev => addTaskToArea(prev, areaId, task));
   }, []);
 
   const updateTaskStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, status } : t) } : a
-    ));
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status })));
   }, []);
 
   const updateTaskStyle = useCallback((areaId: string, taskId: string, style: Partial<TaskTextStyle>) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, style: { ...t.style, ...style } } : t) } : a
-    ));
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, style: { ...t.style, ...style } })));
   }, []);
 
   const updateTaskText = useCallback((areaId: string, taskId: string, text: string) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, text } : t) } : a
-    ));
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, text })));
   }, []);
 
   const updateTaskTime = useCallback((areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? {
-        ...a,
-        tasks: a.tasks.map(t => t.id === taskId ? {
-          ...t,
-          dueTime: dueTime || undefined,
-          dueDate: dueDate !== undefined ? (dueDate || undefined) : t.dueDate,
-        } : t)
-      } : a
-    ));
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({
+      ...t,
+      dueTime: dueTime || undefined,
+      dueDate: dueDate !== undefined ? (dueDate || undefined) : t.dueDate,
+    })));
+  }, []);
+
+  const updateTaskPriority = useCallback((areaId: string, taskId: string, priority: TaskPriority) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, priority })));
+  }, []);
+
+  const updateTaskTags = useCallback((areaId: string, taskId: string, tagIds: string[]) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, tagIds })));
   }, []);
 
   const deleteTask = useCallback((areaId: string, taskId: string) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.filter(t => t.id !== taskId) } : a
-    ));
+    setAreas(prev => removeTaskFromArea(prev, areaId, taskId));
   }, []);
 
+  const moveTask = useCallback((fromAreaId: string, toAreaId: string, taskId: string, toIndex?: number) => {
+    setAreas(prev => moveTaskBetweenAreas(prev, fromAreaId, toAreaId, taskId, toIndex));
+  }, []);
+
+  // Subtasks
+  const addSubtaskTo = useCallback((areaId: string, taskId: string, text: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => addSubtask(t, text)));
+  }, []);
+  const toggleSubtaskOf = useCallback((areaId: string, taskId: string, subtaskId: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => toggleSubtask(t, subtaskId)));
+  }, []);
+  const deleteSubtaskOf = useCallback((areaId: string, taskId: string, subtaskId: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => deleteSubtask(t, subtaskId)));
+  }, []);
+  const updateSubtaskTextOf = useCallback((areaId: string, taskId: string, subtaskId: string, text: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => updateSubtaskText(t, subtaskId, text)));
+  }, []);
+
+  // Comments
+  const addComment = useCallback((areaId: string, taskId: string, text: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => addCommentToTask(t, text)));
+  }, []);
+  const deleteComment = useCallback((areaId: string, taskId: string, commentId: string) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => deleteCommentFromTask(t, commentId)));
+  }, []);
+
+  // Areas
   const toggleCollapse = useCallback((areaId: string) => {
     setAreas(prev => prev.map(a => a.id === areaId ? { ...a, collapsed: !a.collapsed } : a));
   }, []);
@@ -244,17 +271,21 @@ export function useTaskStore() {
     });
   }, []);
 
-  const addComment = useCallback((areaId: string, taskId: string, text: string) => {
-    const comment: TaskComment = { id: crypto.randomUUID(), text, createdAt: new Date().toISOString() };
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t) } : a
-    ));
+  // Tags
+  const addTag = useCallback((name: string, color: string) => {
+    const tag: TaskTag = { id: crypto.randomUUID(), name, color };
+    setTags(prev => [...prev, tag]);
+    return tag;
   }, []);
-
-  const deleteComment = useCallback((areaId: string, taskId: string, commentId: string) => {
-    setAreas(prev => prev.map(a =>
-      a.id === areaId ? { ...a, tasks: a.tasks.map(t => t.id === taskId ? { ...t, comments: t.comments.filter(c => c.id !== commentId) } : t) } : a
-    ));
+  const updateTag = useCallback((id: string, patch: Partial<TaskTag>) => {
+    setTags(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+  }, []);
+  const deleteTag = useCallback((id: string) => {
+    setTags(prev => prev.filter(t => t.id !== id));
+    setAreas(prev => prev.map(a => ({
+      ...a,
+      tasks: a.tasks.map(t => ({ ...t, tagIds: (t.tagIds || []).filter(tid => tid !== id) })),
+    })));
   }, []);
 
   const allTasks = areas.flatMap(a => a.tasks);
@@ -279,13 +310,17 @@ export function useTaskStore() {
   );
 
   return {
-    areas, theme, setTheme, customColors, setCustomColors,
+    areas, tags,
+    theme, setTheme, customColors, setCustomColors,
     timezone, setTimezone,
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     showThemeDecorations, setShowThemeDecorations,
-    addTask, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, deleteTask,
+    addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime,
+    updateTaskPriority, updateTaskTags, deleteTask, moveTask,
+    addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
+    addTag, updateTag, deleteTag,
     stats, todayTasks, allTasksWithArea,
   };
 }
