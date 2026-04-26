@@ -106,7 +106,7 @@ const AppContent = () => {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-3 sm:pr-6">
+        <main className={`${activeTab === "tasks" ? "max-w-[1600px]" : "max-w-4xl"} mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-3 sm:pr-6`}>
           {activeTab === "tasks" && (
             <>
               <StatsBar stats={store.stats} />
