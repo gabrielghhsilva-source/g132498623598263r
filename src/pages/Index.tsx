@@ -9,7 +9,7 @@ import { useSalaryStore } from "@/hooks/useSalaryStore";
 import { Preloader } from "@/components/Preloader";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
-import { DraggableAreaList } from "@/components/DraggableAreaList";
+import { KanbanBoard } from "@/components/KanbanBoard";
 import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
 import { NotificationPopup } from "@/components/NotificationPopup";
@@ -38,6 +38,7 @@ const AppContent = () => {
   );
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
+  const [addAreaOpen, setAddAreaOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
@@ -109,22 +110,37 @@ const AppContent = () => {
           {activeTab === "tasks" && (
             <>
               <StatsBar stats={store.stats} />
-              <DraggableAreaList
+              <KanbanBoard
                 areas={store.areas}
+                tags={store.tags}
                 timezone={store.timezone}
-                onReorder={store.reorderAreas}
-                onToggleCollapse={store.toggleCollapse}
-                onAddTask={(areaId, text, date, rec, time) => store.addTask(areaId, text, date, rec, time)}
+                onAddTaskFull={store.addTaskFull}
+                onAddTaskQuick={(areaId, text) => store.addTask(areaId, text)}
+                onUpdateText={store.updateTaskText}
                 onUpdateStatus={store.updateTaskStatus}
                 onUpdateStyle={store.updateTaskStyle}
-                onUpdateText={store.updateTaskText}
                 onUpdateTime={store.updateTaskTime}
+                onUpdatePriority={store.updateTaskPriority}
+                onUpdateTags={store.updateTaskTags}
+                onMoveTask={store.moveTask}
                 onDeleteTask={store.deleteTask}
                 onDeleteArea={store.deleteArea}
+                onAddSubtask={store.addSubtaskTo}
+                onToggleSubtask={store.toggleSubtaskOf}
+                onDeleteSubtask={store.deleteSubtaskOf}
+                onUpdateSubtaskText={store.updateSubtaskTextOf}
                 onAddComment={store.addComment}
                 onDeleteComment={store.deleteComment}
+                onAddTag={store.addTag}
+                onDeleteTag={store.deleteTag}
+                onAddArea={() => setAddAreaOpen(true)}
               />
-              <AddAreaDialog onAdd={store.addArea} />
+              <AddAreaDialog
+                onAdd={store.addArea}
+                open={addAreaOpen}
+                onOpenChange={setAddAreaOpen}
+                hideTrigger
+              />
             </>
           )}
           {activeTab === "investments" && (
