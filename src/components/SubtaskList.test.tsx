@@ -17,7 +17,8 @@ describe("SubtaskList", () => {
       />
     );
     expect(screen.getByText(/1\/2 concluídas/)).toBeInTheDocument();
-    expect(screen.getByDisplayValue?.("a") ?? screen.getByText("a")).toBeInTheDocument();
+    expect(screen.getByText("a")).toBeInTheDocument();
+    expect(screen.getByText("b")).toBeInTheDocument();
   });
 
   it("calls onAdd when typing and pressing Enter", () => {
