@@ -100,7 +100,8 @@ export function useNotificationSystem(
           showNotification(
             `⏰ Tarefa em ${advMin} minuto${advMin !== 1 ? "s" : ""}`,
             matchingNames.join(", "),
-            `advance-${advMin}-${Date.now()}`
+            `advance-${advMin}-${Date.now()}`,
+            matchingRefs,
           );
 
           // Sound
