@@ -1,85 +1,97 @@
 import { useEffect, useRef, useState } from "react";
-import sheet from "@/assets/godzilla-sheet-user.png";
+// Frames pré-fatiados (256x274 com sprite alinhado pelo pé) — sem bleeding.
+import r0c0 from "@/assets/godzilla/r0c0.png";
+import r0c1 from "@/assets/godzilla/r0c1.png";
+import r0c2 from "@/assets/godzilla/r0c2.png";
+import r0c3 from "@/assets/godzilla/r0c3.png";
+import r1c0 from "@/assets/godzilla/r1c0.png";
+import r1c1 from "@/assets/godzilla/r1c1.png";
+import r1c2 from "@/assets/godzilla/r1c2.png";
+import r1c3 from "@/assets/godzilla/r1c3.png";
+import r2c0 from "@/assets/godzilla/r2c0.png";
+import r2c1 from "@/assets/godzilla/r2c1.png";
+import r2c2 from "@/assets/godzilla/r2c2.png";
+import r2c3 from "@/assets/godzilla/r2c3.png";
+import r3c0 from "@/assets/godzilla/r3c0.png";
+import r3c1 from "@/assets/godzilla/r3c1.png";
+import r3c2 from "@/assets/godzilla/r3c2.png";
+import r3c3 from "@/assets/godzilla/r3c3.png";
 
 /**
- * GodzillaPet — pequeno mascote pixel art que caminha aleatoriamente
- * na parte de baixo da tela.
+ * GodzillaPet — pequeno mascote pixel art andando no rodapé.
  *
- * Layout do sprite sheet (1055x1077, grid 4x4 ≈ 264x269 por frame):
- *   Linha 0 (y=0):   walk frames 0..3   (virado p/ direita)
- *   Linha 1 (y=1):   walk frames 4..7   (virado p/ direita)  → ciclo de 8 frames
- *   Linha 2 (y=2):   idle frames 0..3   (virado p/ esquerda no original)
- *   Linha 3 (y=3):   walk extra; usamos col 0 como frame de "rugido"
+ * Sprites:
+ *   Linha 0/1: walk virado p/ DIREITA (8 frames de ciclo)
+ *   Linha 2:   idle virado p/ ESQUERDA no original — usamos invertido
+ *              quando pet olha p/ direita, e direto quando olha p/ esquerda.
+ *   Linha 3 col 0: pose de rugido (boca aberta).
  *
- * Comportamento: alterna entre andar (uma direção, alguns segundos), pausar
- * (idle/respirando), virar e andar pro outro lado. Raramente solta um rugido.
- *
- * Renderizado tamanho ~80px (visível mas não rouba a cena).
+ * Como evitamos os bugs anteriores:
+ *   1. Frames são <img>s individuais já trimados → ZERO bleeding entre células.
+ *   2. Movimento usa requestAnimationFrame escrevendo direto em style.transform
+ *      via ref (sem setState a cada pixel) → sem re-render quebrando a animação
+ *      do sprite e sem "tremedeira" no movimento.
+ *   3. Direção é guardada em ref e lida pelo loop a cada frame, evitando
+ *      closure stale que fazia ele "andar pra trás bugadinho".
  */
 
-// ---- Constantes do sheet ----
-const SHEET_W = 1055;
-const SHEET_H = 1077;
-const COLS = 4;
-const ROWS = 4;
-const FRAME_W = SHEET_W / COLS; // ≈ 263.75
-const FRAME_H = SHEET_H / ROWS; // ≈ 269.25
+const WALK_FRAMES = [r0c0, r0c1, r0c2, r0c3, r1c0, r1c1, r1c2, r1c3];
+// Frames idle são da linha 2 (que está virada pra esquerda no original).
+// Vamos usar o mesmo array; o flip horizontal cuida da direção.
+const IDLE_FRAMES = [r2c0, r2c1, r2c2, r2c3];
+const ROAR_FRAME = r3c0;
 
-// Tamanho exibido na tela (px)
-const DISPLAY = 80;
-const SCALE = DISPLAY / FRAME_H;
-
-// Animação
-const WALK_FRAMES: Array<[number, number]> = [
-  [0, 0], [1, 0], [2, 0], [3, 0],
-  [0, 1], [1, 1], [2, 1], [3, 1],
-];
-const IDLE_FRAMES: Array<[number, number]> = [
-  [0, 2], [1, 2], [2, 2], [3, 2],
-];
-const ROAR_FRAME: [number, number] = [0, 3];
-
-const WALK_FRAME_MS = 140;     // velocidade da animação de andar
-const IDLE_FRAME_MS = 320;     // respira mais devagar
-const WALK_SPEED_PX_S = 28;    // pixels por segundo
+const DISPLAY = 80;            // tamanho exibido
+const WALK_FRAME_MS = 140;
+const IDLE_FRAME_MS = 320;
+const WALK_SPEED_PX_S = 30;
 
 type Mode = "walking" | "idle" | "roaring";
 
 export function GodzillaPet() {
-  // Posição em px relativos à viewport (canto inferior).
-  const [x, setX] = useState(() => Math.random() * (window.innerWidth - DISPLAY));
-  // dir: 1 = direita, -1 = esquerda. Sprite original olha p/ direita,
-  // então invertemos com scaleX(-1) quando dir = -1.
-  const [dir, setDir] = useState<1 | -1>(Math.random() > 0.5 ? 1 : -1);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const [mode, setMode] = useState<Mode>("walking");
   const [frameIdx, setFrameIdx] = useState(0);
+  const [dirTick, setDirTick] = useState(0); // força re-render quando dir muda
 
-  // refs pra animação contínua sem disparar re-render por frame
-  const xRef = useRef(x);
-  const dirRef = useRef<1 | -1>(dir);
-  const modeRef = useRef<Mode>(mode);
-  xRef.current = x;
-  dirRef.current = dir;
+  // Refs para o loop de animação (evitam closure stale + re-render por frame)
+  const xRef = useRef<number>(
+    Math.random() * Math.max(0, window.innerWidth - DISPLAY),
+  );
+  const dirRef = useRef<1 | -1>(Math.random() > 0.5 ? 1 : -1);
+  const modeRef = useRef<Mode>("walking");
   modeRef.current = mode;
 
-  // Loop de movimento (rAF) — só atualiza X enquanto andando
+  // Loop de movimento — escreve transform direto no DOM (sem setState)
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
     const step = (now: number) => {
-      const dt = (now - last) / 1000;
+      const dt = Math.min(0.05, (now - last) / 1000); // clamp p/ evitar saltos
       last = now;
-      if (modeRef.current === "walking") {
-        const maxX = window.innerWidth - DISPLAY;
-        let nx = xRef.current + dirRef.current * WALK_SPEED_PX_S * dt;
-        if (nx <= 0) {
-          nx = 0;
-          setDir(1);
-        } else if (nx >= maxX) {
-          nx = maxX;
-          setDir(-1);
+      const el = containerRef.current;
+      if (el) {
+        if (modeRef.current === "walking") {
+          const maxX = window.innerWidth - DISPLAY;
+          let nx = xRef.current + dirRef.current * WALK_SPEED_PX_S * dt;
+          if (nx <= 0) {
+            nx = 0;
+            if (dirRef.current !== 1) {
+              dirRef.current = 1;
+              setDirTick((t) => t + 1);
+            }
+          } else if (nx >= maxX) {
+            nx = maxX;
+            if (dirRef.current !== -1) {
+              dirRef.current = -1;
+              setDirTick((t) => t + 1);
+            }
+          }
+          xRef.current = nx;
         }
-        setX(nx);
+        // Sempre escreve a posição (não custa nada e mantém suave)
+        el.style.transform = `translate3d(${Math.round(xRef.current)}px, 0, 0)`;
       }
       raf = requestAnimationFrame(step);
     };
@@ -87,94 +99,101 @@ export function GodzillaPet() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Loop de troca de frames (animação do sprite)
+  // Loop de troca de frames do sprite
   useEffect(() => {
     const ms =
       mode === "walking" ? WALK_FRAME_MS :
       mode === "roaring" ? 220 :
       IDLE_FRAME_MS;
-    const id = window.setInterval(() => {
-      setFrameIdx((i) => i + 1);
-    }, ms);
+    const id = window.setInterval(() => setFrameIdx((i) => i + 1), ms);
     return () => clearInterval(id);
   }, [mode]);
 
-  // Máquina de estados — alterna walking / idle / (raro) roaring
+  // Máquina de estados de comportamento
   useEffect(() => {
     let cancelled = false;
-    const schedule = () => {
-      // Duração do estado atual
+    let timeoutId: number | undefined;
+
+    const next = () => {
+      if (cancelled) return;
+      const cur = modeRef.current;
       let duration: number;
-      if (modeRef.current === "walking") {
-        duration = 4000 + Math.random() * 5000; // 4–9s andando
-      } else if (modeRef.current === "idle") {
-        duration = 1500 + Math.random() * 2500; // 1.5–4s parado
-      } else {
-        duration = 900; // rugido curto
-      }
-      const t = window.setTimeout(() => {
+      if (cur === "walking") duration = 4000 + Math.random() * 5000;
+      else if (cur === "idle") duration = 1500 + Math.random() * 2500;
+      else duration = 900;
+
+      timeoutId = window.setTimeout(() => {
         if (cancelled) return;
-        const cur = modeRef.current;
-        if (cur === "walking") {
-          // 15% de chance de soltar rugido, senão idle
-          if (Math.random() < 0.15) {
-            setMode("roaring");
-          } else {
-            setMode("idle");
+        const c = modeRef.current;
+        if (c === "walking") {
+          if (Math.random() < 0.15) setMode("roaring");
+          else setMode("idle");
+        } else if (c === "idle") {
+          if (Math.random() < 0.5) {
+            dirRef.current = (dirRef.current === 1 ? -1 : 1) as 1 | -1;
+            setDirTick((t) => t + 1);
           }
-        } else if (cur === "idle") {
-          // Ao sair do idle, possivelmente troca de direção
-          if (Math.random() < 0.5) setDir((d) => (d === 1 ? -1 : 1));
           setMode("walking");
         } else {
-          // depois de rugir, volta a andar
           setMode("walking");
         }
         setFrameIdx(0);
-        schedule();
+        next();
       }, duration);
-      return () => clearTimeout(t);
     };
-    const cleanup = schedule();
+    next();
     return () => {
       cancelled = true;
-      cleanup?.();
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
   }, []);
 
-  // Frame atual conforme modo
-  let cell: [number, number];
-  if (mode === "walking") cell = WALK_FRAMES[frameIdx % WALK_FRAMES.length];
-  else if (mode === "idle") cell = IDLE_FRAMES[frameIdx % IDLE_FRAMES.length];
-  else cell = ROAR_FRAME;
+  // Escolhe frame atual
+  let src: string;
+  if (mode === "walking") src = WALK_FRAMES[frameIdx % WALK_FRAMES.length];
+  else if (mode === "idle") src = IDLE_FRAMES[frameIdx % IDLE_FRAMES.length];
+  else src = ROAR_FRAME;
 
-  const [col, row] = cell;
-  // background-position negativo desloca o sheet pra mostrar a célula certa.
-  // Como escalamos o sheet inteiro, multiplicamos pelas dimensões escaladas.
-  const bgX = -col * FRAME_W * SCALE;
-  const bgY = -row * FRAME_H * SCALE;
-  const bgSizeW = SHEET_W * SCALE;
-  const bgSizeH = SHEET_H * SCALE;
+  // Como linha 2 (idle) já está virada pra esquerda no original, e linha 0/1/3
+  // estão viradas pra direita, precisamos de regras diferentes de espelhamento
+  // pra que o pet sempre olhe na direção em que está andando.
+  //   walking/roaring: dir=1 (direita) → sem flip; dir=-1 → flip
+  //   idle:            dir=-1 (esquerda) → sem flip; dir=1 → flip
+  const sourceFacesRight = mode !== "idle";
+  const wantsRight = dirRef.current === 1;
+  const flip = sourceFacesRight !== wantsRight;
+  void dirTick; // garante que mudanças de dir re-renderizem o flip
 
   return (
     <div
+      ref={containerRef}
       aria-hidden
       className="fixed pointer-events-none select-none"
       style={{
-        left: `${x}px`,
+        left: 0,
         bottom: "8px",
         width: `${DISPLAY}px`,
         height: `${DISPLAY}px`,
         zIndex: 40,
-        backgroundImage: `url(${sheet})`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: `${bgX}px ${bgY}px`,
-        backgroundSize: `${bgSizeW}px ${bgSizeH}px`,
-        imageRendering: "pixelated",
-        transform: dir === -1 ? "scaleX(-1)" : "scaleX(1)",
-        transformOrigin: "center",
-        filter: "drop-shadow(0 4px 4px hsl(0 0% 0% / 0.35))",
+        willChange: "transform",
       }}
-    />
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        width={DISPLAY}
+        height={DISPLAY}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          objectPosition: "center bottom",
+          imageRendering: "pixelated",
+          transform: flip ? "scaleX(-1)" : undefined,
+          filter: "drop-shadow(0 4px 4px hsl(0 0% 0% / 0.35))",
+        }}
+      />
+    </div>
   );
 }
