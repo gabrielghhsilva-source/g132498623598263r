@@ -47,16 +47,28 @@ export function KanbanBoard(props: Props) {
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
-  // Translate vertical wheel into horizontal scroll on the board (smooth, no snap stutter)
+  // Translate vertical wheel into smooth horizontal scroll (eased via rAF)
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
+    let targetLeft = el.scrollLeft;
+    let rafId: number | null = null;
+
+    const tick = () => {
+      const current = el.scrollLeft;
+      const diff = targetLeft - current;
+      if (Math.abs(diff) < 0.5) {
+        el.scrollLeft = targetLeft;
+        rafId = null;
+        return;
+      }
+      el.scrollLeft = current + diff * 0.18;
+      rafId = requestAnimationFrame(tick);
+    };
+
     const onWheel = (e: WheelEvent) => {
-      // Ignore pinch-zoom (ctrlKey + deltaY on trackpads triggers browser zoom — let it pass)
       if (e.ctrlKey) return;
-      // Only intercept when user is scrolling vertically over the board
       if (e.deltaY === 0) return;
-      // If the inner column can still scroll vertically, let it
       const target = e.target as HTMLElement;
       const scrollableCol = target.closest('[data-column-scroll]') as HTMLElement | null;
       if (scrollableCol) {
@@ -68,11 +80,19 @@ export function KanbanBoard(props: Props) {
         if (canScroll) return;
       }
       e.preventDefault();
-      el.scrollLeft += e.deltaY;
+      const max = el.scrollWidth - el.clientWidth;
+      if (rafId === null) targetLeft = el.scrollLeft;
+      targetLeft = Math.max(0, Math.min(max, targetLeft + e.deltaY));
+      if (rafId === null) rafId = requestAnimationFrame(tick);
     };
+
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
+
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
