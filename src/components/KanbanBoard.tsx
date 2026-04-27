@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -45,6 +45,67 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Global Shift+wheel → horizontal scroll on the board (works anywhere on the page)
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      const el = boardRef.current;
+      if (!el) return;
+      if (!e.shiftKey) return;
+      const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+      if (delta === 0) return;
+      e.preventDefault();
+      el.scrollBy({ left: delta, behavior: "auto" });
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Click-and-drag panning on board background (grab empty space to pan horizontally)
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    let isDown = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      // Only left button, and only when grabbing the board background itself (not a card/column/button)
+      if (e.button !== 0) return;
+      const target = e.target as HTMLElement;
+      // Ignore drags that start on interactive/draggable content inside columns
+      if (target.closest('[data-kanban-card], button, input, textarea, a, [draggable="true"]')) return;
+      isDown = true;
+      startX = e.pageX;
+      startScrollLeft = el.scrollLeft;
+      el.style.cursor = "grabbing";
+      el.style.userSelect = "none";
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      el.scrollLeft = startScrollLeft - (e.pageX - startX);
+    };
+    const stop = () => {
+      if (!isDown) return;
+      isDown = false;
+      el.style.cursor = "";
+      el.style.userSelect = "";
+    };
+
+    el.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", stop);
+    window.addEventListener("mouseleave", stop);
+    return () => {
+      el.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", stop);
+      window.removeEventListener("mouseleave", stop);
+    };
+  }, []);
+
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
@@ -120,7 +181,8 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-proximity"
+        ref={boardRef}
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-proximity cursor-grab"
         data-testid="kanban-board"
       >
         {areas.map(area => (
