@@ -192,6 +192,9 @@ const AppContent = () => {
           event={currentEvent}
           settings={notifStore.settings}
           onDismiss={dismissEvent}
+          onSnooze={(refs, minutes) => {
+            refs.forEach(({ areaId, taskId }) => store.snoozeTask(areaId, taskId, minutes));
+          }}
         />
       </div>
     </>

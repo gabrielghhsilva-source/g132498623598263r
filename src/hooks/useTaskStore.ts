@@ -328,7 +328,7 @@ export function useTaskStore() {
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     showThemeDecorations, setShowThemeDecorations,
     addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime,
-    updateTaskPriority, updateTaskTags, deleteTask, moveTask,
+    updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
