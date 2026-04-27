@@ -2,3 +2,6 @@ project_id = "sdbhsipnawdfvuwmaqud"
 
 [functions.transcribe-audio]
 verify_jwt = false
+
+[functions.voice-tasks]
+verify_jwt = false
