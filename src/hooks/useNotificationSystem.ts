@@ -135,7 +135,7 @@ export function useNotificationSystem(
       }
 
       if (dueNow.length > 0) {
-        showNotification("⏰ Tarefa agora!", dueNowNames.join(", "), `due-now-${Date.now()}`);
+        showNotification("⏰ Tarefa agora!", dueNowNames.join(", "), `due-now-${Date.now()}`, dueNowRefs);
         playSound(settings.volume, settings.customSoundUrl);
         setCurrentEvent({
           id: `${Date.now()}-now`,
