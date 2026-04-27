@@ -54,7 +54,37 @@ export function KanbanBoard(props: Props) {
     startScroll: 0,
     moved: false,
   });
+  const wheelScrollState = useRef<{ frame: number | null; target: number }>({
+    frame: null,
+    target: 0,
+  });
   const [isPanning, setIsPanning] = useState(false);
+
+  const animateHorizontalScroll = useCallback(() => {
+    const el = boardRef.current;
+    const state = wheelScrollState.current;
+
+    if (!el) {
+      state.frame = null;
+      return;
+    }
+
+    const distance = state.target - el.scrollLeft;
+    if (Math.abs(distance) < 0.5) {
+      el.scrollLeft = state.target;
+      state.frame = null;
+      return;
+    }
+
+    el.scrollLeft += distance * 0.18;
+    state.frame = requestAnimationFrame(animateHorizontalScroll);
+  }, []);
+
+  const normalizeWheelDelta = (delta: number, deltaMode: number) => {
+    if (deltaMode === 1) return delta * 16;
+    if (deltaMode === 2) return delta * window.innerHeight * 0.85;
+    return delta;
+  };
 
   const onBoardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
@@ -91,9 +121,16 @@ export function KanbanBoard(props: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (wheelScrollState.current.frame !== null) {
+        cancelAnimationFrame(wheelScrollState.current.frame);
+      }
+    };
+  }, []);
+
   // Convert vertical wheel to smooth horizontal scroll when not over a vertical scroller
   const onBoardWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY === 0 || e.deltaX !== 0) return;
     const target = e.target as HTMLElement;
     // If hovering a column that can scroll vertically, let it scroll normally
     const verticalScroller = target.closest<HTMLElement>("[data-kanban-column-scroll]");
@@ -101,9 +138,28 @@ export function KanbanBoard(props: Props) {
       const canScroll = verticalScroller.scrollHeight > verticalScroller.clientHeight;
       if (canScroll) return;
     }
+
     const el = boardRef.current;
     if (!el) return;
-    el.scrollLeft += e.deltaY;
+
+    const dominantDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const delta = normalizeWheelDelta(dominantDelta, e.deltaMode);
+    if (delta === 0) return;
+
+    e.preventDefault();
+
+    const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+    const state = wheelScrollState.current;
+
+    if (state.frame === null) {
+      state.target = el.scrollLeft;
+    }
+
+    state.target = Math.max(0, Math.min(maxScroll, state.target + delta * 1.1));
+
+    if (state.frame === null) {
+      state.frame = requestAnimationFrame(animateHorizontalScroll);
+    }
   };
 
 
@@ -184,8 +240,8 @@ export function KanbanBoard(props: Props) {
         ref={boardRef}
         onMouseDown={onBoardMouseDown}
         onWheel={onBoardWheel}
-        className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 scroll-smooth select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
-        style={{ scrollBehavior: isPanning ? "auto" : "smooth", overscrollBehaviorX: "contain" }}
+        className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ scrollBehavior: "auto", overscrollBehaviorX: "contain" }}
         data-testid="kanban-board"
       >
         {areas.map(area => (
