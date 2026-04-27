@@ -158,6 +158,27 @@ export function useNotificationSystem(
     }
   }, []);
 
+  // Escuta cliques nos botões da notificação nativa (vindos do Service Worker)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !onSnooze) return;
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "SNOOZE_TASKS") {
+        const { taskRefs, minutes } = event.data.payload || {};
+        if (Array.isArray(taskRefs) && typeof minutes === "number") {
+          onSnooze(taskRefs as NotificationTaskRef[], minutes);
+          // Limpa o estado de "fired" para essa task pra que novas notificações disparem no novo horário
+          for (const ref of taskRefs as NotificationTaskRef[]) {
+            for (const key of Array.from(firedRef.current)) {
+              if (key.startsWith(`${ref.taskId}-`)) firedRef.current.delete(key);
+            }
+          }
+        }
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [onSnooze]);
+
   const dismissEvent = useCallback(() => setCurrentEvent(null), []);
 
   return { currentEvent, dismissEvent };
