@@ -230,7 +230,7 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
             <span className="ml-2 text-sm text-muted-foreground">Carregando dados...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto no-scrollbar">
             {filteredStocks.map(s => (
               <button
                 key={s.symbol}
