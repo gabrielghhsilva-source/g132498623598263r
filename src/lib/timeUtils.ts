@@ -62,3 +62,24 @@ export function minutesUntilDue(
 
   return Math.round((dueTotal - nowTotal) / 60000);
 }
+
+/**
+ * Adiciona `minutes` a um par dueDate/dueTime e retorna a nova data/hora.
+ * Se dueTime não estiver definido, usa "23:59" como base.
+ */
+export function addMinutesToDue(
+  dueDate: string,
+  dueTime: string | undefined,
+  minutes: number,
+): { date: string; time: string } {
+  const effectiveTime = dueTime || "23:59";
+  const [y, m, d] = dueDate.split("-").map(Number);
+  const [h, min] = effectiveTime.split(":").map(Number);
+  const base = new Date(y, m - 1, d, h, min);
+  base.setMinutes(base.getMinutes() + minutes);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`,
+    time: `${pad(base.getHours())}:${pad(base.getMinutes())}`,
+  };
+}

@@ -2,9 +2,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Task, NotificationSettings } from "@/lib/types";
 import { minutesUntilDue, getNowInTimezone } from "@/lib/timeUtils";
 
+export interface NotificationTaskRef {
+  taskId: string;
+  areaId: string;
+}
+
 interface NotificationEvent {
   id: string;
   taskNames: string[];
+  taskRefs: NotificationTaskRef[];
   advanceMinutes: number;
 }
 
@@ -15,7 +21,7 @@ interface TodayTask extends Task {
 }
 
 export function useNotificationSystem(
-  allTasks: { task: Task; areaName: string }[],
+  allTasks: { task: Task; areaName: string; areaId?: string }[],
   settings: NotificationSettings,
   timezone: string,
 ) {
@@ -70,8 +76,9 @@ export function useNotificationSystem(
       for (const advMin of settings.advanceTimes) {
         const matching: string[] = [];
         const matchingNames: string[] = [];
+        const matchingRefs: NotificationTaskRef[] = [];
 
-        for (const { task } of pendingTasks) {
+        for (const { task, areaId } of pendingTasks) {
           const mins = minutesUntilDue(task.dueDate!, task.dueTime, timezone);
           // Fire if within a 1-minute window of the advance time
           if (mins >= advMin - 1 && mins <= advMin + 1) {
@@ -80,6 +87,7 @@ export function useNotificationSystem(
               firedRef.current.add(key);
               matching.push(task.id);
               matchingNames.push(task.text);
+              if (areaId) matchingRefs.push({ taskId: task.id, areaId });
             }
           }
         }
@@ -98,6 +106,7 @@ export function useNotificationSystem(
           setCurrentEvent({
             id: `${Date.now()}-${advMin}`,
             taskNames: matchingNames,
+            taskRefs: matchingRefs,
             advanceMinutes: advMin,
           });
         }
@@ -106,7 +115,8 @@ export function useNotificationSystem(
       // Also check for tasks due right now (0 minutes)
       const dueNow: string[] = [];
       const dueNowNames: string[] = [];
-      for (const { task } of pendingTasks) {
+      const dueNowRefs: NotificationTaskRef[] = [];
+      for (const { task, areaId } of pendingTasks) {
         const mins = minutesUntilDue(task.dueDate!, task.dueTime, timezone);
         if (mins >= -1 && mins <= 1) {
           const key = `${task.id}-0`;
@@ -114,6 +124,7 @@ export function useNotificationSystem(
             firedRef.current.add(key);
             dueNow.push(task.id);
             dueNowNames.push(task.text);
+            if (areaId) dueNowRefs.push({ taskId: task.id, areaId });
           }
         }
       }
@@ -124,6 +135,7 @@ export function useNotificationSystem(
         setCurrentEvent({
           id: `${Date.now()}-now`,
           taskNames: dueNowNames,
+          taskRefs: dueNowRefs,
           advanceMinutes: 0,
         });
       }

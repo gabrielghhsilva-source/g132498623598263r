@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
+import { DoneColumn, DONE_COLUMN_ID } from "./DoneColumn";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { QuickAddDialog } from "./QuickAddDialog";
 import { Plus, Keyboard } from "lucide-react";
@@ -203,6 +204,15 @@ export function KanbanBoard(props: Props) {
     setDragOverColumnId(null);
   }, [draggingTaskId, dragFromAreaId, props]);
 
+  const handleDropOnDone = useCallback(() => {
+    if (!draggingTaskId || !dragFromAreaId) return;
+    // Marca como done na área original (a coluna Prontas é virtual)
+    props.onUpdateStatus(dragFromAreaId, draggingTaskId, "done");
+    setDraggingTaskId(null);
+    setDragFromAreaId(null);
+    setDragOverColumnId(null);
+  }, [draggingTaskId, dragFromAreaId, props]);
+
   const openTaskDetail = (areaId: string, task: Task) => {
     setSelectedAreaId(areaId);
     setSelectedTaskId(task.id);
@@ -244,29 +254,46 @@ export function KanbanBoard(props: Props) {
         style={{ scrollBehavior: "auto", overscrollBehaviorX: "contain" }}
         data-testid="kanban-board"
       >
-        {areas.map(area => (
-          <KanbanColumn
-            key={area.id}
-            area={area}
-            tags={tags}
-            timezone={timezone}
-            isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
-            draggingTaskId={draggingTaskId}
-            dragOverColumnId={dragOverColumnId}
-            onTaskClick={(t) => openTaskDetail(area.id, t)}
-            onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
-            onQuickToggleDone={(taskId) => {
-              const t = area.tasks.find(x => x.id === taskId);
-              if (!t) return;
-              props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
-            }}
-            onDeleteArea={() => props.onDeleteArea(area.id)}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOverColumn={() => setDragOverColumnId(area.id)}
-            onDropOnColumn={() => handleDropOnColumn(area.id)}
-          />
-        ))}
+        {areas.map(area => {
+          // Tasks done são exibidas APENAS na coluna virtual "Prontas"
+          const visibleArea: TaskArea = { ...area, tasks: area.tasks.filter(t => t.status !== "done") };
+          return (
+            <KanbanColumn
+              key={area.id}
+              area={visibleArea}
+              tags={tags}
+              timezone={timezone}
+              isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
+              draggingTaskId={draggingTaskId}
+              dragOverColumnId={dragOverColumnId}
+              onTaskClick={(t) => openTaskDetail(area.id, t)}
+              onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
+              onQuickToggleDone={(taskId) => {
+                const t = area.tasks.find(x => x.id === taskId);
+                if (!t) return;
+                props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
+              }}
+              onDeleteArea={() => props.onDeleteArea(area.id)}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOverColumn={() => setDragOverColumnId(area.id)}
+              onDropOnColumn={() => handleDropOnColumn(area.id)}
+            />
+          );
+        })}
+
+        {/* Coluna virtual "Prontas" — agrega todas as tasks done */}
+        <DoneColumn
+          areas={areas}
+          tags={tags}
+          timezone={timezone}
+          draggingTaskId={draggingTaskId}
+          dragOverColumnId={dragOverColumnId}
+          onTaskClick={(areaId, t) => openTaskDetail(areaId, t)}
+          onMarkUndone={(areaId, taskId) => props.onUpdateStatus(areaId, taskId, "todo")}
+          onDropDone={handleDropOnDone}
+          onDragOverColumn={() => setDragOverColumnId(DONE_COLUMN_ID)}
+        />
 
         {/* Add column */}
         <button

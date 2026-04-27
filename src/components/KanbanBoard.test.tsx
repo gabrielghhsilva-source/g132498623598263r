@@ -140,4 +140,49 @@ describe("KanbanBoard", () => {
     expect(input.text).toBe("Nova task complexa");
     expect(input.subtasks).toEqual([{ text: "passo 1" }, { text: "passo 2" }]);
   });
+
+  it("renders the virtual 'Prontas' column with done count", () => {
+    const areas: TaskArea[] = [
+      { id: "work", name: "Trabalho", icon: "💼", collapsed: false, tasks: [
+        { ...makeTask({ text: "Done one" }), status: "done" },
+        makeTask({ text: "Pending one" }),
+      ]},
+      { id: "games", name: "Jogos", icon: "🎮", collapsed: false, tasks: [
+        { ...makeTask({ text: "Done two" }), status: "done" },
+      ]},
+    ];
+    render(<KanbanBoard {...buildProps({ areas })} />);
+    expect(screen.getByText("Prontas")).toBeInTheDocument();
+    // 2 done tasks visible inside the Prontas column
+    expect(screen.getByText("Done one")).toBeInTheDocument();
+    expect(screen.getByText("Done two")).toBeInTheDocument();
+    // Pending one still in its area
+    expect(screen.getByText("Pending one")).toBeInTheDocument();
+  });
+
+  it("hiding the 'Prontas' column persists and shows compact toggle", () => {
+    localStorage.removeItem("kanban-hide-done");
+    const areas: TaskArea[] = [
+      { id: "work", name: "Trabalho", icon: "💼", collapsed: false, tasks: [
+        { ...makeTask({ text: "Done one" }), status: "done" },
+      ]},
+    ];
+    render(<KanbanBoard {...buildProps({ areas })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Ocultar coluna Prontas/i }));
+    expect(localStorage.getItem("kanban-hide-done")).toBe("1");
+    expect(screen.getByRole("button", { name: /Mostrar coluna Prontas/i })).toBeInTheDocument();
+  });
+
+  it("done tasks are NOT shown in their original area column", () => {
+    localStorage.removeItem("kanban-hide-done");
+    const areas: TaskArea[] = [
+      { id: "work", name: "Trabalho", icon: "💼", collapsed: false, tasks: [
+        { ...makeTask({ text: "Already done" }), status: "done" },
+      ]},
+      { id: "games", name: "Jogos", icon: "🎮", collapsed: false, tasks: [] },
+    ];
+    render(<KanbanBoard {...buildProps({ areas })} />);
+    // Single occurrence (in Prontas), not duplicated in Trabalho
+    expect(screen.getAllByText("Already done")).toHaveLength(1);
+  });
 });

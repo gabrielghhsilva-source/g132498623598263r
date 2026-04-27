@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskTag, TaskPriority, Subtask } from "@/lib/types";
-import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
+import { isTaskOverdue, getNowInTimezone, addMinutesToDue } from "@/lib/timeUtils";
 import { secureGet, secureSet } from "@/lib/crypto";
 import {
   AddTaskInput, makeTask, normalizeTask,
@@ -210,6 +210,18 @@ export function useTaskStore() {
     })));
   }, []);
 
+  /**
+   * Adia o prazo de uma task em `minutes` minutos.
+   * Se a task não tem dueDate, ignora silenciosamente.
+   */
+  const snoozeTask = useCallback((areaId: string, taskId: string, minutes: number) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => {
+      if (!t.dueDate) return t;
+      const next = addMinutesToDue(t.dueDate, t.dueTime, minutes);
+      return { ...t, dueDate: next.date, dueTime: next.time };
+    }));
+  }, []);
+
   const updateTaskPriority = useCallback((areaId: string, taskId: string, priority: TaskPriority) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, priority })));
   }, []);
@@ -306,7 +318,7 @@ export function useTaskStore() {
   );
 
   const allTasksWithArea = areas.flatMap(a =>
-    a.tasks.map(t => ({ task: t, areaName: a.name }))
+    a.tasks.map(t => ({ task: t, areaName: a.name, areaId: a.id }))
   );
 
   return {
@@ -316,7 +328,7 @@ export function useTaskStore() {
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     showThemeDecorations, setShowThemeDecorations,
     addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime,
-    updateTaskPriority, updateTaskTags, deleteTask, moveTask,
+    updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
