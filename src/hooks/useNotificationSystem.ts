@@ -24,24 +24,28 @@ export function useNotificationSystem(
   allTasks: { task: Task; areaName: string; areaId?: string }[],
   settings: NotificationSettings,
   timezone: string,
+  onSnooze?: (refs: NotificationTaskRef[], minutes: number) => void,
 ) {
   const [currentEvent, setCurrentEvent] = useState<NotificationEvent | null>(null);
   const firedRef = useRef<Set<string>>(new Set());
 
-  const showNotification = useCallback((title: string, body: string, tag: string) => {
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    // Prefere o Service Worker (entrega melhor em background); fallback para Notification API
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: "SHOW_NOTIFICATION",
-        payload: { title, body, icon: "/icon-192.png", tag },
-      });
-    } else {
-      try {
-        new Notification(title, { body, icon: "/icon-192.png", tag });
-      } catch {}
-    }
-  }, []);
+  const showNotification = useCallback(
+    (title: string, body: string, tag: string, taskRefs: NotificationTaskRef[] = []) => {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      // Prefere o Service Worker (entrega melhor em background + suporta botões de ação)
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "SHOW_NOTIFICATION",
+          payload: { title, body, icon: "/icon-192.png", tag, taskRefs },
+        });
+      } else {
+        try {
+          new Notification(title, { body, icon: "/icon-192.png", tag });
+        } catch {}
+      }
+    },
+    [],
+  );
 
   const playSound = useCallback((volume: number, customUrl?: string) => {
     if (customUrl) {
@@ -96,7 +100,8 @@ export function useNotificationSystem(
           showNotification(
             `⏰ Tarefa em ${advMin} minuto${advMin !== 1 ? "s" : ""}`,
             matchingNames.join(", "),
-            `advance-${advMin}-${Date.now()}`
+            `advance-${advMin}-${Date.now()}`,
+            matchingRefs,
           );
 
           // Sound
@@ -130,7 +135,7 @@ export function useNotificationSystem(
       }
 
       if (dueNow.length > 0) {
-        showNotification("⏰ Tarefa agora!", dueNowNames.join(", "), `due-now-${Date.now()}`);
+        showNotification("⏰ Tarefa agora!", dueNowNames.join(", "), `due-now-${Date.now()}`, dueNowRefs);
         playSound(settings.volume, settings.customSoundUrl);
         setCurrentEvent({
           id: `${Date.now()}-now`,
@@ -152,6 +157,27 @@ export function useNotificationSystem(
       Notification.requestPermission();
     }
   }, []);
+
+  // Escuta cliques nos botões da notificação nativa (vindos do Service Worker)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !onSnooze) return;
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "SNOOZE_TASKS") {
+        const { taskRefs, minutes } = event.data.payload || {};
+        if (Array.isArray(taskRefs) && typeof minutes === "number") {
+          onSnooze(taskRefs as NotificationTaskRef[], minutes);
+          // Limpa o estado de "fired" para essa task pra que novas notificações disparem no novo horário
+          for (const ref of taskRefs as NotificationTaskRef[]) {
+            for (const key of Array.from(firedRef.current)) {
+              if (key.startsWith(`${ref.taskId}-`)) firedRef.current.delete(key);
+            }
+          }
+        }
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [onSnooze]);
 
   const dismissEvent = useCallback(() => setCurrentEvent(null), []);
 

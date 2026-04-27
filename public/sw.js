@@ -1,10 +1,9 @@
-// Service Worker básico para o PWA "Lista de Tarefas G"
-// Permite exibir notificações vindas do app mesmo quando a aba está em segundo plano.
+// Service Worker do PWA "Lista de Tarefas G"
+// Exibe notificações com botões de ação (+5/+30 min) e propaga cliques de volta ao app.
 
-const CACHE_NAME = "tarefas-g-v1";
+const CACHE_NAME = "tarefas-g-v2";
 
-self.addEventListener("install", (event) => {
-  // Ativa imediatamente a nova versão
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -15,21 +14,71 @@ self.addEventListener("activate", (event) => {
 // Recebe mensagens do app principal para disparar notificações
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SHOW_NOTIFICATION") {
-    const { title, body, icon, tag } = event.data.payload || {};
+    const { title, body, icon, tag, taskRefs } = event.data.payload || {};
+    const hasRefs = Array.isArray(taskRefs) && taskRefs.length > 0;
+
     self.registration.showNotification(title || "Tarefas G", {
       body: body || "",
       icon: icon || "/icon-192.png",
       badge: "/icon-192.png",
       tag: tag || "task-notification",
-      requireInteraction: false,
+      requireInteraction: true,
       vibrate: [200, 100, 200],
+      // Botões aparecem na notificação nativa do Windows quando o app
+      // está instalado como PWA. Limite prático = 2 ações.
+      actions: hasRefs
+        ? [
+            { action: "snooze-5", title: "+5 min" },
+            { action: "snooze-30", title: "+30 min" },
+          ]
+        : [],
+      data: {
+        taskRefs: hasRefs ? taskRefs : [],
+      },
     });
   }
 });
 
-// Ao clicar na notificação, foca/abre a janela do app
+// Lida com clique nos botões / corpo da notificação
 self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
+  const { action, notification } = event;
+  const taskRefs = notification.data?.taskRefs || [];
+
+  notification.close();
+
+  // Snooze: posta mensagem para todas as abas abertas aplicarem o adiamento
+  if (action === "snooze-5" || action === "snooze-30") {
+    const minutes = action === "snooze-5" ? 5 : 30;
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then(async (clientList) => {
+          // Se nenhuma aba estiver aberta, abre uma para que o app receba a mensagem
+          if (clientList.length === 0 && self.clients.openWindow) {
+            const newClient = await self.clients.openWindow("/");
+            if (newClient) {
+              newClient.postMessage({
+                type: "SNOOZE_TASKS",
+                payload: { taskRefs, minutes },
+              });
+            }
+            return;
+          }
+          for (const client of clientList) {
+            client.postMessage({
+              type: "SNOOZE_TASKS",
+              payload: { taskRefs, minutes },
+            });
+          }
+          // Foca a primeira janela disponível
+          const focusable = clientList.find((c) => "focus" in c);
+          if (focusable) await focusable.focus();
+        })
+    );
+    return;
+  }
+
+  // Clique no corpo da notificação (sem ação): foca/abre o app
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -40,7 +89,5 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// Fallback simples (não cacheia agressivamente para evitar problemas de versão)
-self.addEventListener("fetch", () => {
-  // Pass-through: não interceptamos requests para evitar servir conteúdo desatualizado
-});
+// Pass-through: não interceptamos requests para evitar conteúdo desatualizado
+self.addEventListener("fetch", () => {});

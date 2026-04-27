@@ -35,6 +35,9 @@ const AppContent = () => {
     store.allTasksWithArea,
     notifStore.settings,
     store.timezone,
+    (refs, minutes) => {
+      refs.forEach((r) => store.snoozeTask(r.areaId, r.taskId, minutes));
+    },
   );
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
