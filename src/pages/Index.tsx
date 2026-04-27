@@ -20,9 +20,11 @@ import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
+import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
 import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
+import { useEffect } from "react";
 
 const AppContent = () => {
   const store = useTaskStore();
@@ -42,10 +44,25 @@ const AppContent = () => {
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
+  const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
   });
+
+  // Atalho global tecla V → abre o modo voz inteligente
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "v" && e.key !== "V") return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || t.tagName === "SELECT")) return;
+      e.preventDefault();
+      setVoiceTaskOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const handlePreloaderDone = useCallback(() => {
     sessionStorage.setItem("preloader-shown", "true");
