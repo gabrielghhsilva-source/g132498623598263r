@@ -63,7 +63,7 @@ export function SettingsMenu({
       </button>
 
       {path && (
-        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg z-50 animate-scale-in w-[calc(100vw-1.5rem)] sm:w-auto sm:min-w-[280px] max-w-[340px] max-h-[80vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg z-50 animate-scale-in w-[calc(100vw-1.5rem)] sm:w-auto sm:min-w-[280px] max-w-[340px] max-h-[80vh] overflow-y-auto no-scrollbar">
           {/* Root menu */}
           {path === "root" && (
             <div className="p-2 space-y-0.5">

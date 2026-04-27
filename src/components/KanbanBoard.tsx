@@ -120,7 +120,7 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        className="flex gap-3 overflow-x-auto pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
         data-testid="kanban-board"
       >
         {areas.map(area => (

@@ -243,7 +243,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
           <div className="flex-1 flex flex-col min-h-0">
             {/* "Sem horário" section */}
             <div
-              className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0 max-h-[35%] overflow-y-auto"
+              className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0 max-h-[35%] overflow-y-auto no-scrollbar"
               onDragOver={(e) => { e.preventDefault(); }}
               onDrop={handleDropUntimed}
             >
@@ -271,7 +271,7 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
             </div>
 
             {/* Horizontal timeline */}
-            <div className="flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar">
               <div
                 ref={timelineRef}
                 className="relative h-full"

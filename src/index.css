@@ -224,6 +224,14 @@
   .animate-slide-in-right {
     animation: slideInRight 0.3s ease-out;
   }
+  /* Hide scrollbar but keep scrolling functional */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Opera */
+  }
 }
 
 @keyframes slideInRight {

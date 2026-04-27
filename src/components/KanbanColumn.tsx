@@ -104,7 +104,7 @@ export function KanbanColumn({
       )}
 
       {/* Tasks list */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[200px] max-h-[calc(100vh-280px)]">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2 min-h-[200px] max-h-[calc(100vh-280px)]">
         {area.tasks.length === 0 && !adding && (
           <div className="text-center py-8 text-xs text-muted-foreground italic">
             Sem tarefas. Clique em + pra adicionar.
