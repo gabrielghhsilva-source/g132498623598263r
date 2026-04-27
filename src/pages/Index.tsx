@@ -21,6 +21,7 @@ import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
+import { GodzillaPet } from "@/components/GodzillaPet";
 import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
@@ -216,6 +217,8 @@ const AppContent = () => {
             refs.forEach(({ areaId, taskId }) => store.snoozeTask(areaId, taskId, minutes));
           }}
         />
+
+        <GodzillaPet />
 
         <VoiceTaskDialog
           open={voiceTaskOpen}
