@@ -4,6 +4,7 @@ import { TaskTag, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
+import { VoiceRecorderButton } from "./VoiceRecorderButton";
 import { Plus, X } from "lucide-react";
 
 interface AreaOption { id: string; name: string; icon: string; }
@@ -79,14 +80,22 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Título *</label>
-            <input
-              autoFocus
-              value={text}
-              onChange={e => setText(e.target.value)}
-              placeholder="Descreva a tarefa..."
-              className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border focus:border-primary/40"
-            />
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">
+              Título * <span className="text-muted-foreground/70">— ou clique no microfone para ditar</span>
+            </label>
+            <div className="flex items-stretch gap-2">
+              <input
+                autoFocus
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder="Descreva a tarefa..."
+                className="flex-1 bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border focus:border-primary/40"
+              />
+              <VoiceRecorderButton
+                onTranscribed={(t) => setText(prev => (prev ? prev + " " + t : t))}
+                label="Ditar título da tarefa"
+              />
+            </div>
           </div>
 
           <div>
