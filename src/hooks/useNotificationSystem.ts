@@ -2,9 +2,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Task, NotificationSettings } from "@/lib/types";
 import { minutesUntilDue, getNowInTimezone } from "@/lib/timeUtils";
 
+export interface NotificationTaskRef {
+  taskId: string;
+  areaId: string;
+}
+
 interface NotificationEvent {
   id: string;
   taskNames: string[];
+  taskRefs: NotificationTaskRef[];
   advanceMinutes: number;
 }
 
