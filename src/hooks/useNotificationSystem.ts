@@ -24,6 +24,7 @@ export function useNotificationSystem(
   allTasks: { task: Task; areaName: string; areaId?: string }[],
   settings: NotificationSettings,
   timezone: string,
+  onSnooze?: (refs: NotificationTaskRef[], minutes: number) => void,
 ) {
   const [currentEvent, setCurrentEvent] = useState<NotificationEvent | null>(null);
   const firedRef = useRef<Set<string>>(new Set());
