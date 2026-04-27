@@ -71,11 +71,11 @@ export function KanbanBoard(props: Props) {
     let startScrollLeft = 0;
 
     const onMouseDown = (e: MouseEvent) => {
-      // Only left button, and only when grabbing the board background itself (not a card/column/button)
+      // Only left button, and only when grabbing the board background itself
       if (e.button !== 0) return;
       const target = e.target as HTMLElement;
-      // Ignore drags that start on interactive/draggable content inside columns
-      if (target.closest('[data-kanban-card], button, input, textarea, a, [draggable="true"]')) return;
+      // Only initiate panning when clicking the board container directly (not a column or its contents)
+      if (target !== el) return;
       isDown = true;
       startX = e.pageX;
       startScrollLeft = el.scrollLeft;
