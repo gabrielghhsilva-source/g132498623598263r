@@ -210,6 +210,20 @@ export function useTaskStore() {
     })));
   }, []);
 
+  /**
+   * Adia o prazo de uma task em `minutes` minutos.
+   * Se a task não tem dueDate, ignora silenciosamente.
+   */
+  const snoozeTask = useCallback((areaId: string, taskId: string, minutes: number) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => {
+      if (!t.dueDate) return t;
+      // import dinâmico para evitar ciclo de imports nos testes
+      const { addMinutesToDue } = require("@/lib/timeUtils");
+      const next = addMinutesToDue(t.dueDate, t.dueTime, minutes);
+      return { ...t, dueDate: next.date, dueTime: next.time };
+    }));
+  }, []);
+
   const updateTaskPriority = useCallback((areaId: string, taskId: string, priority: TaskPriority) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, priority })));
   }, []);
