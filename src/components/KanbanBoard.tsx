@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -45,61 +45,6 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
-
-  // Translate vertical wheel into smooth horizontal scroll (eased via rAF)
-  useEffect(() => {
-    const el = boardRef.current;
-    if (!el) return;
-    let targetLeft = el.scrollLeft;
-    let rafId: number | null = null;
-
-    const tick = () => {
-      const current = el.scrollLeft;
-      const diff = targetLeft - current;
-      if (Math.abs(diff) < 0.5) {
-        el.scrollLeft = targetLeft;
-        rafId = null;
-        return;
-      }
-      el.scrollLeft = current + diff * 0.18;
-      rafId = requestAnimationFrame(tick);
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey) return;
-      // Shift+wheel sends delta on deltaX in some browsers, deltaY in others — handle both
-      const delta = e.shiftKey
-        ? (e.deltaX !== 0 ? e.deltaX : e.deltaY)
-        : (e.deltaX !== 0 ? e.deltaX : e.deltaY);
-      if (delta === 0) return;
-      // Only respect inner column vertical scroll for plain vertical wheel (not shift, not horizontal)
-      if (!e.shiftKey && e.deltaX === 0) {
-        const target = e.target as HTMLElement;
-        const scrollableCol = target.closest('[data-column-scroll]') as HTMLElement | null;
-        if (scrollableCol) {
-          const { scrollTop, scrollHeight, clientHeight } = scrollableCol;
-          const goingDown = delta > 0;
-          const canScroll = goingDown
-            ? scrollTop + clientHeight < scrollHeight - 1
-            : scrollTop > 0;
-          if (canScroll) return;
-        }
-      }
-      e.preventDefault();
-      const max = el.scrollWidth - el.clientWidth;
-      if (rafId === null) targetLeft = el.scrollLeft;
-      targetLeft = Math.max(0, Math.min(max, targetLeft + delta));
-      if (rafId === null) rafId = requestAnimationFrame(tick);
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
-  }, []);
-
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
@@ -175,7 +120,6 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        ref={boardRef}
         className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-proximity"
         data-testid="kanban-board"
       >
