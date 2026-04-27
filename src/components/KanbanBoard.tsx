@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -45,6 +45,67 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  // Click-and-drag panning (ClickUp style) + smooth wheel-to-horizontal
+  const boardRef = useRef<HTMLDivElement>(null);
+  const panState = useRef<{ active: boolean; startX: number; startScroll: number; moved: boolean }>({
+    active: false,
+    startX: 0,
+    startScroll: 0,
+    moved: false,
+  });
+  const [isPanning, setIsPanning] = useState(false);
+
+  const onBoardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    // Don't pan when interacting with cards, buttons, inputs, etc.
+    if (target.closest("[data-kanban-card], button, input, textarea, a, [role='button'], [contenteditable='true']")) return;
+    const el = boardRef.current;
+    if (!el) return;
+    panState.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
+    setIsPanning(true);
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const s = panState.current;
+      if (!s.active) return;
+      const el = boardRef.current;
+      if (!el) return;
+      const dx = e.clientX - s.startX;
+      if (Math.abs(dx) > 4) s.moved = true;
+      el.scrollLeft = s.startScroll - dx;
+    };
+    const onUp = () => {
+      if (panState.current.active) {
+        panState.current.active = false;
+        setIsPanning(false);
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  // Convert vertical wheel to smooth horizontal scroll when not over a vertical scroller
+  const onBoardWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY === 0 || e.deltaX !== 0) return;
+    const target = e.target as HTMLElement;
+    // If hovering a column that can scroll vertically, let it scroll normally
+    const verticalScroller = target.closest<HTMLElement>("[data-kanban-column-scroll]");
+    if (verticalScroller) {
+      const canScroll = verticalScroller.scrollHeight > verticalScroller.clientHeight;
+      if (canScroll) return;
+    }
+    const el = boardRef.current;
+    if (!el) return;
+    el.scrollLeft += e.deltaY;
+  };
+
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
@@ -120,44 +181,45 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
+        ref={boardRef}
+        onMouseDown={onBoardMouseDown}
+        onWheel={onBoardWheel}
+        className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 scroll-smooth select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ scrollBehavior: isPanning ? "auto" : "smooth", overscrollBehaviorX: "contain" }}
         data-testid="kanban-board"
       >
         {areas.map(area => (
-          <div key={area.id} className="snap-start">
-            <KanbanColumn
-              area={area}
-              tags={tags}
-              timezone={timezone}
-              isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
-              draggingTaskId={draggingTaskId}
-              dragOverColumnId={dragOverColumnId}
-              onTaskClick={(t) => openTaskDetail(area.id, t)}
-              onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
-              onQuickToggleDone={(taskId) => {
-                const t = area.tasks.find(x => x.id === taskId);
-                if (!t) return;
-                props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
-              }}
-              onDeleteArea={() => props.onDeleteArea(area.id)}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOverColumn={() => setDragOverColumnId(area.id)}
-              onDropOnColumn={() => handleDropOnColumn(area.id)}
-            />
-          </div>
+          <KanbanColumn
+            key={area.id}
+            area={area}
+            tags={tags}
+            timezone={timezone}
+            isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
+            draggingTaskId={draggingTaskId}
+            dragOverColumnId={dragOverColumnId}
+            onTaskClick={(t) => openTaskDetail(area.id, t)}
+            onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
+            onQuickToggleDone={(taskId) => {
+              const t = area.tasks.find(x => x.id === taskId);
+              if (!t) return;
+              props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
+            }}
+            onDeleteArea={() => props.onDeleteArea(area.id)}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOverColumn={() => setDragOverColumnId(area.id)}
+            onDropOnColumn={() => handleDropOnColumn(area.id)}
+          />
         ))}
 
         {/* Add column */}
-        <div className="snap-start">
-          <button
-            onClick={props.onAddArea}
-            className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">Nova área</span>
-          </button>
-        </div>
+        <button
+          onClick={props.onAddArea}
+          className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="text-sm font-medium">Nova área</span>
+        </button>
       </div>
 
       {/* Quick add dialog */}

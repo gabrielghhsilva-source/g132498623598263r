@@ -30,6 +30,7 @@ export function KanbanCard({ task, tags, timezone, isDragging, onClick, onDragSt
 
   return (
     <div
+      data-kanban-card
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
