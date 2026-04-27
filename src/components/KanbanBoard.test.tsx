@@ -174,6 +174,7 @@ describe("KanbanBoard", () => {
   });
 
   it("done tasks are NOT shown in their original area column", () => {
+    localStorage.removeItem("kanban-hide-done");
     const areas: TaskArea[] = [
       { id: "work", name: "Trabalho", icon: "💼", collapsed: false, tasks: [
         { ...makeTask({ text: "Already done" }), status: "done" },
