@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, Clock } from "lucide-react";
 import { NotificationSettings } from "@/lib/types";
+import { NotificationTaskRef } from "@/hooks/useNotificationSystem";
 
 interface NotificationEvent {
   id: string;
   taskNames: string[];
+  taskRefs: NotificationTaskRef[];
   advanceMinutes: number;
 }
 
@@ -12,20 +14,23 @@ interface Props {
   event: NotificationEvent | null;
   settings: NotificationSettings;
   onDismiss: () => void;
+  /** Adia o prazo de TODAS as tasks do evento em `minutes` minutos. */
+  onSnooze?: (refs: NotificationTaskRef[], minutes: number) => void;
 }
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 
-export function NotificationPopup({ event, settings, onDismiss }: Props) {
+export function NotificationPopup({ event, settings, onDismiss, onSnooze }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (event) {
       setVisible(true);
+      // Tempo maior para dar chance de clicar em snooze
       const timer = setTimeout(() => {
         setVisible(false);
         setTimeout(onDismiss, 300);
-      }, 8000);
+      }, 15000);
       return () => clearTimeout(timer);
     }
   }, [event, onDismiss]);
@@ -40,6 +45,17 @@ export function NotificationPopup({ event, settings, onDismiss }: Props) {
   const timeLabel = event.advanceMinutes > 0
     ? `em ${event.advanceMinutes} minuto${event.advanceMinutes !== 1 ? "s" : ""}`
     : "agora!";
+
+  const close = () => { setVisible(false); setTimeout(onDismiss, 300); };
+
+  const handleSnooze = (mins: number) => {
+    if (onSnooze && event.taskRefs.length > 0) {
+      onSnooze(event.taskRefs, mins);
+    }
+    close();
+  };
+
+  const canSnooze = !!onSnooze && event.taskRefs.length > 0;
 
   return (
     <div
@@ -68,12 +84,35 @@ export function NotificationPopup({ event, settings, onDismiss }: Props) {
             </p>
           </div>
           <button
-            onClick={() => { setVisible(false); setTimeout(onDismiss, 300); }}
+            onClick={close}
             className="p-1 rounded-md hover:bg-accent transition-colors flex-shrink-0"
+            aria-label="Fechar notificação"
           >
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
+
+        {canSnooze && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/60">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" /> Adiar prazo
+            </span>
+            <div className="flex items-center gap-1.5 ml-auto">
+              <button
+                onClick={() => handleSnooze(5)}
+                className="px-2.5 py-1 rounded-md text-xs font-medium bg-secondary hover:bg-accent transition-colors"
+              >
+                +5 min
+              </button>
+              <button
+                onClick={() => handleSnooze(30)}
+                className="px-2.5 py-1 rounded-md text-xs font-medium bg-secondary hover:bg-accent transition-colors"
+              >
+                +30 min
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
