@@ -306,7 +306,7 @@ export function useTaskStore() {
   );
 
   const allTasksWithArea = areas.flatMap(a =>
-    a.tasks.map(t => ({ task: t, areaName: a.name }))
+    a.tasks.map(t => ({ task: t, areaName: a.name, areaId: a.id }))
   );
 
   return {
