@@ -204,6 +204,15 @@ export function KanbanBoard(props: Props) {
     setDragOverColumnId(null);
   }, [draggingTaskId, dragFromAreaId, props]);
 
+  const handleDropOnDone = useCallback(() => {
+    if (!draggingTaskId || !dragFromAreaId) return;
+    // Marca como done na área original (a coluna Prontas é virtual)
+    props.onUpdateStatus(dragFromAreaId, draggingTaskId, "done");
+    setDraggingTaskId(null);
+    setDragFromAreaId(null);
+    setDragOverColumnId(null);
+  }, [draggingTaskId, dragFromAreaId, props]);
+
   const openTaskDetail = (areaId: string, task: Task) => {
     setSelectedAreaId(areaId);
     setSelectedTaskId(task.id);
