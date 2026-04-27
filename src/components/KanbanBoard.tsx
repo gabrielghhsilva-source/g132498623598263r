@@ -213,15 +213,13 @@ export function KanbanBoard(props: Props) {
         ))}
 
         {/* Add column */}
-        <div className="snap-start">
-          <button
-            onClick={props.onAddArea}
-            className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">Nova área</span>
-          </button>
-        </div>
+        <button
+          onClick={props.onAddArea}
+          className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="text-sm font-medium">Nova área</span>
+        </button>
       </div>
 
       {/* Quick add dialog */}
