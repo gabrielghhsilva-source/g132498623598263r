@@ -181,7 +181,11 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
+        ref={boardRef}
+        onMouseDown={onBoardMouseDown}
+        onWheel={onBoardWheel}
+        className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 scroll-smooth select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ scrollBehavior: isPanning ? "auto" : "smooth", overscrollBehaviorX: "contain" }}
         data-testid="kanban-board"
       >
         {areas.map(area => (
