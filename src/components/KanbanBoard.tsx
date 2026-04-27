@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -45,6 +45,34 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Translate vertical wheel into horizontal scroll on the board (smooth, no snap stutter)
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      // Ignore pinch-zoom (ctrlKey + deltaY on trackpads triggers browser zoom — let it pass)
+      if (e.ctrlKey) return;
+      // Only intercept when user is scrolling vertically over the board
+      if (e.deltaY === 0) return;
+      // If the inner column can still scroll vertically, let it
+      const target = e.target as HTMLElement;
+      const scrollableCol = target.closest('[data-column-scroll]') as HTMLElement | null;
+      if (scrollableCol) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollableCol;
+        const goingDown = e.deltaY > 0;
+        const canScroll = goingDown
+          ? scrollTop + clientHeight < scrollHeight - 1
+          : scrollTop > 0;
+        if (canScroll) return;
+      }
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
@@ -120,7 +148,8 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
+        ref={boardRef}
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-proximity"
         data-testid="kanban-board"
       >
         {areas.map(area => (
