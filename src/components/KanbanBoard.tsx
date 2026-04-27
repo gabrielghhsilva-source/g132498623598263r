@@ -189,28 +189,27 @@ export function KanbanBoard(props: Props) {
         data-testid="kanban-board"
       >
         {areas.map(area => (
-          <div key={area.id} className="snap-start">
-            <KanbanColumn
-              area={area}
-              tags={tags}
-              timezone={timezone}
-              isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
-              draggingTaskId={draggingTaskId}
-              dragOverColumnId={dragOverColumnId}
-              onTaskClick={(t) => openTaskDetail(area.id, t)}
-              onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
-              onQuickToggleDone={(taskId) => {
-                const t = area.tasks.find(x => x.id === taskId);
-                if (!t) return;
-                props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
-              }}
-              onDeleteArea={() => props.onDeleteArea(area.id)}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOverColumn={() => setDragOverColumnId(area.id)}
-              onDropOnColumn={() => handleDropOnColumn(area.id)}
-            />
-          </div>
+          <KanbanColumn
+            key={area.id}
+            area={area}
+            tags={tags}
+            timezone={timezone}
+            isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
+            draggingTaskId={draggingTaskId}
+            dragOverColumnId={dragOverColumnId}
+            onTaskClick={(t) => openTaskDetail(area.id, t)}
+            onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
+            onQuickToggleDone={(taskId) => {
+              const t = area.tasks.find(x => x.id === taskId);
+              if (!t) return;
+              props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
+            }}
+            onDeleteArea={() => props.onDeleteArea(area.id)}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOverColumn={() => setDragOverColumnId(area.id)}
+            onDropOnColumn={() => handleDropOnColumn(area.id)}
+          />
         ))}
 
         {/* Add column */}
