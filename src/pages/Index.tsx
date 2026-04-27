@@ -216,6 +216,18 @@ const AppContent = () => {
             refs.forEach(({ areaId, taskId }) => store.snoozeTask(areaId, taskId, minutes));
           }}
         />
+
+        <VoiceTaskDialog
+          open={voiceTaskOpen}
+          onOpenChange={setVoiceTaskOpen}
+          areas={store.areas.map(a => ({ id: a.id, name: a.name, icon: a.icon }))}
+          tags={store.tags}
+          timezone={store.timezone}
+          onCreateTasks={(items) => {
+            items.forEach(({ areaId, input }) => store.addTaskFull(areaId, input));
+            setActiveTab("tasks");
+          }}
+        />
       </div>
     </>
   );
