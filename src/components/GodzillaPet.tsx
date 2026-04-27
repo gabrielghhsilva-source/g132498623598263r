@@ -42,9 +42,13 @@ const IDLE_FRAMES = [r2c0, r2c1, r2c2, r2c3];
 const ROAR_FRAME = r3c0;
 
 const DISPLAY = 80;            // tamanho exibido
-const WALK_FRAME_MS = 140;
-const IDLE_FRAME_MS = 320;
-const WALK_SPEED_PX_S = 30;
+// Sincronia entre passos e movimento pra ele não "patinar":
+// 8 frames de ciclo × 180ms = 1.44s por ciclo completo.
+// Cada ciclo = ~2 passos. Um passo de Godzilla 80px ≈ 32px de avanço.
+// → velocidade ≈ (32px × 2) / 1.44s ≈ 44 px/s.
+const WALK_FRAME_MS = 180;     // animação um pouco mais lenta = passos mais "pesados"
+const IDLE_FRAME_MS = 380;
+const WALK_SPEED_PX_S = 44;    // calibrado pros pés baterem no chão
 
 type Mode = "walking" | "idle" | "roaring";
 
