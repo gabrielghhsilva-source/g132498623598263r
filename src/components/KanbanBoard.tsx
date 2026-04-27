@@ -68,21 +68,28 @@ export function KanbanBoard(props: Props) {
 
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) return;
-      if (e.deltaY === 0) return;
-      const target = e.target as HTMLElement;
-      const scrollableCol = target.closest('[data-column-scroll]') as HTMLElement | null;
-      if (scrollableCol) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollableCol;
-        const goingDown = e.deltaY > 0;
-        const canScroll = goingDown
-          ? scrollTop + clientHeight < scrollHeight - 1
-          : scrollTop > 0;
-        if (canScroll) return;
+      // Shift+wheel sends delta on deltaX in some browsers, deltaY in others — handle both
+      const delta = e.shiftKey
+        ? (e.deltaX !== 0 ? e.deltaX : e.deltaY)
+        : (e.deltaX !== 0 ? e.deltaX : e.deltaY);
+      if (delta === 0) return;
+      // Only respect inner column vertical scroll for plain vertical wheel (not shift, not horizontal)
+      if (!e.shiftKey && e.deltaX === 0) {
+        const target = e.target as HTMLElement;
+        const scrollableCol = target.closest('[data-column-scroll]') as HTMLElement | null;
+        if (scrollableCol) {
+          const { scrollTop, scrollHeight, clientHeight } = scrollableCol;
+          const goingDown = delta > 0;
+          const canScroll = goingDown
+            ? scrollTop + clientHeight < scrollHeight - 1
+            : scrollTop > 0;
+          if (canScroll) return;
+        }
       }
       e.preventDefault();
       const max = el.scrollWidth - el.clientWidth;
       if (rafId === null) targetLeft = el.scrollLeft;
-      targetLeft = Math.max(0, Math.min(max, targetLeft + e.deltaY));
+      targetLeft = Math.max(0, Math.min(max, targetLeft + delta));
       if (rafId === null) rafId = requestAnimationFrame(tick);
     };
 
