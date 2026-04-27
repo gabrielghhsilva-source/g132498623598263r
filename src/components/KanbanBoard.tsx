@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -45,108 +45,6 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
-
-  // Smooth horizontal scrolling target (eased via rAF) — used by Shift+wheel
-  const targetLeftRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
-
-  const ensureSmoothScroll = useCallback(() => {
-    const el = boardRef.current;
-    if (!el) return;
-    if (rafRef.current !== null) return;
-    const tick = () => {
-      const node = boardRef.current;
-      if (!node) { rafRef.current = null; return; }
-      const current = node.scrollLeft;
-      const diff = targetLeftRef.current - current;
-      if (Math.abs(diff) < 0.5) {
-        node.scrollLeft = targetLeftRef.current;
-        rafRef.current = null;
-        return;
-      }
-      // Ease-out: ~9% per frame → smooth, visible glide
-      node.scrollLeft = current + diff * 0.09;
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-  }, []);
-
-  // Global Shift+wheel → smooth horizontal scroll on the board (works anywhere on the page)
-  useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      const el = boardRef.current;
-      if (!el) return;
-      if (!e.shiftKey) return;
-      const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
-      if (delta === 0) return;
-      e.preventDefault();
-      const max = el.scrollWidth - el.clientWidth;
-      // If no animation in progress, sync target to current scroll so the new gesture feels responsive
-      if (rafRef.current === null) targetLeftRef.current = el.scrollLeft;
-      // Multiplier > 1 makes the glide travel further and feel smoother
-      targetLeftRef.current = Math.max(0, Math.min(max, targetLeftRef.current + delta * 1.4));
-      ensureSmoothScroll();
-    };
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [ensureSmoothScroll]);
-
-  // Click-and-drag panning anywhere on the board background (including padding/empty areas)
-  useEffect(() => {
-    const el = boardRef.current;
-    if (!el) return;
-    let isDown = false;
-    let startX = 0;
-    let startScrollLeft = 0;
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-      const target = e.target as HTMLElement;
-      // Skip drags that start on interactive content (cards, buttons, inputs, draggable items)
-      if (target.closest('button, input, textarea, a, select, [draggable="true"], [role="button"]')) return;
-      // Cancel any ongoing smooth scroll so it doesn't fight the drag
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      isDown = true;
-      startX = e.pageX;
-      startScrollLeft = el.scrollLeft;
-      el.style.cursor = "grabbing";
-      el.style.userSelect = "none";
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDown) return;
-      e.preventDefault();
-      el.scrollLeft = startScrollLeft - (e.pageX - startX);
-    };
-    const stop = () => {
-      if (!isDown) return;
-      isDown = false;
-      el.style.cursor = "";
-      el.style.userSelect = "";
-    };
-
-    el.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", stop);
-    window.addEventListener("mouseleave", stop);
-    return () => {
-      el.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", stop);
-      window.removeEventListener("mouseleave", stop);
-    };
-  }, []);
-
-
 
   // Keyboard shortcut: N opens quick add
   useEffect(() => {
@@ -222,8 +120,7 @@ export function KanbanBoard(props: Props) {
 
       {/* Board */}
       <div
-        ref={boardRef}
-        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-proximity cursor-grab"
+        className="flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
         data-testid="kanban-board"
       >
         {areas.map(area => (
