@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskTag, TaskPriority, Subtask } from "@/lib/types";
-import { isTaskOverdue, getNowInTimezone } from "@/lib/timeUtils";
+import { isTaskOverdue, getNowInTimezone, addMinutesToDue } from "@/lib/timeUtils";
 import { secureGet, secureSet } from "@/lib/crypto";
 import {
   AddTaskInput, makeTask, normalizeTask,
@@ -217,8 +217,6 @@ export function useTaskStore() {
   const snoozeTask = useCallback((areaId: string, taskId: string, minutes: number) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => {
       if (!t.dueDate) return t;
-      // import dinâmico para evitar ciclo de imports nos testes
-      const { addMinutesToDue } = require("@/lib/timeUtils");
       const next = addMinutesToDue(t.dueDate, t.dueTime, minutes);
       return { ...t, dueDate: next.date, dueTime: next.time };
     }));
