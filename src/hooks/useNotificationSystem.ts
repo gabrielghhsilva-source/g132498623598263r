@@ -28,20 +28,23 @@ export function useNotificationSystem(
   const [currentEvent, setCurrentEvent] = useState<NotificationEvent | null>(null);
   const firedRef = useRef<Set<string>>(new Set());
 
-  const showNotification = useCallback((title: string, body: string, tag: string) => {
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    // Prefere o Service Worker (entrega melhor em background); fallback para Notification API
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: "SHOW_NOTIFICATION",
-        payload: { title, body, icon: "/icon-192.png", tag },
-      });
-    } else {
-      try {
-        new Notification(title, { body, icon: "/icon-192.png", tag });
-      } catch {}
-    }
-  }, []);
+  const showNotification = useCallback(
+    (title: string, body: string, tag: string, taskRefs: NotificationTaskRef[] = []) => {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      // Prefere o Service Worker (entrega melhor em background + suporta botões de ação)
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "SHOW_NOTIFICATION",
+          payload: { title, body, icon: "/icon-192.png", tag, taskRefs },
+        });
+      } else {
+        try {
+          new Notification(title, { body, icon: "/icon-192.png", tag });
+        } catch {}
+      }
+    },
+    [],
+  );
 
   const playSound = useCallback((volume: number, customUrl?: string) => {
     if (customUrl) {
