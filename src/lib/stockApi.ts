@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getAppPassword } from "@/lib/crypto";
 
 // In-memory cache to reduce API calls
 const responseCache = new Map<string, { data: any; timestamp: number }>();
@@ -15,7 +16,11 @@ function setCache(key: string, data: any) {
 }
 
 async function callProxy(body: Record<string, string>) {
-  const { data, error } = await supabase.functions.invoke("stock-proxy", { body });
+  const pwd = getAppPassword();
+  const { data, error } = await supabase.functions.invoke("stock-proxy", {
+    body,
+    headers: pwd ? { "x-app-password": pwd } : undefined,
+  });
   if (error) throw new Error(error.message || "Proxy request failed");
   if (data?.error) throw new Error(data.error);
   return data;
