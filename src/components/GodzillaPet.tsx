@@ -265,10 +265,16 @@ export function GodzillaPet() {
   // Direção: sprites originais olham pra DIREITA. dir=-1 (esquerda) precisa flip.
   const flip = dirRef.current === -1;
 
+  const handleClick = () => {
+    const now = performance.now();
+    if (now - lastFireRef.current < COOLDOWN_MS) return;
+    lastFireRef.current = now;
+    triggerFireRef.current();
+  };
+
   return (
     <div
       ref={containerRef}
-      aria-hidden
       className="fixed pointer-events-none select-none"
       style={{
         left: 0,
@@ -280,12 +286,17 @@ export function GodzillaPet() {
       }}
     >
       <div
+        onClick={handleClick}
+        role="button"
+        aria-label="Atomic breath"
         style={{
           position: "relative",
           width: "100%",
           height: "100%",
           transform: flip ? "scaleX(-1)" : undefined,
           transformOrigin: "center bottom",
+          cursor: "pointer",
+          pointerEvents: "auto",
         }}
       >
         <img
