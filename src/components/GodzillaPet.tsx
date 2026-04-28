@@ -228,6 +228,15 @@ export function GodzillaPet() {
       }, duration);
     };
     schedule();
+
+    triggerFireRef.current = () => {
+      if (cancelled) return;
+      const cur = modeRef.current;
+      if (cur === "charging" || cur === "firing") return;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      transitionTo("charging");
+      schedule();
+    };
     return () => {
       cancelled = true;
       if (timeoutId !== undefined) clearTimeout(timeoutId);
