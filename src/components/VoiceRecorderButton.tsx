@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getAppPassword } from "@/lib/crypto";
 import { toast } from "sonner";
 
 interface Props {
@@ -43,8 +44,10 @@ export function VoiceRecorderButton({ onTranscribed, className, label = "Ditar t
         reader.readAsDataURL(blob);
       });
 
+      const pwd = getAppPassword();
       const { data, error } = await supabase.functions.invoke("transcribe-audio", {
         body: { audio: base64, mimeType: blob.type || "audio/webm" },
+        headers: pwd ? { "x-app-password": pwd } : undefined,
       });
 
       if (error) {
