@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Mic, Square, Loader2, Sparkles, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getAppPassword } from "@/lib/crypto";
 import { toast } from "sonner";
 import { TaskTag, TaskPriority, PRIORITY_META } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
@@ -115,6 +116,7 @@ export function VoiceTaskDialog({ open, onOpenChange, areas, tags, timezone, onC
         reader.readAsDataURL(blob);
       });
 
+      const pwd = getAppPassword();
       const { data, error } = await supabase.functions.invoke("voice-tasks", {
         body: {
           audio: base64,
@@ -123,6 +125,7 @@ export function VoiceTaskDialog({ open, onOpenChange, areas, tags, timezone, onC
           tags: tags.map((t) => ({ id: t.id, name: t.name })),
           today: todayStr,
         },
+        headers: pwd ? { "x-app-password": pwd } : undefined,
       });
 
       if (error) {
