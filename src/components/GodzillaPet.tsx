@@ -298,9 +298,9 @@ export function GodzillaPet() {
             draggable={false}
             style={{
               position: "absolute",
-              // Boca fica aprox em ~55% da altura, "à frente" (esquerda no sprite original).
-              // Como o container já é flipado quando dir=1, o beam sai naturalmente da boca.
-              right: `${DISPLAY * 0.85}px`,
+              // Boca fica do lado oposto à direção visível atual: como o container já é flipado
+              // quando dir=-1, posicionar o beam pela LEFT faz ele sair pela boca em ambos os lados.
+              left: `${DISPLAY * 0.85}px`,
               bottom: `${DISPLAY * 0.45}px`,
               height: `${DISPLAY * 0.35}px`,
               width: "auto",
