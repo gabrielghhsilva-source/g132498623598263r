@@ -248,8 +248,8 @@ export function GodzillaPet() {
   const showBeam = mode === "firing";
   const beamFrame = showBeam ? BEAM[Math.min(frameIdx, BEAM.length - 1)] : null;
 
-  // Direção: sprites originais olham pra ESQUERDA. dir=1 (direita) precisa flip.
-  const flip = dirRef.current === 1;
+  // Direção: sprites originais olham pra DIREITA. dir=-1 (esquerda) precisa flip.
+  const flip = dirRef.current === -1;
 
   return (
     <div
