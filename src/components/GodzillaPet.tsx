@@ -95,6 +95,7 @@ export function GodzillaPet() {
   const [frameIdx, setFrameIdx] = useState(0);
   const [, forceRender] = useState(0);
   const lastFireRef = useRef<number>(0);
+  const cooldownTickRef = useRef<number>(0);
   const COOLDOWN_MS = 7000;
 
   // Refs do loop (evitam closure stale + re-render por frame)
