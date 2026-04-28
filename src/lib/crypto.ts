@@ -97,6 +97,7 @@ export async function initSecurity(password: string): Promise<boolean> {
     }
   }
 
+  appPassword = password;
   return true;
 }
 
