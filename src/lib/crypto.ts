@@ -2,7 +2,12 @@
 const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key", "salary-data"];
 
 let cryptoKey: CryptoKey | null = null;
+let appPassword: string | null = null;
 const cache = new Map<string, string>();
+
+export function getAppPassword(): string | null {
+  return appPassword;
+}
 
 function hexToBytes(hex: string): Uint8Array {
   return new Uint8Array(hex.match(/.{2}/g)!.map(h => parseInt(h, 16)));
