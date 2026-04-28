@@ -232,7 +232,8 @@ export function GodzillaPet() {
 
   // === Escolhe sprite atual ===
   let frames: string[];
-  if (mode === "walking") frames = WALK;
+  // "walking" usa os frames de RUN (animação mais viva), mas com velocidade de caminhada.
+  if (mode === "walking") frames = RUN;
   else if (mode === "running") frames = RUN;
   else if (mode === "jumping") frames = JUMP;
   else if (mode === "charging") frames = CHARGE;
