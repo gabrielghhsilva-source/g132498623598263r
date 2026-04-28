@@ -70,7 +70,7 @@ const BEAM = [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11];
 
 // === CONFIG ===
 const DISPLAY = 80;             // tamanho exibido na página
-const WALK_FRAME_MS = 110;      // 11 frames × 110ms ≈ 1.21s/ciclo
+const WALK_FRAME_MS = 75;       // walking usa frames de RUN — anima rápido mesmo andando devagar
 const RUN_FRAME_MS = 70;        // corre rápido
 const JUMP_FRAME_MS = 80;       // arco do pulo
 const CHARGE_FRAME_MS = 140;
