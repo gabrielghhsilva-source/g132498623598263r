@@ -94,6 +94,8 @@ export function GodzillaPet() {
   const [mode, setMode] = useState<Mode>("walking");
   const [frameIdx, setFrameIdx] = useState(0);
   const [, forceRender] = useState(0);
+  const lastFireRef = useRef<number>(0);
+  const COOLDOWN_MS = 7000;
 
   // Refs do loop (evitam closure stale + re-render por frame)
   const xRef = useRef<number>(
