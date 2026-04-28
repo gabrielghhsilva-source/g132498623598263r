@@ -1,5 +1,4 @@
 // AES-GCM encryption with PBKDF2 key derivation from password
-const EXPECTED_HASH = "7f17fe7d4623c01b2b066c442d67115c9db9e408b3c2ea07bad8c86f65fc7e62";
 const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key", "salary-data"];
 
 let cryptoKey: CryptoKey | null = null;
@@ -11,12 +10,6 @@ function hexToBytes(hex: string): Uint8Array {
 
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function hashPassword(password: string): Promise<string> {
-  const encoded = new TextEncoder().encode(password);
-  const hash = await crypto.subtle.digest("SHA-256", encoded);
-  return bytesToHex(new Uint8Array(hash));
 }
 
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
@@ -57,10 +50,6 @@ async function decrypt(hexData: string): Promise<string> {
 }
 
 export async function initSecurity(password: string): Promise<boolean> {
-  // Verify password hash
-  const hash = await hashPassword(password);
-  if (hash !== EXPECTED_HASH) return false;
-
   // Get or create salt
   let saltHex = localStorage.getItem("crypto-salt");
   let salt: Uint8Array;
