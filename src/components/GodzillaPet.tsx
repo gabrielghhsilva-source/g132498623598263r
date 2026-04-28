@@ -94,6 +94,9 @@ export function GodzillaPet() {
   const [mode, setMode] = useState<Mode>("walking");
   const [frameIdx, setFrameIdx] = useState(0);
   const [, forceRender] = useState(0);
+  const lastFireRef = useRef<number>(0);
+  const cooldownTickRef = useRef<number>(0);
+  const COOLDOWN_MS = 7000;
 
   // Refs do loop (evitam closure stale + re-render por frame)
   const xRef = useRef<number>(
@@ -104,6 +107,7 @@ export function GodzillaPet() {
   const modeRef = useRef<Mode>("walking");
   modeRef.current = mode;
   const jumpStartRef = useRef<number>(0);
+  const triggerFireRef = useRef<() => void>(() => {});
 
   // === Loop de movimento + arco de pulo ===
   useEffect(() => {
@@ -224,6 +228,15 @@ export function GodzillaPet() {
       }, duration);
     };
     schedule();
+
+    triggerFireRef.current = () => {
+      if (cancelled) return;
+      const cur = modeRef.current;
+      if (cur === "charging" || cur === "firing") return;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      transitionTo("charging");
+      schedule();
+    };
     return () => {
       cancelled = true;
       if (timeoutId !== undefined) clearTimeout(timeoutId);
@@ -252,10 +265,16 @@ export function GodzillaPet() {
   // Direção: sprites originais olham pra DIREITA. dir=-1 (esquerda) precisa flip.
   const flip = dirRef.current === -1;
 
+  const handleClick = () => {
+    const now = performance.now();
+    if (now - lastFireRef.current < COOLDOWN_MS) return;
+    lastFireRef.current = now;
+    triggerFireRef.current();
+  };
+
   return (
     <div
       ref={containerRef}
-      aria-hidden
       className="fixed pointer-events-none select-none"
       style={{
         left: 0,
@@ -267,12 +286,17 @@ export function GodzillaPet() {
       }}
     >
       <div
+        onClick={handleClick}
+        role="button"
+        aria-label="Atomic breath"
         style={{
           position: "relative",
           width: "100%",
           height: "100%",
           transform: flip ? "scaleX(-1)" : undefined,
           transformOrigin: "center bottom",
+          cursor: "pointer",
+          pointerEvents: "auto",
         }}
       >
         <img
