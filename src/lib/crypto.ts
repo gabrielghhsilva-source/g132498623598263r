@@ -12,12 +12,6 @@ function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function hashPassword(password: string): Promise<string> {
-  const encoded = new TextEncoder().encode(password);
-  const hash = await crypto.subtle.digest("SHA-256", encoded);
-  return bytesToHex(new Uint8Array(hash));
-}
-
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoded = new TextEncoder().encode(password);
   const rawKey = new Uint8Array(encoded).buffer;
