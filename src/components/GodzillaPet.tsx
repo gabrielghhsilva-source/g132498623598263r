@@ -107,6 +107,7 @@ export function GodzillaPet() {
   const modeRef = useRef<Mode>("walking");
   modeRef.current = mode;
   const jumpStartRef = useRef<number>(0);
+  const triggerFireRef = useRef<() => void>(() => {});
 
   // === Loop de movimento + arco de pulo ===
   useEffect(() => {
