@@ -289,7 +289,7 @@ export function GodzillaPet() {
             objectFit: "contain",
             objectPosition: "center bottom",
             imageRendering: "pixelated",
-            filter: "drop-shadow(0 4px 4px hsl(0 0% 0% / 0.35))",
+            filter: "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
           }}
         />
         {beamFrame && (
