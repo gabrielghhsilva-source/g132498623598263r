@@ -134,5 +134,6 @@ export function isUnlocked(): boolean {
 
 export function lockApp(): void {
   cryptoKey = null;
+  appPassword = null;
   cache.clear();
 }
