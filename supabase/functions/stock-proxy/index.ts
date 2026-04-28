@@ -2,15 +2,36 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-password",
 };
 
 const API_BASE = "https://www.alphavantage.co/query";
+
+function checkAppPassword(req: Request): Response | null {
+  const expected = Deno.env.get("APP_PASSWORD");
+  if (!expected) {
+    return new Response(JSON.stringify({ error: "APP_PASSWORD not configured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const provided = req.headers.get("x-app-password");
+  if (!provided || provided !== expected) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  return null;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const authFail = checkAppPassword(req);
+  if (authFail) return authFail;
 
   const apiKey = Deno.env.get("ALPHA_VANTAGE_API_KEY");
   if (!apiKey) {
