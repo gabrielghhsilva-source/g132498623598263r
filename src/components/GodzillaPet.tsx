@@ -198,9 +198,9 @@ export function GodzillaPet() {
         let next: Mode = "walking";
         if (c === "walking") {
           const r = Math.random();
-          if (r < 0.12) next = "charging";
-          else if (r < 0.25) next = "running";
-          else if (r < 0.32) next = "jumping";
+          if (r < 0.05) next = "charging";
+          else if (r < 0.18) next = "running";
+          else if (r < 0.25) next = "jumping";
           else next = "idle";
         } else if (c === "running") {
           next = Math.random() < 0.3 ? "jumping" : "walking";
