@@ -88,7 +88,14 @@ type Mode = "walking" | "running" | "idle" | "jumping" | "charging" | "firing";
 // Sprites originais miram pra ESQUERDA. Quando dir=1 (direita), espelhamos.
 // Exceção: se algum sprite estiver pra direita, ajustamos no render.
 
-export function GodzillaPet() {
+interface PetProps {
+  /** Sprite estático que sobrepõe o sprite-sheet padrão (usado por skins idle-only como Shin Godzilla) */
+  overrideSprite?: string;
+  /** Efeitos visuais ativos para a skin/nível atual */
+  effects?: Array<{ kind: string; color?: string; intensity?: number }>;
+}
+
+export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [mode, setMode] = useState<Mode>("walking");
