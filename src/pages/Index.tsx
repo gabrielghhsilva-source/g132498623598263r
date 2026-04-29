@@ -36,6 +36,7 @@ const AppContent = () => {
   const bgStore = useBackgroundStore();
   const stockStore = useStockStore();
   const salaryStore = useSalaryStore();
+  const xp = useXpStore();
   const { currentEvent, dismissEvent } = useNotificationSystem(
     store.allTasksWithArea,
     notifStore.settings,
@@ -44,6 +45,32 @@ const AppContent = () => {
       refs.forEach((r) => store.snoozeTask(r.areaId, r.taskId, minutes));
     },
   );
+
+  // ===== XP wiring: intercept actions to award XP =====
+  const handleUpdateStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
+    const area = store.areas.find(a => a.id === areaId);
+    const task = area?.tasks.find(t => t.id === taskId);
+    const wasNotDone = task && task.status !== "done";
+    store.updateTaskStatus(areaId, taskId, status);
+    if (status === "done" && wasNotDone && task) {
+      xp.awardTask({ task: { id: task.id, text: task.text, priority: task.priority, dueDate: task.dueDate, dueTime: task.dueTime, subtasks: task.subtasks } });
+    }
+  }, [store, xp]);
+
+  const handleToggleSubtask = useCallback((areaId: string, taskId: string, subId: string) => {
+    const area = store.areas.find(a => a.id === areaId);
+    const task = area?.tasks.find(t => t.id === taskId);
+    const sub = task?.subtasks?.find(s => s.id === subId);
+    const wasNotDone = sub && !sub.done;
+    store.toggleSubtaskOf(areaId, taskId, subId);
+    if (wasNotDone && task) xp.awardSubtask(task.text);
+  }, [store, xp]);
+
+  const handleAddContribution = useCallback((areaId: string, investmentId: string, date: string, amount: number) => {
+    investStore.addContribution(areaId, investmentId, date, amount);
+    if (amount > 0) xp.awardContribution(investmentId, amount);
+  }, [investStore, xp]);
+
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
