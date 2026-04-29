@@ -216,3 +216,50 @@ export const DEFAULT_SALARY_DATA: SalaryData = {
 
 // Navigation
 export type AppTab = "tasks" | "investments" | "stocks" | "salary";
+
+// ===== XP / Level system =====
+export type XpReason =
+  | "task_done"
+  | "subtask_done"
+  | "early_completion"
+  | "late_completion"
+  | "monthly_contribution"
+  | "contribution_amount"
+  | "daily_bonus"
+  | "streak_bonus";
+
+export interface XpEntry {
+  id: string;
+  ts: string;          // ISO timestamp
+  amount: number;      // already with multiplier applied
+  base: number;        // raw amount before multiplier
+  multiplier: number;  // streak multiplier applied
+  reason: XpReason;
+  detail?: string;     // free-text context (task name, area, etc)
+}
+
+export interface XpState {
+  totalXp: number;          // cumulative XP earned
+  currentLevel: number;     // computed but cached
+  history: XpEntry[];       // last N entries
+  dailyDoneCount: Record<string, number>; // YYYY-MM-DD -> count of tasks completed (for daily bonus)
+  dailyXp: Record<string, number>;        // YYYY-MM-DD -> total XP earned that day
+  streakDays: number;       // consecutive days with at least 1 task done
+  lastStreakDate: string;   // YYYY-MM-DD of last streak day
+  monthlyContributions: Record<string, string[]>; // "YYYY-MM" -> [investmentId] already credited
+  selectedSkin: string;     // active skin id
+  unlockedSkins: string[];  // explicitly unlocked skins (auto-includes those whose level <= currentLevel)
+}
+
+export const DEFAULT_XP_STATE: XpState = {
+  totalXp: 0,
+  currentLevel: 1,
+  history: [],
+  dailyDoneCount: {},
+  dailyXp: {},
+  streakDays: 0,
+  lastStreakDate: "",
+  monthlyContributions: {},
+  selectedSkin: "classic",
+  unlockedSkins: ["classic"],
+};
