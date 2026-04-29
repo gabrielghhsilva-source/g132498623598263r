@@ -265,7 +265,10 @@ const AppContent = () => {
           }}
         />
 
-        <GodzillaPet />
+        <GodzillaPet
+          overrideSprite={xp.activeStage.idleSprite}
+          effects={xp.activeSkin.effects.filter(e => xp.progress.level >= e.fromLevel)}
+        />
 
         <VoiceTaskDialog
           open={voiceTaskOpen}
