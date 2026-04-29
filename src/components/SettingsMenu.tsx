@@ -45,6 +45,7 @@ export function SettingsMenu({
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
   showThemeDecorations, onShowThemeDecorationsChange,
+  xpState, xpProgress, xpStreakMult, xpActiveSkin, xpActiveStage, xpSetSelectedSkin,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -76,9 +77,25 @@ export function SettingsMenu({
           {/* Root menu */}
           {path === "root" && (
             <div className="p-2 space-y-0.5">
+              <MenuItem icon={Trophy} label="Progresso" onClick={() => setPath("progress")} hasSubmenu />
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
+            </div>
+          )}
+
+          {/* Progress */}
+          {path === "progress" && (
+            <div className="p-3 space-y-3">
+              <BackButton onClick={() => setPath("root")} label="Progresso" />
+              <LevelPanel
+                state={xpState}
+                progress={xpProgress}
+                streakMult={xpStreakMult}
+                activeSkin={xpActiveSkin}
+                activeStage={xpActiveStage}
+                setSelectedSkin={xpSetSelectedSkin}
+              />
             </div>
           )}
 
