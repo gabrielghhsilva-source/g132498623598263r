@@ -88,7 +88,14 @@ type Mode = "walking" | "running" | "idle" | "jumping" | "charging" | "firing";
 // Sprites originais miram pra ESQUERDA. Quando dir=1 (direita), espelhamos.
 // Exceção: se algum sprite estiver pra direita, ajustamos no render.
 
-export function GodzillaPet() {
+interface PetProps {
+  /** Sprite estático que sobrepõe o sprite-sheet padrão (usado por skins idle-only como Shin Godzilla) */
+  overrideSprite?: string;
+  /** Efeitos visuais ativos para a skin/nível atual */
+  effects?: Array<{ kind: string; color?: string; intensity?: number }>;
+}
+
+export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [mode, setMode] = useState<Mode>("walking");
@@ -299,8 +306,24 @@ export function GodzillaPet() {
           pointerEvents: "auto",
         }}
       >
+        {/* Aura glow (efeito por trás do sprite) */}
+        {effects.filter(e => e.kind === "aura-glow").map((e, i) => (
+          <div
+            key={`aura-${i}`}
+            style={{
+              position: "absolute",
+              inset: "-10%",
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${e.color || "hsl(200 100% 60%)"} 0%, transparent 60%)`,
+              opacity: (e.intensity || 0.5) * 0.6,
+              filter: "blur(8px)",
+              pointerEvents: "none",
+              animation: "pulse 2s ease-in-out infinite",
+            }}
+          />
+        ))}
         <img
-          src={src}
+          src={overrideSprite || src}
           alt=""
           draggable={false}
           width={DISPLAY}
@@ -313,7 +336,13 @@ export function GodzillaPet() {
             objectFit: "contain",
             objectPosition: "center bottom",
             imageRendering: "pixelated",
-            filter: "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
+            filter: [
+              "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
+              ...effects.filter(e => e.kind === "spine-glow").map(e => `drop-shadow(0 0 ${4 + (e.intensity || 0.4) * 8}px ${e.color || "hsl(200 100% 60%)"})`),
+              ...effects.filter(e => e.kind === "color-tint").map(e => `hue-rotate(${(e.intensity || 0.3) * 60}deg)`),
+            ].join(" "),
+            // micro-respiração quando usando sprite estático (skin Shin)
+            animation: overrideSprite ? "pulse 2.4s ease-in-out infinite" : undefined,
           }}
         />
         {beamFrame && (
