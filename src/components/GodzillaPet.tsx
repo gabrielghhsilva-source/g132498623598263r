@@ -306,8 +306,24 @@ export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
           pointerEvents: "auto",
         }}
       >
+        {/* Aura glow (efeito por trás do sprite) */}
+        {effects.filter(e => e.kind === "aura-glow").map((e, i) => (
+          <div
+            key={`aura-${i}`}
+            style={{
+              position: "absolute",
+              inset: "-10%",
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${e.color || "hsl(200 100% 60%)"} 0%, transparent 60%)`,
+              opacity: (e.intensity || 0.5) * 0.6,
+              filter: "blur(8px)",
+              pointerEvents: "none",
+              animation: "pulse 2s ease-in-out infinite",
+            }}
+          />
+        ))}
         <img
-          src={src}
+          src={overrideSprite || src}
           alt=""
           draggable={false}
           width={DISPLAY}
@@ -320,7 +336,13 @@ export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
             objectFit: "contain",
             objectPosition: "center bottom",
             imageRendering: "pixelated",
-            filter: "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
+            filter: [
+              "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
+              ...effects.filter(e => e.kind === "spine-glow").map(e => `drop-shadow(0 0 ${4 + (e.intensity || 0.4) * 8}px ${e.color || "hsl(200 100% 60%)"})`),
+              ...effects.filter(e => e.kind === "color-tint").map(e => `hue-rotate(${(e.intensity || 0.3) * 60}deg)`),
+            ].join(" "),
+            // micro-respiração quando usando sprite estático (skin Shin)
+            animation: overrideSprite ? "pulse 2.4s ease-in-out infinite" : undefined,
           }}
         />
         {beamFrame && (
