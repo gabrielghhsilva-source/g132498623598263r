@@ -185,7 +185,7 @@ const AppContent = () => {
                 onAddTaskFull={store.addTaskFull}
                 onAddTaskQuick={(areaId, text) => store.addTask(areaId, text)}
                 onUpdateText={store.updateTaskText}
-                onUpdateStatus={store.updateTaskStatus}
+                onUpdateStatus={handleUpdateStatus}
                 onUpdateStyle={store.updateTaskStyle}
                 onUpdateTime={store.updateTaskTime}
                 onUpdatePriority={store.updateTaskPriority}
@@ -194,7 +194,7 @@ const AppContent = () => {
                 onDeleteTask={store.deleteTask}
                 onDeleteArea={store.deleteArea}
                 onAddSubtask={store.addSubtaskTo}
-                onToggleSubtask={store.toggleSubtaskOf}
+                onToggleSubtask={handleToggleSubtask}
                 onDeleteSubtask={store.deleteSubtaskOf}
                 onUpdateSubtaskText={store.updateSubtaskTextOf}
                 onAddComment={store.addComment}
@@ -218,7 +218,7 @@ const AppContent = () => {
               onDeleteArea={investStore.deleteArea}
               onAddInvestment={investStore.addInvestment}
               onDeleteInvestment={investStore.deleteInvestment}
-              onAddContribution={investStore.addContribution}
+              onAddContribution={handleAddContribution}
               onAddGoal={investStore.addGoal}
               onDeleteGoal={investStore.deleteGoal}
               onAddDebt={investStore.addDebt}
@@ -252,7 +252,7 @@ const AppContent = () => {
 
         <TodayPanel
           tasks={store.todayTasks}
-          onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+          onMarkDone={(areaId, taskId) => handleUpdateStatus(areaId, taskId, "done")}
           onUpdateTime={store.updateTaskTime}
         />
 
