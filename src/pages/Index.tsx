@@ -133,26 +133,44 @@ const AppContent = () => {
               <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
               <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">{tabMeta[activeTab].label}</h1>
             </div>
-            <SettingsMenu
-              theme={store.theme}
-              onThemeChange={store.setTheme}
-              customColors={store.customColors}
-              onCustomColorsChange={store.setCustomColors}
-              timezone={store.timezone}
-              onTimezoneChange={store.setTimezone}
-              notificationSettings={notifStore.settings}
-              onNotificationUpdate={notifStore.setSettings}
-              onToggleAdvanceTime={notifStore.toggleAdvanceTime}
-              onTestSound={notifStore.playTestSound}
-              backgroundSettings={bgStore.settings}
-              onBackgroundUpdate={bgStore.setSettings}
-              buttonBgColor={store.buttonBgColor}
-              buttonTextColor={store.buttonTextColor}
-              onButtonBgChange={store.setButtonBgColor}
-              onButtonTextChange={store.setButtonTextColor}
-              showThemeDecorations={store.showThemeDecorations}
-              onShowThemeDecorationsChange={store.setShowThemeDecorations}
-            />
+            <div className="flex items-center gap-2">
+              <LevelBadge
+                level={xp.progress.level}
+                progress={xp.progress.progress}
+                intoLevel={xp.progress.intoLevel}
+                needed={xp.progress.needed}
+                stageName={xp.activeStage.name}
+                skinName={xp.activeSkin.name}
+                streakDays={xp.state.streakDays}
+                streakMultiplier={xp.streakMultiplier}
+              />
+              <SettingsMenu
+                theme={store.theme}
+                onThemeChange={store.setTheme}
+                customColors={store.customColors}
+                onCustomColorsChange={store.setCustomColors}
+                timezone={store.timezone}
+                onTimezoneChange={store.setTimezone}
+                notificationSettings={notifStore.settings}
+                onNotificationUpdate={notifStore.setSettings}
+                onToggleAdvanceTime={notifStore.toggleAdvanceTime}
+                onTestSound={notifStore.playTestSound}
+                backgroundSettings={bgStore.settings}
+                onBackgroundUpdate={bgStore.setSettings}
+                buttonBgColor={store.buttonBgColor}
+                buttonTextColor={store.buttonTextColor}
+                onButtonBgChange={store.setButtonBgColor}
+                onButtonTextChange={store.setButtonTextColor}
+                showThemeDecorations={store.showThemeDecorations}
+                onShowThemeDecorationsChange={store.setShowThemeDecorations}
+                xpState={xp.state}
+                xpProgress={xp.progress}
+                xpStreakMult={xp.streakMultiplier}
+                xpActiveSkin={xp.activeSkin}
+                xpActiveStage={xp.activeStage}
+                xpSetSelectedSkin={xp.setSelectedSkin}
+              />
+            </div>
           </div>
         </header>
 
