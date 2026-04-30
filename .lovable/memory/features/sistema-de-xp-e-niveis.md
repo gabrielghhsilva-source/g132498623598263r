@@ -17,13 +17,19 @@ Sistema de gamificação implementado em `src/lib/xpEngine.ts` (puro/testável) 
 **Curva de níveis (clássica RPG):** `xpRequired(n→n+1) = n*100`. Inversa: `level = floor((1 + sqrt(1 + 8*xp/100))/2)`.
 
 **Skins (`src/lib/godzillaSkins.ts`):**
-- **Godzilla Clássico** (Nv 1) — usa sprite-sheets existentes. Estágios: Despertar/Furioso/Berserker/Apex/Lenda Viva. Efeitos progressivos: spine-glow, aura, partículas, color-tint, ground-shake.
-- **Shin Godzilla** (Nv 15) — sprites idle estáticos com micro-animação de respiração. Estágios canônicos: 2ª Forma (Kamata-kun rosa) Nv15, 3ª Forma (Shinagawa-kun bipede vermelho) Nv22, 4ª Forma (definitiva preta com flesh vermelho) Nv32, Awakened (espinhas magenta brilhantes) Nv45.
+- **Godzilla Clássico** (Nv 1) — usa sprite-sheets COMPLETOS (walk/run/jump/charge/beam). Estágios NUNCA definem `idleSprite`/`walkFrames` (preservar atomic breath e demais animações do sheet). Apenas adicionam EFEITOS visuais: Despertar/Furioso/Berserker/Apex/Lenda Viva — Atomic Glow (Nv45 ganha aura roxa intensa + spine-glow ciano + partículas atômicas).
+- **Shin Godzilla** (Nv 15) — cada estágio tem ciclo de walk de 4 frames (idle, step, step2, step) que dá animação real de pernas. Estágios: 2ª Forma Kamata-kun (Nv15), 3ª Shinagawa-kun (Nv22), 4ª Definitiva (Nv32), 4ª+ Crimson (Nv38), Awakened Apex Crimson Burn (Nv45 — sprite custom com fissuras crimson brilhantes e ember particles).
+
+**Animação CSS no `GodzillaPet`:**
+- Andando com walkFrames: `kaiju-idle-bob 0.6s` (sincroniza com 1 ciclo de 4 frames a 75ms = 300ms, dando peso).
+- Skin custom parada: `kaiju-breath 2.4s` (respiração).
+- Clássico (sem override): `kaiju-idle-bob 1.6s` (sutil; pernas vêm do sprite-sheet).
 
 **Integração:** `Index.tsx` envolve `updateTaskStatus`, `toggleSubtaskOf` e `addContribution` com handlers que disparam `xp.awardTask/awardSubtask/awardContribution`. Toasts mostram +XP e level up.
 
 **UI:**
 - `LevelBadge` no header (sempre visível): Nv X + barra de XP + tooltip ao hover com skin/estágio/streak.
 - `LevelPanel` em Configurações → Progresso: estatísticas do dia, lista de skins (desbloqueadas/bloqueadas), todos os estágios da skin ativa com nível requerido, histórico dos últimos 12 ganhos.
+- Botão DEV `+500 XP` no header (left-click adiciona, right-click reseta).
 
-**Skins desbloqueadas auto** quando level ≥ unlockLevel. Toast notifica desbloqueio. Sprites do Shin Godzilla em `src/assets/godzilla/shin/shin_form{1-4}_idle.png` (gerados via IA, pixel art).
+**Sprites:** Shin em `src/assets/godzilla/shin/shin_form{1-4}_{idle,step,step2}.png` + `shin_awakened_{idle,step}.png`. Lenda Viva preview em `src/assets/godzilla/classic_legend_idle.png` (usado APENAS como `previewSprite` no painel/seletor — runtime usa o sheet original).

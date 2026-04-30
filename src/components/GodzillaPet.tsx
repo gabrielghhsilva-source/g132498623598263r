@@ -338,10 +338,13 @@ export function GodzillaPet({ overrideSprite, overrideWalkFrames, effects = [] }
             currentSrc = src;
           }
 
-          // Animação CSS: skins custom paradas respiram; o clássico ganha bob sutil.
-          // Quando há walkFrames animando, NÃO aplica animação CSS (deixa os frames falarem).
+          // Animação CSS:
+          // - Andando com walkFrames: bob sincronizado com 1 ciclo completo de passos
+          //   (4 frames × ~75ms = ~300ms; bob de 600ms = 1 sobe + 1 desce por ciclo, sensação de peso).
+          // - Skin custom parada: respira (kaiju-breath).
+          // - Clássico (sem override): bob lento (sprite-sheet já anima as pernas).
           const cssAnim = (overrideWalkFrames && isMoving)
-            ? "kaiju-idle-bob 0.4s ease-in-out infinite"
+            ? "kaiju-idle-bob 0.6s ease-in-out infinite"
             : overrideSprite
               ? "kaiju-breath 2.4s ease-in-out infinite"
               : "kaiju-idle-bob 1.6s ease-in-out infinite";
