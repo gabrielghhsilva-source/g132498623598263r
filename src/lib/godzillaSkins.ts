@@ -12,10 +12,14 @@
  */
 
 // === Sprites do Shin Godzilla ===
-import shinForm1 from "@/assets/godzilla/shin/shin_form1_idle.png";
-import shinForm2 from "@/assets/godzilla/shin/shin_form2_idle.png";
-import shinForm3 from "@/assets/godzilla/shin/shin_form3_idle.png";
-import shinForm4 from "@/assets/godzilla/shin/shin_form4_idle.png";
+import shinForm1Idle from "@/assets/godzilla/shin/shin_form1_idle.png";
+import shinForm1Step from "@/assets/godzilla/shin/shin_form1_step.png";
+import shinForm2Idle from "@/assets/godzilla/shin/shin_form2_idle.png";
+import shinForm2Step from "@/assets/godzilla/shin/shin_form2_step.png";
+import shinForm3Idle from "@/assets/godzilla/shin/shin_form3_idle.png";
+import shinForm3Step from "@/assets/godzilla/shin/shin_form3_step.png";
+import shinForm4Idle from "@/assets/godzilla/shin/shin_form4_idle.png";
+import shinForm4Step from "@/assets/godzilla/shin/shin_form4_step.png";
 
 export type SkinId = "classic" | "shin";
 
@@ -24,8 +28,10 @@ export interface SkinStage {
   name: string;
   /** Nível mínimo pra desbloquear esse estágio */
   unlockLevel: number;
-  /** Único pra skins idle-only: caminho do sprite estático. Se ausente, usa sprite-sheet padrão (classic). */
+  /** Único pra skins idle-only: caminho do sprite estático (preview/idle parado). */
   idleSprite?: string;
+  /** Frames de caminhada do estágio (alterna em loop). Se ausente cai pra [idleSprite]. */
+  walkFrames?: string[];
 }
 
 export interface SkinEffect {
@@ -84,12 +90,12 @@ export const SKINS: SkinDef[] = [
     name: "Shin Godzilla",
     unlockLevel: 15,
     description: "Evolui em formas canônicas: do larval ao Awakened.",
-    previewSprite: shinForm3,
+    previewSprite: shinForm3Idle,
     stages: [
-      { name: "2ª Forma — Kamata-kun", unlockLevel: 15, idleSprite: shinForm1 },
-      { name: "3ª Forma — Shinagawa-kun", unlockLevel: 22, idleSprite: shinForm2 },
-      { name: "4ª Forma — Definitiva", unlockLevel: 32, idleSprite: shinForm3 },
-      { name: "Awakened — Atomic Glow", unlockLevel: 45, idleSprite: shinForm4 },
+      { name: "2ª Forma — Kamata-kun", unlockLevel: 15, idleSprite: shinForm1Idle, walkFrames: [shinForm1Idle, shinForm1Step] },
+      { name: "3ª Forma — Shinagawa-kun", unlockLevel: 22, idleSprite: shinForm2Idle, walkFrames: [shinForm2Idle, shinForm2Step] },
+      { name: "4ª Forma — Definitiva", unlockLevel: 32, idleSprite: shinForm3Idle, walkFrames: [shinForm3Idle, shinForm3Step] },
+      { name: "Awakened — Atomic Glow", unlockLevel: 45, idleSprite: shinForm4Idle, walkFrames: [shinForm4Idle, shinForm4Step] },
     ],
     effects: [
       { fromLevel: 18, kind: "spine-glow", color: "hsl(340 100% 55%)", intensity: 0.45 },

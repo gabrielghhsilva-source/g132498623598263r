@@ -91,11 +91,13 @@ type Mode = "walking" | "running" | "idle" | "jumping" | "charging" | "firing";
 interface PetProps {
   /** Sprite estático que sobrepõe o sprite-sheet padrão (usado por skins idle-only como Shin Godzilla) */
   overrideSprite?: string;
+  /** Frames de caminhada da skin custom (alterna entre eles enquanto walking/running). Se ausente cai pra overrideSprite. */
+  overrideWalkFrames?: string[];
   /** Efeitos visuais ativos para a skin/nível atual */
   effects?: Array<{ kind: string; color?: string; intensity?: number }>;
 }
 
-export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
+export function GodzillaPet({ overrideSprite, overrideWalkFrames, effects = [] }: PetProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [mode, setMode] = useState<Mode>("walking");
@@ -322,33 +324,54 @@ export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
             }}
           />
         ))}
-        <img
-          src={overrideSprite || src}
-          alt=""
-          draggable={false}
-          width={DISPLAY}
-          height={DISPLAY}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "center bottom",
-            imageRendering: "pixelated",
-            filter: [
-              "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
-              ...effects.filter(e => e.kind === "spine-glow").map(e => `drop-shadow(0 0 ${4 + (e.intensity || 0.4) * 8}px ${e.color || "hsl(200 100% 60%)"})`),
-              ...effects.filter(e => e.kind === "color-tint").map(e => `hue-rotate(${(e.intensity || 0.3) * 60}deg)`),
-            ].join(" "),
-            // Sprites estáticos (skin Shin) ganham respiração real (scaleY).
-            // Sprite-sheet animado do clássico ganha um bob sutil pra parecer mais vivo.
-            animation: overrideSprite
+        {(() => {
+          // Decide qual sprite mostrar.
+          // Se a skin tem walkFrames e estamos andando/correndo, alterna entre eles (animação real de pernas).
+          // Caso contrário, usa overrideSprite (parado/respirando) ou cai pro sprite-sheet padrão (classic).
+          const isMoving = mode === "walking" || mode === "running";
+          let currentSrc: string;
+          if (overrideWalkFrames && overrideWalkFrames.length > 1 && isMoving) {
+            currentSrc = overrideWalkFrames[frameIdx % overrideWalkFrames.length];
+          } else if (overrideSprite) {
+            currentSrc = overrideSprite;
+          } else {
+            currentSrc = src;
+          }
+
+          // Animação CSS: skins custom paradas respiram; o clássico ganha bob sutil.
+          // Quando há walkFrames animando, NÃO aplica animação CSS (deixa os frames falarem).
+          const cssAnim = (overrideWalkFrames && isMoving)
+            ? "kaiju-idle-bob 0.4s ease-in-out infinite"
+            : overrideSprite
               ? "kaiju-breath 2.4s ease-in-out infinite"
-              : "kaiju-idle-bob 1.6s ease-in-out infinite",
-            transformOrigin: "center bottom",
-          }}
-        />
+              : "kaiju-idle-bob 1.6s ease-in-out infinite";
+
+          return (
+            <img
+              src={currentSrc}
+              alt=""
+              draggable={false}
+              width={DISPLAY}
+              height={DISPLAY}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                objectPosition: "center bottom",
+                imageRendering: "pixelated",
+                filter: [
+                  "drop-shadow(0 2px 1px hsl(0 0% 0% / 0.25))",
+                  ...effects.filter(e => e.kind === "spine-glow").map(e => `drop-shadow(0 0 ${4 + (e.intensity || 0.4) * 8}px ${e.color || "hsl(200 100% 60%)"})`),
+                  ...effects.filter(e => e.kind === "color-tint").map(e => `hue-rotate(${(e.intensity || 0.3) * 60}deg)`),
+                ].join(" "),
+                animation: cssAnim,
+                transformOrigin: "center bottom",
+              }}
+            />
+          );
+        })()}
         {beamFrame && (
           <img
             src={beamFrame}
