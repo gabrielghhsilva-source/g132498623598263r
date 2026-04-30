@@ -28,8 +28,10 @@ export interface SkinStage {
   name: string;
   /** Nível mínimo pra desbloquear esse estágio */
   unlockLevel: number;
-  /** Único pra skins idle-only: caminho do sprite estático. Se ausente, usa sprite-sheet padrão (classic). */
+  /** Único pra skins idle-only: caminho do sprite estático (preview/idle parado). */
   idleSprite?: string;
+  /** Frames de caminhada do estágio (alterna em loop). Se ausente cai pra [idleSprite]. */
+  walkFrames?: string[];
 }
 
 export interface SkinEffect {
