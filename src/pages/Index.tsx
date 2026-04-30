@@ -144,6 +144,15 @@ const AppContent = () => {
                 streakDays={xp.state.streakDays}
                 streakMultiplier={xp.streakMultiplier}
               />
+              <button
+                onClick={() => xp.devAddXp(500)}
+                onContextMenu={(e) => { e.preventDefault(); xp.devResetXp(); }}
+                title="Clique: +500 XP • Botão direito: resetar XP"
+                className="px-2 py-2 rounded-lg border border-dashed border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-colors"
+                aria-label="Dev: ganhar XP"
+              >
+                +500 XP
+              </button>
               <SettingsMenu
                 theme={store.theme}
                 onThemeChange={store.setTheme}
