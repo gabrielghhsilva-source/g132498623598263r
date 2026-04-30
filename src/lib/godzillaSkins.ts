@@ -90,12 +90,12 @@ export const SKINS: SkinDef[] = [
     name: "Shin Godzilla",
     unlockLevel: 15,
     description: "Evolui em formas canônicas: do larval ao Awakened.",
-    previewSprite: shinForm3,
+    previewSprite: shinForm3Idle,
     stages: [
-      { name: "2ª Forma — Kamata-kun", unlockLevel: 15, idleSprite: shinForm1 },
-      { name: "3ª Forma — Shinagawa-kun", unlockLevel: 22, idleSprite: shinForm2 },
-      { name: "4ª Forma — Definitiva", unlockLevel: 32, idleSprite: shinForm3 },
-      { name: "Awakened — Atomic Glow", unlockLevel: 45, idleSprite: shinForm4 },
+      { name: "2ª Forma — Kamata-kun", unlockLevel: 15, idleSprite: shinForm1Idle, walkFrames: [shinForm1Idle, shinForm1Step] },
+      { name: "3ª Forma — Shinagawa-kun", unlockLevel: 22, idleSprite: shinForm2Idle, walkFrames: [shinForm2Idle, shinForm2Step] },
+      { name: "4ª Forma — Definitiva", unlockLevel: 32, idleSprite: shinForm3Idle, walkFrames: [shinForm3Idle, shinForm3Step] },
+      { name: "Awakened — Atomic Glow", unlockLevel: 45, idleSprite: shinForm4Idle, walkFrames: [shinForm4Idle, shinForm4Step] },
     ],
     effects: [
       { fromLevel: 18, kind: "spine-glow", color: "hsl(340 100% 55%)", intensity: 0.45 },
