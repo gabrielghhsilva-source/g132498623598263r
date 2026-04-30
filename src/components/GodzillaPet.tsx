@@ -91,11 +91,13 @@ type Mode = "walking" | "running" | "idle" | "jumping" | "charging" | "firing";
 interface PetProps {
   /** Sprite estático que sobrepõe o sprite-sheet padrão (usado por skins idle-only como Shin Godzilla) */
   overrideSprite?: string;
+  /** Frames de caminhada da skin custom (alterna entre eles enquanto walking/running). Se ausente cai pra overrideSprite. */
+  overrideWalkFrames?: string[];
   /** Efeitos visuais ativos para a skin/nível atual */
   effects?: Array<{ kind: string; color?: string; intensity?: number }>;
 }
 
-export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
+export function GodzillaPet({ overrideSprite, overrideWalkFrames, effects = [] }: PetProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [mode, setMode] = useState<Mode>("walking");
