@@ -239,7 +239,15 @@
   to { transform: translateX(0); }
 }
 
-@keyframes gradientShift {
+@keyframes kaiju-breath {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50%      { transform: scaleY(1.04) scaleX(0.98); }
+}
+
+@keyframes kaiju-idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
