@@ -86,6 +86,47 @@ export function useXpStore() {
     handleResult(res);
   }, [handleResult]);
 
+  /** DEV: concede XP bruto direto, útil pra testar evolução de skins/níveis. */
+  const devAddXp = useCallback((amount: number) => {
+    const entry = {
+      id: (typeof crypto !== "undefined" && "randomUUID" in crypto) ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      ts: new Date().toISOString(),
+      amount,
+      base: amount,
+      multiplier: 1,
+      reason: "task_done" as const,
+      detail: "DEV +XP",
+    };
+    setState(prev => {
+      const oldLevel = prev.currentLevel;
+      const totalXp = Math.max(0, prev.totalXp + amount);
+      const today = entry.ts.slice(0, 10);
+      const dailyXp = { ...prev.dailyXp, [today]: (prev.dailyXp[today] || 0) + amount };
+      const history = [...prev.history, entry].slice(-200);
+      const next = {
+        ...prev,
+        totalXp,
+        currentLevel: Math.max(1, Math.floor((1 + Math.sqrt(1 + (8 * totalXp) / 100)) / 2)),
+        history,
+        dailyXp,
+      };
+      if (next.currentLevel > oldLevel) {
+        const skin = getSkin(next.selectedSkin as SkinId);
+        const stage = getActiveStage(skin, next.currentLevel);
+        toast.success(`⬆️ Nível ${next.currentLevel}!`, { description: `Estágio: ${stage.name}`, duration: 3500 });
+      } else {
+        toast.success(`+${amount} XP (dev)`, { duration: 1500 });
+      }
+      return next;
+    });
+  }, []);
+
+  /** DEV: zera tudo de XP/níveis. */
+  const devResetXp = useCallback(() => {
+    setState({ ...DEFAULT_XP_STATE });
+    toast.success("XP resetado", { duration: 1500 });
+  }, []);
+
   const setSelectedSkin = useCallback((id: SkinId) => {
     setState(prev => {
       const skin = getSkin(id);
