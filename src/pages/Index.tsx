@@ -276,6 +276,7 @@ const AppContent = () => {
 
         <GodzillaPet
           overrideSprite={xp.activeStage.idleSprite}
+          overrideWalkFrames={xp.activeStage.walkFrames}
           effects={xp.activeSkin.effects.filter(e => xp.progress.level >= e.fromLevel)}
         />
 
