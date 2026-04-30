@@ -148,5 +148,6 @@ export function useXpStore() {
     streakMultiplier: mult,
     awardTask, awardSubtask, awardContribution,
     setSelectedSkin,
+    devAddXp, devResetXp,
   };
 }
