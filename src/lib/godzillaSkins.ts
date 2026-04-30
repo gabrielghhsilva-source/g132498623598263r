@@ -12,10 +12,14 @@
  */
 
 // === Sprites do Shin Godzilla ===
-import shinForm1 from "@/assets/godzilla/shin/shin_form1_idle.png";
-import shinForm2 from "@/assets/godzilla/shin/shin_form2_idle.png";
-import shinForm3 from "@/assets/godzilla/shin/shin_form3_idle.png";
-import shinForm4 from "@/assets/godzilla/shin/shin_form4_idle.png";
+import shinForm1Idle from "@/assets/godzilla/shin/shin_form1_idle.png";
+import shinForm1Step from "@/assets/godzilla/shin/shin_form1_step.png";
+import shinForm2Idle from "@/assets/godzilla/shin/shin_form2_idle.png";
+import shinForm2Step from "@/assets/godzilla/shin/shin_form2_step.png";
+import shinForm3Idle from "@/assets/godzilla/shin/shin_form3_idle.png";
+import shinForm3Step from "@/assets/godzilla/shin/shin_form3_step.png";
+import shinForm4Idle from "@/assets/godzilla/shin/shin_form4_idle.png";
+import shinForm4Step from "@/assets/godzilla/shin/shin_form4_step.png";
 
 export type SkinId = "classic" | "shin";
 
