@@ -341,8 +341,12 @@ export function GodzillaPet({ overrideSprite, effects = [] }: PetProps = {}) {
               ...effects.filter(e => e.kind === "spine-glow").map(e => `drop-shadow(0 0 ${4 + (e.intensity || 0.4) * 8}px ${e.color || "hsl(200 100% 60%)"})`),
               ...effects.filter(e => e.kind === "color-tint").map(e => `hue-rotate(${(e.intensity || 0.3) * 60}deg)`),
             ].join(" "),
-            // micro-respiração quando usando sprite estático (skin Shin)
-            animation: overrideSprite ? "pulse 2.4s ease-in-out infinite" : undefined,
+            // Sprites estáticos (skin Shin) ganham respiração real (scaleY).
+            // Sprite-sheet animado do clássico ganha um bob sutil pra parecer mais vivo.
+            animation: overrideSprite
+              ? "kaiju-breath 2.4s ease-in-out infinite"
+              : "kaiju-idle-bob 1.6s ease-in-out infinite",
+            transformOrigin: "center bottom",
           }}
         />
         {beamFrame && (
