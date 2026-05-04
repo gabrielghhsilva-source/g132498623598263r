@@ -16,12 +16,10 @@ import { NotificationPopup } from "@/components/NotificationPopup";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { ThemeDecorations } from "@/components/ThemeDecorations";
 import { CardNavigation } from "@/components/CardNavigation";
-import { InvestmentDashboard } from "@/components/InvestmentDashboard";
-import { StockMarket } from "@/components/StockMarket";
-import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
-import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
+import { ClipboardList, LayoutDashboard } from "lucide-react";
+import { MenuPage } from "@/components/MenuPage";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 import { useEffect } from "react";
@@ -79,9 +77,7 @@ const AppContent = () => {
 
   const tabMeta: Record<AppTab, { icon: typeof ClipboardList; label: string; color: string }> = {
     tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
-    investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
-    stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
-    salary: { icon: Wallet, label: "Salário", color: "text-amber-500" },
+    menu: { icon: LayoutDashboard, label: "Menu", color: "text-blue-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
@@ -97,11 +93,11 @@ const AppContent = () => {
       <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"}`}>
         <CardNavigation active={activeTab} onChange={setActiveTab} />
 
-        <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
-          <div className="max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 pl-16 sm:pl-20">
+        <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b-2 border-border shadow-sm transition-colors duration-300">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 pl-16 sm:pl-20">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
-              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">{tabMeta[activeTab].label}</h1>
+              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate uppercase">{tabMeta[activeTab].label}</h1>
             </div>
             <div className="flex items-center gap-2">
               <SettingsMenu
@@ -128,7 +124,8 @@ const AppContent = () => {
           </div>
         </header>
 
-        <main className={`${activeTab === "tasks" ? "max-w-[1600px]" : "max-w-4xl"} mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-3 sm:pr-6`}>
+        <main className="max-w-[1600px] mx-auto px-4 sm:px-8 py-5 sm:py-7 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-4 sm:pr-8">
+        
           {activeTab === "tasks" && (
             <>
               <StatsBar stats={store.stats} />
@@ -165,41 +162,12 @@ const AppContent = () => {
               />
             </>
           )}
-          {activeTab === "investments" && (
-            <InvestmentDashboard
-              areas={investStore.areas}
-              onAddArea={investStore.addArea}
-              onDeleteArea={investStore.deleteArea}
-              onAddInvestment={investStore.addInvestment}
-              onDeleteInvestment={investStore.deleteInvestment}
-              onAddContribution={investStore.addContribution}
-              onAddGoal={investStore.addGoal}
-              onDeleteGoal={investStore.deleteGoal}
-              onAddDebt={investStore.addDebt}
-              onDeleteDebt={investStore.deleteDebt}
-              onSetMonthlyOverride={investStore.setMonthlyOverride}
+          {activeTab === "menu" && (
+            <MenuPage
+              invest={investStore}
+              stocks={stockStore}
+              salary={salaryStore}
               onCreateTaskReminder={handleCreateTaskReminder}
-            />
-          )}
-          {activeTab === "stocks" && (
-            <StockMarket
-              positions={stockStore.positions}
-              onAdd={stockStore.addPosition}
-              onRemove={stockStore.removePosition}
-            />
-          )}
-          {activeTab === "salary" && (
-            <SalaryPanel
-              salary={salaryStore.data.salary}
-              manualExpenses={salaryStore.data.manualExpenses}
-              manualIncomes={salaryStore.data.manualIncomes || []}
-              investmentAreas={investStore.areas}
-              stockPositions={stockStore.positions}
-              onSetSalary={salaryStore.setSalary}
-              onAddExpense={salaryStore.addExpense}
-              onDeleteExpense={salaryStore.deleteExpense}
-              onAddIncome={salaryStore.addIncome}
-              onDeleteIncome={salaryStore.deleteIncome}
             />
           )}
         </main>
