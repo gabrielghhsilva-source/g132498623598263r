@@ -79,9 +79,7 @@ const AppContent = () => {
 
   const tabMeta: Record<AppTab, { icon: typeof ClipboardList; label: string; color: string }> = {
     tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
-    investments: { icon: TrendingUp, label: "Investimentos", color: "text-green-500" },
-    stocks: { icon: BarChart3, label: "Ações", color: "text-blue-500" },
-    salary: { icon: Wallet, label: "Salário", color: "text-amber-500" },
+    menu: { icon: LayoutDashboard, label: "Menu", color: "text-blue-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
