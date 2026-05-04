@@ -19,17 +19,14 @@ import { DebtsPanel } from "@/components/DebtsPanel";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
-  // investments
-  invest: ReturnType<typeof useInvestApi>;
-  // stocks
-  stocks: ReturnType<typeof useStocksApi>;
-  // salary
-  salary: ReturnType<typeof useSalaryApi>;
+  invest: InvestApi;
+  stocks: StocksApi;
+  salary: SalaryApi;
   onCreateTaskReminder: (text: string) => void;
 }
 
 // Type helpers (imported usage shape from existing stores)
-type useInvestApi = {
+type InvestApi = {
   areas: InvestmentArea[];
   addArea: (n: string, c: string, e: string) => void;
   deleteArea: (id: string) => void;
