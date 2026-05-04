@@ -39,12 +39,12 @@ type InvestApi = {
   deleteDebt: (...args: any[]) => void;
   setMonthlyOverride: (...args: any[]) => void;
 };
-type useStocksApi = {
+type StocksApi = {
   positions: StockPosition[];
   addPosition: (...args: any[]) => void;
   removePosition: (id: string) => void;
 };
-type useSalaryApi = {
+type SalaryApi = {
   data: SalaryData;
   setSalary: (v: number) => void;
   addExpense: (n: string, a: number) => void;
