@@ -6,11 +6,9 @@ import { useInvestmentStore } from "@/hooks/useInvestmentStore";
 import { useBackgroundStore } from "@/hooks/useBackgroundStore";
 import { useStockStore } from "@/hooks/useStockStore";
 import { useSalaryStore } from "@/hooks/useSalaryStore";
-import { useXpStore } from "@/hooks/useXpStore";
 import { Preloader } from "@/components/Preloader";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StatsBar } from "@/components/StatsBar";
-import { LevelBadge } from "@/components/LevelBadge";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { TodayPanel } from "@/components/TodayPanel";
 import { AddAreaDialog } from "@/components/AddAreaDialog";
@@ -23,9 +21,8 @@ import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
-import { GodzillaPet } from "@/components/GodzillaPet";
 import { ClipboardList, TrendingUp, BarChart3, Wallet } from "lucide-react";
-import { AppTab, TaskStatus } from "@/lib/types";
+import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 import { useEffect } from "react";
 
@@ -36,7 +33,6 @@ const AppContent = () => {
   const bgStore = useBackgroundStore();
   const stockStore = useStockStore();
   const salaryStore = useSalaryStore();
-  const xp = useXpStore();
   const { currentEvent, dismissEvent } = useNotificationSystem(
     store.allTasksWithArea,
     notifStore.settings,
@@ -45,32 +41,6 @@ const AppContent = () => {
       refs.forEach((r) => store.snoozeTask(r.areaId, r.taskId, minutes));
     },
   );
-
-  // ===== XP wiring: intercept actions to award XP =====
-  const handleUpdateStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
-    const area = store.areas.find(a => a.id === areaId);
-    const task = area?.tasks.find(t => t.id === taskId);
-    const wasNotDone = task && task.status !== "done";
-    store.updateTaskStatus(areaId, taskId, status);
-    if (status === "done" && wasNotDone && task) {
-      xp.awardTask({ task: { id: task.id, text: task.text, priority: task.priority, dueDate: task.dueDate, dueTime: task.dueTime, subtasks: task.subtasks } });
-    }
-  }, [store, xp]);
-
-  const handleToggleSubtask = useCallback((areaId: string, taskId: string, subId: string) => {
-    const area = store.areas.find(a => a.id === areaId);
-    const task = area?.tasks.find(t => t.id === taskId);
-    const sub = task?.subtasks?.find(s => s.id === subId);
-    const wasNotDone = sub && !sub.done;
-    store.toggleSubtaskOf(areaId, taskId, subId);
-    if (wasNotDone && task) xp.awardSubtask(task.text);
-  }, [store, xp]);
-
-  const handleAddContribution = useCallback((areaId: string, investmentId: string, date: string, amount: number) => {
-    investStore.addContribution(areaId, investmentId, date, amount);
-    if (amount > 0) xp.awardContribution(investmentId, amount);
-  }, [investStore, xp]);
-
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
@@ -134,25 +104,6 @@ const AppContent = () => {
               <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">{tabMeta[activeTab].label}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <LevelBadge
-                level={xp.progress.level}
-                progress={xp.progress.progress}
-                intoLevel={xp.progress.intoLevel}
-                needed={xp.progress.needed}
-                stageName={xp.activeStage.name}
-                skinName={xp.activeSkin.name}
-                streakDays={xp.state.streakDays}
-                streakMultiplier={xp.streakMultiplier}
-              />
-              <button
-                onClick={() => xp.devAddXp(500)}
-                onContextMenu={(e) => { e.preventDefault(); xp.devResetXp(); }}
-                title="Clique: +500 XP • Botão direito: resetar XP"
-                className="px-2 py-2 rounded-lg border border-dashed border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-colors"
-                aria-label="Dev: ganhar XP"
-              >
-                +500 XP
-              </button>
               <SettingsMenu
                 theme={store.theme}
                 onThemeChange={store.setTheme}
@@ -172,12 +123,6 @@ const AppContent = () => {
                 onButtonTextChange={store.setButtonTextColor}
                 showThemeDecorations={store.showThemeDecorations}
                 onShowThemeDecorationsChange={store.setShowThemeDecorations}
-                xpState={xp.state}
-                xpProgress={xp.progress}
-                xpStreakMult={xp.streakMultiplier}
-                xpActiveSkin={xp.activeSkin}
-                xpActiveStage={xp.activeStage}
-                xpSetSelectedSkin={xp.setSelectedSkin}
               />
             </div>
           </div>
@@ -194,7 +139,7 @@ const AppContent = () => {
                 onAddTaskFull={store.addTaskFull}
                 onAddTaskQuick={(areaId, text) => store.addTask(areaId, text)}
                 onUpdateText={store.updateTaskText}
-                onUpdateStatus={handleUpdateStatus}
+                onUpdateStatus={store.updateTaskStatus}
                 onUpdateStyle={store.updateTaskStyle}
                 onUpdateTime={store.updateTaskTime}
                 onUpdatePriority={store.updateTaskPriority}
@@ -203,7 +148,7 @@ const AppContent = () => {
                 onDeleteTask={store.deleteTask}
                 onDeleteArea={store.deleteArea}
                 onAddSubtask={store.addSubtaskTo}
-                onToggleSubtask={handleToggleSubtask}
+                onToggleSubtask={store.toggleSubtaskOf}
                 onDeleteSubtask={store.deleteSubtaskOf}
                 onUpdateSubtaskText={store.updateSubtaskTextOf}
                 onAddComment={store.addComment}
@@ -227,7 +172,7 @@ const AppContent = () => {
               onDeleteArea={investStore.deleteArea}
               onAddInvestment={investStore.addInvestment}
               onDeleteInvestment={investStore.deleteInvestment}
-              onAddContribution={handleAddContribution}
+              onAddContribution={investStore.addContribution}
               onAddGoal={investStore.addGoal}
               onDeleteGoal={investStore.deleteGoal}
               onAddDebt={investStore.addDebt}
@@ -261,7 +206,7 @@ const AppContent = () => {
 
         <TodayPanel
           tasks={store.todayTasks}
-          onMarkDone={(areaId, taskId) => handleUpdateStatus(areaId, taskId, "done")}
+          onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
           onUpdateTime={store.updateTaskTime}
         />
 
@@ -272,12 +217,6 @@ const AppContent = () => {
           onSnooze={(refs, minutes) => {
             refs.forEach(({ areaId, taskId }) => store.snoozeTask(areaId, taskId, minutes));
           }}
-        />
-
-        <GodzillaPet
-          overrideSprite={xp.activeStage.idleSprite}
-          overrideWalkFrames={xp.activeStage.walkFrames}
-          effects={xp.activeSkin.effects.filter(e => xp.progress.level >= e.fromLevel)}
         />
 
         <VoiceTaskDialog
