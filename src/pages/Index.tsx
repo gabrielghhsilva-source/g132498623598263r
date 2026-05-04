@@ -93,11 +93,11 @@ const AppContent = () => {
       <div className={`min-h-screen transition-all duration-500 ${preloaderDone ? "opacity-100" : "opacity-0"}`}>
         <CardNavigation active={activeTab} onChange={setActiveTab} />
 
-        <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border transition-colors duration-300">
-          <div className="max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 pl-16 sm:pl-20">
+        <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b-2 border-border shadow-sm transition-colors duration-300">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 pl-16 sm:pl-20">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
-              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">{tabMeta[activeTab].label}</h1>
+              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate uppercase">{tabMeta[activeTab].label}</h1>
             </div>
             <div className="flex items-center gap-2">
               <SettingsMenu
@@ -124,6 +124,7 @@ const AppContent = () => {
           </div>
         </header>
 
+        <main className="max-w-[1600px] mx-auto px-4 sm:px-8 py-5 sm:py-7 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-4 sm:pr-8">
         <main className={`${activeTab === "tasks" ? "max-w-[1600px]" : "max-w-4xl"} mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pl-16 sm:pl-20 pr-3 sm:pr-6`}>
           {activeTab === "tasks" && (
             <>
