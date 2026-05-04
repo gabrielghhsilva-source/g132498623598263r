@@ -164,41 +164,12 @@ const AppContent = () => {
               />
             </>
           )}
-          {activeTab === "investments" && (
-            <InvestmentDashboard
-              areas={investStore.areas}
-              onAddArea={investStore.addArea}
-              onDeleteArea={investStore.deleteArea}
-              onAddInvestment={investStore.addInvestment}
-              onDeleteInvestment={investStore.deleteInvestment}
-              onAddContribution={investStore.addContribution}
-              onAddGoal={investStore.addGoal}
-              onDeleteGoal={investStore.deleteGoal}
-              onAddDebt={investStore.addDebt}
-              onDeleteDebt={investStore.deleteDebt}
-              onSetMonthlyOverride={investStore.setMonthlyOverride}
+          {activeTab === "menu" && (
+            <MenuPage
+              invest={investStore}
+              stocks={stockStore}
+              salary={salaryStore}
               onCreateTaskReminder={handleCreateTaskReminder}
-            />
-          )}
-          {activeTab === "stocks" && (
-            <StockMarket
-              positions={stockStore.positions}
-              onAdd={stockStore.addPosition}
-              onRemove={stockStore.removePosition}
-            />
-          )}
-          {activeTab === "salary" && (
-            <SalaryPanel
-              salary={salaryStore.data.salary}
-              manualExpenses={salaryStore.data.manualExpenses}
-              manualIncomes={salaryStore.data.manualIncomes || []}
-              investmentAreas={investStore.areas}
-              stockPositions={stockStore.positions}
-              onSetSalary={salaryStore.setSalary}
-              onAddExpense={salaryStore.addExpense}
-              onDeleteExpense={salaryStore.deleteExpense}
-              onAddIncome={salaryStore.addIncome}
-              onDeleteIncome={salaryStore.deleteIncome}
             />
           )}
         </main>
