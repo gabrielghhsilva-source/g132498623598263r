@@ -4,9 +4,8 @@
 - **Storage/Offline**: Encrypted localStorage for data, IndexedDB for media. No external media URLs.
 - **Security/API**: Password is `CaveCreate2026*`. External API keys (Alpha Vantage) MUST go through Edge Functions.
 - **UI/Nav**: Card stack navigation with hover fan effect and proximity buffer. Single "Settings" button.
-- **Forbidden**: Do not add passive income or debt tracking to Investments (removed for simplicity).
+- **Forbidden**: Do not add passive income or debt tracking to Investments (removed for simplicity). Do not re-add XP/levels/Godzilla mascot — removidos por deixarem o app pesado e fora do escopo de site pessoal.
 - **Tasks**: Kanban horizontal estilo ClickUp. Lógica pura em `src/lib/taskOperations.ts`. Sempre adicionar testes ao mexer no fluxo de tasks.
-- **XP/Gamificação**: Sistema de níveis ativo. XP em `xpEngine.ts` (puro). Skins do Godzilla evoluem por nível.
 
 ## Memories
 - [Storage Tech](mem://tech/armazenamento) — Offline-first storage rules (localStorage, IndexedDB, Edge Functions)
@@ -27,4 +26,3 @@
 - [Time Management](mem://features/gestao-de-tempo) — Manual timezone config (e.g., UTC-3) for accurate deadlines
 - [Idle Game](mem://features/clicker-game) — 'Loop Tree' idle game, energy production, prestige loops
 - [Data Reset](mem://features/reset-de-dados) — Total data wipe for localStorage, sessionStorage, IndexedDB
-- [XP & Levels](mem://features/sistema-de-xp-e-niveis) — XP por tarefas/aportes/streak, curva RPG, skins Godzilla Clássico + Shin Godzilla evolutivo

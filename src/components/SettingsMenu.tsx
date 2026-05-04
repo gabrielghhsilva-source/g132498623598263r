@@ -1,12 +1,10 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Volume2, Type, Paintbrush, Sparkles, Trophy } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
 import { NotificationSettingsPanel } from "./NotificationSettings";
 import { BackgroundSettingsPanel } from "./BackgroundSettings";
-import { LevelPanel } from "./LevelPanel";
-import { ThemeId, CustomThemeColors, NotificationSettings, BackgroundSettings, XpState } from "@/lib/types";
-import { SkinDef, SkinStage, SkinId } from "@/lib/godzillaSkins";
+import { ThemeId, CustomThemeColors, NotificationSettings, BackgroundSettings } from "@/lib/types";
 
 interface Props {
   theme: ThemeId;
@@ -27,16 +25,9 @@ interface Props {
   onButtonTextChange: (c: string) => void;
   showThemeDecorations: boolean;
   onShowThemeDecorationsChange: (v: boolean) => void;
-  // XP integration
-  xpState: XpState;
-  xpProgress: { level: number; intoLevel: number; needed: number; progress: number };
-  xpStreakMult: number;
-  xpActiveSkin: SkinDef;
-  xpActiveStage: SkinStage;
-  xpSetSelectedSkin: (id: SkinId) => void;
 }
 
-type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons" | "progress";
+type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
 
 export function SettingsMenu({
   theme, onThemeChange, customColors, onCustomColorsChange,
@@ -45,7 +36,6 @@ export function SettingsMenu({
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
   showThemeDecorations, onShowThemeDecorationsChange,
-  xpState, xpProgress, xpStreakMult, xpActiveSkin, xpActiveStage, xpSetSelectedSkin,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -74,32 +64,14 @@ export function SettingsMenu({
 
       {path && (
         <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-lg z-50 animate-scale-in w-[calc(100vw-1.5rem)] sm:w-auto sm:min-w-[280px] max-w-[340px] max-h-[80vh] overflow-y-auto no-scrollbar">
-          {/* Root menu */}
           {path === "root" && (
             <div className="p-2 space-y-0.5">
-              <MenuItem icon={Trophy} label="Progresso" onClick={() => setPath("progress")} hasSubmenu />
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
             </div>
           )}
 
-          {/* Progress */}
-          {path === "progress" && (
-            <div className="p-3 space-y-3">
-              <BackButton onClick={() => setPath("root")} label="Progresso" />
-              <LevelPanel
-                state={xpState}
-                progress={xpProgress}
-                streakMult={xpStreakMult}
-                activeSkin={xpActiveSkin}
-                activeStage={xpActiveStage}
-                setSelectedSkin={xpSetSelectedSkin}
-              />
-            </div>
-          )}
-
-          {/* Themes */}
           {path === "themes" && (
             <div className="p-2 space-y-0.5">
               <BackButton onClick={() => setPath("root")} label="Temas" />
@@ -132,7 +104,6 @@ export function SettingsMenu({
             </div>
           )}
 
-          {/* Time */}
           {path === "time" && (
             <div className="p-2 space-y-0.5">
               <BackButton onClick={() => setPath("root")} label="Horário" />
@@ -153,7 +124,6 @@ export function SettingsMenu({
             </div>
           )}
 
-          {/* Buttons */}
           {path === "buttons" && (
             <div className="p-3 space-y-3">
               <BackButton onClick={() => setPath("root")} label="Botões" />
