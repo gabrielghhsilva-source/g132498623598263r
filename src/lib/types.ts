@@ -215,5 +215,19 @@ export const DEFAULT_SALARY_DATA: SalaryData = {
 };
 
 // Navigation
-export type AppTab = "tasks" | "investments" | "stocks" | "salary";
+export type AppTab = "tasks" | "menu";
+export type MenuSection = "overview" | "financial" | "debts";
+
+// Debt management
+export interface DebtItem {
+  id: string;
+  name: string;
+  amount: number;
+  dueDate?: string; // ISO yyyy-mm-dd
+  category?: string;
+  paid: boolean;
+  paidAt?: string;
+  recurring?: boolean;
+  createdAt: string;
+}
 
