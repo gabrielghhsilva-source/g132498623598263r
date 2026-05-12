@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Task, TaskArea, TaskStatus, TaskTextStyle, ThemeId, RecurrenceRule, CustomThemeColors, TaskTag, TaskPriority, Subtask } from "@/lib/types";
 import { isTaskOverdue, getNowInTimezone, addMinutesToDue } from "@/lib/timeUtils";
 import { secureGet, secureSet } from "@/lib/crypto";
+import { loadCloudState, saveCloudState } from "@/lib/cloudSync";
 import {
   AddTaskInput, makeTask, normalizeTask,
   addTaskToArea, updateTaskInAreas, removeTaskFromArea, moveTaskBetweenAreas,
@@ -107,7 +108,20 @@ export function useTaskStore() {
   const [buttonTextColor, setButtonTextColorState] = useState<string>(() => loadPlain("task-button-text", "#ffffff"));
   const [showThemeDecorations, setShowThemeDecorationsState] = useState<boolean>(() => loadPlain("task-theme-decorations", true));
 
-  useEffect(() => { secureSet("task-areas", JSON.stringify(areas)); }, [areas]);
+  // Cloud hydration: on mount, pull from Lovable Cloud and replace state if present
+  useEffect(() => {
+    let cancelled = false;
+    loadCloudState<TaskArea[]>("tasks_areas").then(cloud => {
+      if (cancelled || !cloud) return;
+      setAreas(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) })));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    secureSet("task-areas", JSON.stringify(areas));
+    saveCloudState("tasks_areas", areas);
+  }, [areas]);
   useEffect(() => { secureSet("task-tags", JSON.stringify(tags)); }, [tags]);
 
   useEffect(() => {
