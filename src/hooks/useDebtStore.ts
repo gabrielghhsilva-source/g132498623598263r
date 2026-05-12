@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { DebtItem } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
+import { loadCloudState, saveCloudState } from "@/lib/cloudSync";
 
 const KEY = "debts-data";
+const CLOUD_KEY = "debts";
 
 function load(): DebtItem[] {
   try {
@@ -16,8 +18,18 @@ function load(): DebtItem[] {
 export function useDebtStore() {
   const [debts, setDebts] = useState<DebtItem[]>(() => load());
 
+  // Hydrate from Lovable Cloud on mount
+  useEffect(() => {
+    let cancelled = false;
+    loadCloudState<DebtItem[]>(CLOUD_KEY).then(cloud => {
+      if (!cancelled && cloud) setDebts(cloud);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     secureSet(KEY, JSON.stringify(debts));
+    saveCloudState(CLOUD_KEY, debts);
   }, [debts]);
 
   const addDebt = useCallback(
