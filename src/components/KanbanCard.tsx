@@ -87,6 +87,17 @@ export function KanbanCard({ task, tags, timezone, isDragging, onClick, onDragSt
                     {task.dueTime}
                   </>
                 )}
+                {(task.endDate || task.endTime) && (
+                  <>
+                    <span className="mx-0.5 opacity-60">→</span>
+                    {task.endDate && task.endDate !== task.dueDate && (
+                      <>{new Date(task.endDate + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</>
+                    )}
+                    {task.endTime && (
+                      <span className="ml-0.5">{task.endTime}</span>
+                    )}
+                  </>
+                )}
               </span>
             )}
             {task.recurrence && (
