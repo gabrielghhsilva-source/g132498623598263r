@@ -120,30 +120,76 @@ export function TaskDetailDialog(props: Props) {
             />
           </div>
 
-          {/* Date + Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Data de vencimento
-              </label>
-              <input
-                type="date"
-                value={task.dueDate || ""}
-                onChange={e => props.onUpdateDate(e.target.value || undefined)}
-                className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
-              />
+          {/* Date + Time (start) */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Início / vencimento</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Data
+                </label>
+                <input
+                  type="date"
+                  value={task.dueDate || ""}
+                  onChange={e => props.onUpdateDate(e.target.value || undefined)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Horário
+                </label>
+                <input
+                  type="time"
+                  value={task.dueTime || ""}
+                  onChange={e => props.onUpdateTime(e.target.value || undefined, task.dueDate)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Horário
-              </label>
-              <input
-                type="time"
-                value={task.dueTime || ""}
-                onChange={e => props.onUpdateTime(e.target.value || undefined, task.dueDate)}
-                className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
-              />
+          </div>
+
+          {/* Date + Time (end / opcional) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Fim (opcional)</label>
+              {(task.endDate || task.endTime) && (
+                <button
+                  type="button"
+                  onClick={() => props.onUpdateEnd(undefined, undefined)}
+                  className="text-[10px] text-muted-foreground hover:text-destructive"
+                >
+                  limpar
+                </button>
+              )}
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Data fim
+                </label>
+                <input
+                  type="date"
+                  value={task.endDate || ""}
+                  onChange={e => props.onUpdateEnd(e.target.value || undefined, task.endTime)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Horário fim
+                </label>
+                <input
+                  type="time"
+                  value={task.endTime || ""}
+                  onChange={e => props.onUpdateEnd(task.endDate, e.target.value || undefined)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Use pra tarefas com janela, ex.: 12/05 14h até 13/05 20h.
+            </p>
           </div>
 
           {/* Subtasks */}
