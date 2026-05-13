@@ -349,7 +349,7 @@ export function useTaskStore() {
     timezone, setTimezone,
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     showThemeDecorations, setShowThemeDecorations,
-    addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime,
+    addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, updateTaskEnd,
     updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
