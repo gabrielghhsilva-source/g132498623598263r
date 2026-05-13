@@ -38,6 +38,9 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
       setText("");
       setDueDate("");
       setDueTime("");
+      setEndDate("");
+      setEndTime("");
+      setShowEnd(false);
       setPriority("none");
       setTagIds([]);
       setSubtasksText("");
@@ -55,6 +58,8 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
       text: text.trim(),
       dueDate: dueDate || undefined,
       dueTime: dueTime || undefined,
+      endDate: endDate || undefined,
+      endTime: endTime || undefined,
       priority,
       tagIds,
       subtasks,
