@@ -350,11 +350,20 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                   </div>
                 )}
 
-                {/* Timed tasks positioned by dueTime — stacked vertically when overlapping */}
+                {/* Timed tasks positioned by dueTime — width spans to endTime when present */}
                 {timedTasks.map((t, idx) => {
                   const mins = timeStrToMinutes(t.dueTime!);
                   const left = (mins / (24 * 60)) * TIMELINE_WIDTH;
-                  // Simple stacking: count earlier tasks within the same 30-min slot
+                  let endMins: number | null = null;
+                  if (resizingEnd?.id === t.id && resizeEndMins !== null) {
+                    endMins = resizeEndMins;
+                  } else if (t.endTime) {
+                    const endsLaterDay = !!(t.endDate && t.dueDate && t.endDate > t.dueDate);
+                    endMins = endsLaterDay ? 24 * 60 - 1 : timeStrToMinutes(t.endTime);
+                  }
+                  const hasRange = endMins !== null && endMins > mins;
+                  const rangeWidth = hasRange ? ((endMins! - mins) / (24 * 60)) * TIMELINE_WIDTH : 0;
+                  const cardWidth = hasRange ? Math.max(slotWidth - 6, rangeWidth - 6) : slotWidth - 6;
                   const slotIdx = Math.floor(mins / SLOT_MINUTES);
                   const stackIndex = timedTasks
                     .slice(0, idx)
@@ -366,18 +375,53 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                       style={{
                         left: left + 2,
                         top: 24 + stackIndex * 56,
-                        width: slotWidth - 6,
+                        width: cardWidth,
                       }}
                     >
-                      <TaskCard
-                        task={t}
-                        onMarkDone={() => onMarkDone(t.areaId, t.id)}
-                        onDragStart={() => setDraggingId(t.id)}
-                        onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
-                        isDragging={draggingId === t.id}
-                        showTime
-                        compact
-                      />
+                      {hasRange && (
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-lg bg-primary/10 border border-primary/30 pointer-events-none -z-0"
+                          style={{ width: rangeWidth }}
+                        />
+                      )}
+                      <div className="relative">
+                        <TaskCard
+                          task={t}
+                          onMarkDone={() => onMarkDone(t.areaId, t.id)}
+                          onDragStart={() => setDraggingId(t.id)}
+                          onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
+                          isDragging={draggingId === t.id}
+                          showTime
+                          compact
+                          endLabel={hasRange ? minutesToTimeStr(endMins!) : undefined}
+                        />
+                        <div
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setResizingEnd({ id: t.id, areaId: t.areaId, dueDate: t.dueDate, startMins: mins });
+                            setResizeEndMins(endMins ?? mins + 30);
+                          }}
+                          className="absolute top-0 bottom-0 -right-1 w-2.5 cursor-ew-resize rounded-r-lg hover:bg-primary/40 group z-10"
+                          title="Arraste para definir o horário de fim"
+                          style={hasRange ? { right: -(rangeWidth - cardWidth) - 4 } : undefined}
+                        >
+                          <div className="absolute top-1/2 right-0.5 -translate-y-1/2 w-0.5 h-5 rounded-full bg-primary/50 group-hover:bg-primary" />
+                        </div>
+                        {hasRange && !resizingEnd && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUpdateEnd(t.areaId, t.id, undefined, undefined);
+                            }}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-card border border-border text-[10px] text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm flex items-center justify-center z-10"
+                            title="Remover horário de fim"
+                            style={{ right: -(rangeWidth - cardWidth) - 8 }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
