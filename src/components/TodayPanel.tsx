@@ -39,7 +39,9 @@ function timeStrToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
+export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Props) {
+  const [resizingEnd, setResizingEnd] = useState<{ id: string; areaId: string; dueDate?: string; startMins: number } | null>(null);
+  const [resizeEndMins, setResizeEndMins] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [notified, setNotified] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
