@@ -332,6 +332,7 @@ export function KanbanBoard(props: Props) {
           onUpdateStyle={(s) => props.onUpdateStyle(selectedAreaId, selectedTask.id, s)}
           onUpdateTime={(time, date) => props.onUpdateTime(selectedAreaId, selectedTask.id, time, date)}
           onUpdateDate={(date) => props.onUpdateTime(selectedAreaId, selectedTask.id, selectedTask.dueTime, date || "")}
+          onUpdateEnd={(endDate, endTime) => props.onUpdateEnd(selectedAreaId, selectedTask.id, endDate, endTime)}
           onUpdatePriority={(p) => props.onUpdatePriority(selectedAreaId, selectedTask.id, p)}
           onUpdateTags={(ids) => props.onUpdateTags(selectedAreaId, selectedTask.id, ids)}
           onAddTag={props.onAddTag}
