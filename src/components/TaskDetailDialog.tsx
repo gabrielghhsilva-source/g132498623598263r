@@ -23,6 +23,7 @@ interface Props {
   onUpdateStyle: (s: Partial<TaskTextStyle>) => void;
   onUpdateTime: (time: string | undefined, date?: string) => void;
   onUpdateDate: (date: string | undefined) => void;
+  onUpdateEnd: (endDate: string | undefined, endTime: string | undefined) => void;
   onUpdatePriority: (p: TaskPriority) => void;
   onUpdateTags: (ids: string[]) => void;
   onAddTag: (name: string, color: string) => TaskTag;
