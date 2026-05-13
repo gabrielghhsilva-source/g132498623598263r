@@ -224,6 +224,14 @@ export function useTaskStore() {
     })));
   }, []);
 
+  const updateTaskEnd = useCallback((areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({
+      ...t,
+      endDate: endDate || undefined,
+      endTime: endTime || undefined,
+    })));
+  }, []);
+
   /**
    * Adia o prazo de uma task em `minutes` minutos.
    * Se a task não tem dueDate, ignora silenciosamente.
