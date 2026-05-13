@@ -472,7 +472,9 @@ function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTi
         <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
           <span className="truncate">{task.areaIcon} {task.areaName}</span>
           {showTime && task.dueTime && (
-            <span className="font-mono text-primary flex-shrink-0">• {task.dueTime}</span>
+            <span className="font-mono text-primary flex-shrink-0">
+              • {task.dueTime}{endLabel ? ` → ${endLabel}` : ""}
+            </span>
           )}
         </p>
       </div>
