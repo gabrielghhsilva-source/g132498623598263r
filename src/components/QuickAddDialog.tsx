@@ -140,6 +140,43 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
             </div>
           </div>
 
+          {!showEnd ? (
+            <button
+              type="button"
+              onClick={() => setShowEnd(true)}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+            >
+              + adicionar horário de fim (intervalo)
+            </button>
+          ) : (
+            <div className="space-y-1.5 rounded-lg border border-dashed border-border p-3 bg-secondary/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-muted-foreground">Fim do intervalo</span>
+                <button
+                  type="button"
+                  onClick={() => { setShowEnd(false); setEndDate(""); setEndTime(""); }}
+                  className="text-[10px] text-muted-foreground hover:text-destructive"
+                >
+                  remover
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={e => setEndTime(e.target.value)}
+                  className="w-full bg-secondary/40 rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Prioridade</label>
             <PrioritySelect value={priority} onChange={setPriority} />
