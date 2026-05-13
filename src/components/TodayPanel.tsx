@@ -12,6 +12,7 @@ interface Props {
   tasks: TodayTask[];
   onMarkDone: (areaId: string, taskId: string) => void;
   onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
+  onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
 }
 
 // Horizontal timeline configuration: 30-minute slots from 00:00 to 23:30
@@ -38,7 +39,9 @@ function timeStrToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
+export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Props) {
+  const [resizingEnd, setResizingEnd] = useState<{ id: string; areaId: string; dueDate?: string; startMins: number } | null>(null);
+  const [resizeEndMins, setResizeEndMins] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [notified, setNotified] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -124,6 +127,35 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
     const mins = Math.round(ratio * 24 * 60);
     return Math.max(0, Math.min(24 * 60 - 1, mins));
   }, [TIMELINE_WIDTH]);
+
+  // End-time resize (drag right edge)
+  useEffect(() => {
+    if (!resizingEnd) return;
+    const onMove = (e: MouseEvent) => {
+      const mins = xToMinutes(e.clientX);
+      setResizeEndMins(Math.max(resizingEnd.startMins + 5, mins));
+    };
+    const onUp = () => {
+      setResizingEnd((curr) => {
+        if (curr && resizeEndMins !== null) {
+          const clamped = Math.min(24 * 60 - 1, Math.max(curr.startMins + 5, resizeEndMins));
+          onUpdateEnd(curr.areaId, curr.id, curr.dueDate, minutesToTimeStr(clamped));
+        }
+        return null;
+      });
+      setResizeEndMins(null);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [resizingEnd, resizeEndMins, xToMinutes, onUpdateEnd]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -318,11 +350,20 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                   </div>
                 )}
 
-                {/* Timed tasks positioned by dueTime — stacked vertically when overlapping */}
+                {/* Timed tasks positioned by dueTime — width spans to endTime when present */}
                 {timedTasks.map((t, idx) => {
                   const mins = timeStrToMinutes(t.dueTime!);
                   const left = (mins / (24 * 60)) * TIMELINE_WIDTH;
-                  // Simple stacking: count earlier tasks within the same 30-min slot
+                  let endMins: number | null = null;
+                  if (resizingEnd?.id === t.id && resizeEndMins !== null) {
+                    endMins = resizeEndMins;
+                  } else if (t.endTime) {
+                    const endsLaterDay = !!(t.endDate && t.dueDate && t.endDate > t.dueDate);
+                    endMins = endsLaterDay ? 24 * 60 - 1 : timeStrToMinutes(t.endTime);
+                  }
+                  const hasRange = endMins !== null && endMins > mins;
+                  const rangeWidth = hasRange ? ((endMins! - mins) / (24 * 60)) * TIMELINE_WIDTH : 0;
+                  const cardWidth = hasRange ? Math.max(slotWidth - 6, rangeWidth - 6) : slotWidth - 6;
                   const slotIdx = Math.floor(mins / SLOT_MINUTES);
                   const stackIndex = timedTasks
                     .slice(0, idx)
@@ -334,18 +375,53 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime }: Props) {
                       style={{
                         left: left + 2,
                         top: 24 + stackIndex * 56,
-                        width: slotWidth - 6,
+                        width: cardWidth,
                       }}
                     >
-                      <TaskCard
-                        task={t}
-                        onMarkDone={() => onMarkDone(t.areaId, t.id)}
-                        onDragStart={() => setDraggingId(t.id)}
-                        onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
-                        isDragging={draggingId === t.id}
-                        showTime
-                        compact
-                      />
+                      {hasRange && (
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-lg bg-primary/10 border border-primary/30 pointer-events-none -z-0"
+                          style={{ width: rangeWidth }}
+                        />
+                      )}
+                      <div className="relative">
+                        <TaskCard
+                          task={t}
+                          onMarkDone={() => onMarkDone(t.areaId, t.id)}
+                          onDragStart={() => setDraggingId(t.id)}
+                          onDragEnd={() => { setDraggingId(null); setHoverMinutes(null); }}
+                          isDragging={draggingId === t.id}
+                          showTime
+                          compact
+                          endLabel={hasRange ? minutesToTimeStr(endMins!) : undefined}
+                        />
+                        <div
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setResizingEnd({ id: t.id, areaId: t.areaId, dueDate: t.dueDate, startMins: mins });
+                            setResizeEndMins(endMins ?? mins + 30);
+                          }}
+                          className="absolute top-0 bottom-0 -right-1 w-2.5 cursor-ew-resize rounded-r-lg hover:bg-primary/40 group z-10"
+                          title="Arraste para definir o horário de fim"
+                          style={hasRange ? { right: -(rangeWidth - cardWidth) - 4 } : undefined}
+                        >
+                          <div className="absolute top-1/2 right-0.5 -translate-y-1/2 w-0.5 h-5 rounded-full bg-primary/50 group-hover:bg-primary" />
+                        </div>
+                        {hasRange && !resizingEnd && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUpdateEnd(t.areaId, t.id, undefined, undefined);
+                            }}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-card border border-border text-[10px] text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm flex items-center justify-center z-10"
+                            title="Remover horário de fim"
+                            style={{ right: -(rangeWidth - cardWidth) - 8 }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -366,9 +442,10 @@ interface TaskCardProps {
   isDragging: boolean;
   showTime?: boolean;
   compact?: boolean;
+  endLabel?: string;
 }
 
-function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact }: TaskCardProps) {
+function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact, endLabel }: TaskCardProps) {
   return (
     <div
       draggable
@@ -395,7 +472,9 @@ function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTi
         <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
           <span className="truncate">{task.areaIcon} {task.areaName}</span>
           {showTime && task.dueTime && (
-            <span className="font-mono text-primary flex-shrink-0">• {task.dueTime}</span>
+            <span className="font-mono text-primary flex-shrink-0">
+              • {task.dueTime}{endLabel ? ` → ${endLabel}` : ""}
+            </span>
           )}
         </p>
       </div>

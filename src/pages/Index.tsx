@@ -177,6 +177,7 @@ const AppContent = () => {
           tasks={store.todayTasks}
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
           onUpdateTime={store.updateTaskTime}
+          onUpdateEnd={store.updateTaskEnd}
         />
 
         <NotificationPopup
