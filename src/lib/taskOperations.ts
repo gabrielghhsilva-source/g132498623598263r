@@ -6,6 +6,8 @@ export interface AddTaskInput {
   text: string;
   dueDate?: string;
   dueTime?: string;
+  endDate?: string;
+  endTime?: string;
   recurrence?: RecurrenceRule;
   priority?: TaskPriority;
   tagIds?: string[];
@@ -20,6 +22,8 @@ export function makeTask(input: AddTaskInput): Task {
     style: { ...DEFAULT_STYLE },
     dueDate: input.dueDate,
     dueTime: input.dueTime,
+    endDate: input.endDate,
+    endTime: input.endTime,
     createdAt: new Date().toISOString(),
     comments: [],
     recurrence: input.recurrence,
