@@ -139,6 +139,7 @@ const AppContent = () => {
                 onUpdateStatus={store.updateTaskStatus}
                 onUpdateStyle={store.updateTaskStyle}
                 onUpdateTime={store.updateTaskTime}
+                onUpdateEnd={store.updateTaskEnd}
                 onUpdatePriority={store.updateTaskPriority}
                 onUpdateTags={store.updateTaskTags}
                 onMoveTask={store.moveTask}
