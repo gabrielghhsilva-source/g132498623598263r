@@ -19,6 +19,7 @@ interface Props {
   onUpdateStatus: (areaId: string, taskId: string, s: TaskStatus) => void;
   onUpdateStyle: (areaId: string, taskId: string, s: Partial<TaskTextStyle>) => void;
   onUpdateTime: (areaId: string, taskId: string, time: string | undefined, date?: string) => void;
+  onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
   onUpdatePriority: (areaId: string, taskId: string, p: TaskPriority) => void;
   onUpdateTags: (areaId: string, taskId: string, ids: string[]) => void;
   onMoveTask: (fromAreaId: string, toAreaId: string, taskId: string, toIndex?: number) => void;
@@ -331,6 +332,7 @@ export function KanbanBoard(props: Props) {
           onUpdateStyle={(s) => props.onUpdateStyle(selectedAreaId, selectedTask.id, s)}
           onUpdateTime={(time, date) => props.onUpdateTime(selectedAreaId, selectedTask.id, time, date)}
           onUpdateDate={(date) => props.onUpdateTime(selectedAreaId, selectedTask.id, selectedTask.dueTime, date || "")}
+          onUpdateEnd={(endDate, endTime) => props.onUpdateEnd(selectedAreaId, selectedTask.id, endDate, endTime)}
           onUpdatePriority={(p) => props.onUpdatePriority(selectedAreaId, selectedTask.id, p)}
           onUpdateTags={(ids) => props.onUpdateTags(selectedAreaId, selectedTask.id, ids)}
           onAddTag={props.onAddTag}

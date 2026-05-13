@@ -48,6 +48,8 @@ export interface Task {
   style: TaskTextStyle;
   dueDate?: string;
   dueTime?: string;
+  endDate?: string;
+  endTime?: string;
   createdAt: string;
   comments: TaskComment[];
   recurrence?: RecurrenceRule;
