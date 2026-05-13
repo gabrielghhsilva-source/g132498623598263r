@@ -128,6 +128,35 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
     return Math.max(0, Math.min(24 * 60 - 1, mins));
   }, [TIMELINE_WIDTH]);
 
+  // End-time resize (drag right edge)
+  useEffect(() => {
+    if (!resizingEnd) return;
+    const onMove = (e: MouseEvent) => {
+      const mins = xToMinutes(e.clientX);
+      setResizeEndMins(Math.max(resizingEnd.startMins + 5, mins));
+    };
+    const onUp = () => {
+      setResizingEnd((curr) => {
+        if (curr && resizeEndMins !== null) {
+          const clamped = Math.min(24 * 60 - 1, Math.max(curr.startMins + 5, resizeEndMins));
+          onUpdateEnd(curr.areaId, curr.id, curr.dueDate, minutesToTimeStr(clamped));
+        }
+        return null;
+      });
+      setResizeEndMins(null);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [resizingEnd, resizeEndMins, xToMinutes, onUpdateEnd]);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggingId) return;
