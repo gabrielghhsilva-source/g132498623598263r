@@ -25,6 +25,9 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
   const [text, setText] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [showEnd, setShowEnd] = useState(false);
   const [priority, setPriority] = useState<TaskPriority>("none");
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [subtasksText, setSubtasksText] = useState("");
