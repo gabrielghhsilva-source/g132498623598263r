@@ -12,6 +12,7 @@ interface Props {
   tasks: TodayTask[];
   onMarkDone: (areaId: string, taskId: string) => void;
   onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
+  onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
 }
 
 // Horizontal timeline configuration: 30-minute slots from 00:00 to 23:30
