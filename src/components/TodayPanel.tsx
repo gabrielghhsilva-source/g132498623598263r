@@ -442,9 +442,10 @@ interface TaskCardProps {
   isDragging: boolean;
   showTime?: boolean;
   compact?: boolean;
+  endLabel?: string;
 }
 
-function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact }: TaskCardProps) {
+function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact, endLabel }: TaskCardProps) {
   return (
     <div
       draggable
