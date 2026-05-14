@@ -509,7 +509,7 @@ function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTi
       onDragEnd={onDragEnd}
       className={`relative flex items-start gap-1.5 ${compact ? "p-1.5" : "p-2.5"} rounded-lg border bg-background/90 backdrop-blur-sm shadow-sm transition-all cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-40 scale-95" : "hover:border-primary/40"
-      } ${isLive ? "border-primary/60 shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)]" : liveDone ? "border-success/40" : "border-border"}`}
+      } ${isLive ? "fut-live-edge" : liveDone ? "border-success/40" : "border-border"}`}
     >
       <GripVertical className="w-3 h-3 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
       <button
