@@ -48,6 +48,18 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
   const [hoverMinutes, setHoverMinutes] = useState<number | null>(null);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
   const [resizing, setResizing] = useState(false);
+  // Tick a cada 30s para atualizar o progresso ao vivo
+  const [nowMins, setNowMins] = useState(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = new Date();
+      setNowMins(d.getHours() * 60 + d.getMinutes());
+    }, 30_000);
+    return () => clearInterval(id);
+  }, []);
   const [slotWidth, setSlotWidth] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_SLOT_WIDTH;
     const saved = Number(localStorage.getItem(SLOT_WIDTH_STORAGE_KEY));
