@@ -440,6 +440,8 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                           showTime
                           compact
                           endLabel={hasRange ? minutesToTimeStr(endMins!) : undefined}
+                          liveProgress={liveActive ? progressRatio : undefined}
+                          liveDone={liveDone}
                         />
                         <div
                           onMouseDown={(e) => {
