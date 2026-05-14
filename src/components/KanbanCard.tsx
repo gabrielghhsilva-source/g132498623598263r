@@ -35,7 +35,7 @@ export function KanbanCard({ task, tags, timezone, isDragging, onClick, onDragSt
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
-      className={`group relative rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
+      className={`group relative fut-surface rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
         isDragging ? "opacity-40 scale-95" : ""
       } ${task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
     >
