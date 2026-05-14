@@ -376,6 +376,13 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                   const hasRange = endMins !== null && endMins > mins;
                   const rangeWidth = hasRange ? ((endMins! - mins) / (24 * 60)) * TIMELINE_WIDTH : 0;
                   const cardWidth = hasRange ? Math.max(slotWidth - 6, rangeWidth - 6) : slotWidth - 6;
+                  const isToday = !t.dueDate || t.dueDate === new Date().toISOString().slice(0, 10);
+                  const liveActive = !!(hasRange && isToday && nowMins >= mins && nowMins <= endMins!);
+                  const liveDone = !!(hasRange && isToday && nowMins > endMins!);
+                  const progressRatio = liveActive
+                    ? (nowMins - mins) / (endMins! - mins)
+                    : liveDone ? 1 : 0;
+                  const progressWidth = rangeWidth * progressRatio;
                   const slotIdx = Math.floor(mins / SLOT_MINUTES);
                   const stackIndex = timedTasks
                     .slice(0, idx)
