@@ -225,7 +225,7 @@ function Kpi({
     muted: "text-muted-foreground border-l-border",
   } as const;
   return (
-    <div className={`bg-card border border-border border-l-4 ${colorMap[accent]} rounded-md shadow-sm p-4`}>
+    <div className={`bg-card border border-border border-l-4 ${colorMap[accent]} rounded-md shadow-sm p-4 fut-surface fut-top-accent`}>
       <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {label}
