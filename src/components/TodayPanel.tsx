@@ -399,9 +399,36 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                     >
                       {hasRange && (
                         <div
-                          className="absolute inset-y-0 left-0 rounded-lg bg-primary/10 border border-primary/30 pointer-events-none -z-0"
+                          className={`absolute inset-y-0 left-0 rounded-lg border pointer-events-none -z-0 overflow-hidden transition-colors ${
+                            liveActive
+                              ? "live-range-active"
+                              : liveDone
+                                ? "bg-success/10 border-success/40"
+                                : "bg-primary/10 border-primary/30"
+                          }`}
                           style={{ width: rangeWidth }}
-                        />
+                        >
+                          {(liveActive || liveDone) && (
+                            <div
+                              className={`absolute inset-y-0 left-0 rounded-l-lg ${
+                                liveActive ? "live-progress-fill" : "bg-success/30"
+                              }`}
+                              style={{ width: progressWidth, transition: "width 800ms linear" }}
+                            />
+                          )}
+                          {liveActive && (
+                            <div
+                              className="absolute top-0 bottom-0 w-8 live-scanline pointer-events-none"
+                              style={{ left: Math.max(0, progressWidth - 32) }}
+                            />
+                          )}
+                          {liveActive && (
+                            <div
+                              className="absolute top-0 bottom-0 w-px bg-primary shadow-[0_0_8px_hsl(var(--primary))] pointer-events-none"
+                              style={{ left: progressWidth }}
+                            />
+                          )}
+                        </div>
                       )}
                       <div className="relative">
                         <TaskCard
