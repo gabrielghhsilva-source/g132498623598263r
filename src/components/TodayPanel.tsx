@@ -48,6 +48,18 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
   const [hoverMinutes, setHoverMinutes] = useState<number | null>(null);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
   const [resizing, setResizing] = useState(false);
+  // Tick a cada 30s para atualizar o progresso ao vivo
+  const [nowMins, setNowMins] = useState(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = new Date();
+      setNowMins(d.getHours() * 60 + d.getMinutes());
+    }, 30_000);
+    return () => clearInterval(id);
+  }, []);
   const [slotWidth, setSlotWidth] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_SLOT_WIDTH;
     const saved = Number(localStorage.getItem(SLOT_WIDTH_STORAGE_KEY));
@@ -364,6 +376,13 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                   const hasRange = endMins !== null && endMins > mins;
                   const rangeWidth = hasRange ? ((endMins! - mins) / (24 * 60)) * TIMELINE_WIDTH : 0;
                   const cardWidth = hasRange ? Math.max(slotWidth - 6, rangeWidth - 6) : slotWidth - 6;
+                  const isToday = !t.dueDate || t.dueDate === new Date().toISOString().slice(0, 10);
+                  const liveActive = !!(hasRange && isToday && nowMins >= mins && nowMins <= endMins!);
+                  const liveDone = !!(hasRange && isToday && nowMins > endMins!);
+                  const progressRatio = liveActive
+                    ? (nowMins - mins) / (endMins! - mins)
+                    : liveDone ? 1 : 0;
+                  const progressWidth = rangeWidth * progressRatio;
                   const slotIdx = Math.floor(mins / SLOT_MINUTES);
                   const stackIndex = timedTasks
                     .slice(0, idx)
@@ -380,9 +399,36 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                     >
                       {hasRange && (
                         <div
-                          className="absolute inset-y-0 left-0 rounded-lg bg-primary/10 border border-primary/30 pointer-events-none -z-0"
+                          className={`absolute inset-y-0 left-0 rounded-lg border pointer-events-none -z-0 overflow-hidden transition-colors ${
+                            liveActive
+                              ? "live-range-active"
+                              : liveDone
+                                ? "bg-success/10 border-success/40"
+                                : "bg-primary/10 border-primary/30"
+                          }`}
                           style={{ width: rangeWidth }}
-                        />
+                        >
+                          {(liveActive || liveDone) && (
+                            <div
+                              className={`absolute inset-y-0 left-0 rounded-l-lg ${
+                                liveActive ? "live-progress-fill" : "bg-success/30"
+                              }`}
+                              style={{ width: progressWidth, transition: "width 800ms linear" }}
+                            />
+                          )}
+                          {liveActive && (
+                            <div
+                              className="absolute top-0 bottom-0 w-8 live-scanline pointer-events-none"
+                              style={{ left: Math.max(0, progressWidth - 32) }}
+                            />
+                          )}
+                          {liveActive && (
+                            <div
+                              className="absolute top-0 bottom-0 w-px bg-primary shadow-[0_0_8px_hsl(var(--primary))] pointer-events-none"
+                              style={{ left: progressWidth }}
+                            />
+                          )}
+                        </div>
                       )}
                       <div className="relative">
                         <TaskCard
@@ -394,6 +440,8 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
                           showTime
                           compact
                           endLabel={hasRange ? minutesToTimeStr(endMins!) : undefined}
+                          liveProgress={liveActive ? progressRatio : undefined}
+                          liveDone={liveDone}
                         />
                         <div
                           onMouseDown={(e) => {
@@ -443,9 +491,13 @@ interface TaskCardProps {
   showTime?: boolean;
   compact?: boolean;
   endLabel?: string;
+  liveProgress?: number;
+  liveDone?: boolean;
 }
 
-function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact, endLabel }: TaskCardProps) {
+function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTime, compact, endLabel, liveProgress, liveDone }: TaskCardProps) {
+  const isLive = typeof liveProgress === "number";
+  const pct = isLive ? Math.round(liveProgress! * 100) : 0;
   return (
     <div
       draggable
@@ -455,9 +507,9 @@ function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTi
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      className={`flex items-start gap-1.5 ${compact ? "p-1.5" : "p-2.5"} rounded-lg border bg-background/90 backdrop-blur-sm shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+      className={`relative flex items-start gap-1.5 ${compact ? "p-1.5" : "p-2.5"} rounded-lg border bg-background/90 backdrop-blur-sm shadow-sm transition-all cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-40 scale-95" : "hover:border-primary/40"
-      } border-border`}
+      } ${isLive ? "border-primary/60 shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)]" : liveDone ? "border-success/40" : "border-border"}`}
     >
       <GripVertical className="w-3 h-3 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
       <button
@@ -474,6 +526,12 @@ function TaskCard({ task, onMarkDone, onDragStart, onDragEnd, isDragging, showTi
           {showTime && task.dueTime && (
             <span className="font-mono text-primary flex-shrink-0">
               • {task.dueTime}{endLabel ? ` → ${endLabel}` : ""}
+            </span>
+          )}
+          {isLive && (
+            <span className="ml-auto font-mono text-[9px] tracking-wider text-primary flex items-center gap-1 flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_6px_hsl(var(--primary))]" />
+              {pct}%
             </span>
           )}
         </p>
