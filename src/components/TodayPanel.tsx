@@ -67,7 +67,52 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
     return Math.max(MIN_SLOT_WIDTH, Math.min(MAX_SLOT_WIDTH, saved));
   });
   const timelineRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPanning, setIsPanning] = useState(false);
   const TIMELINE_WIDTH = SLOTS_PER_DAY * slotWidth;
+
+  // Click-and-hold horizontal pan on the timeline scroll container
+  const handlePanStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    // Don't start panning if user grabbed a card, resize handle, or button
+    if (target.closest('[draggable="true"], button, [data-no-pan]')) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startScroll = el.scrollLeft;
+    setIsPanning(true);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
+    const onMove = (ev: MouseEvent) => {
+      el.scrollLeft = startScroll - (ev.clientX - startX);
+    };
+    const onUp = () => {
+      setIsPanning(false);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
+
+  // Scroll wheel: vertical wheel scrolls horizontally on the timeline
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0) return;
+      // only hijack vertical wheel when there's room to scroll horizontally
+      if (el.scrollWidth <= el.clientWidth) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [open]);
 
   useEffect(() => {
     try { localStorage.setItem(SLOT_WIDTH_STORAGE_KEY, String(slotWidth)); } catch {}
