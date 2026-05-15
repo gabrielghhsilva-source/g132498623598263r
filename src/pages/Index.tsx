@@ -197,6 +197,18 @@ const AppContent = () => {
           }}
         />
 
+        <ImageTaskDialog
+          open={imageTaskOpen}
+          onOpenChange={setImageTaskOpen}
+          areas={store.areas.map(a => ({ id: a.id, name: a.name, icon: a.icon }))}
+          tags={store.tags}
+          timezone={store.timezone}
+          onCreateTasks={(items) => {
+            items.forEach(({ areaId, input }) => store.addTaskFull(areaId, input));
+            setActiveTab("tasks");
+          }}
+        />
+
         <VoiceTaskDialog
           open={voiceTaskOpen}
           onOpenChange={setVoiceTaskOpen}
