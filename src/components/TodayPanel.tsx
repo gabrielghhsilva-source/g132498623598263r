@@ -360,7 +360,11 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
             </div>
 
             {/* Horizontal timeline */}
-            <div className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar">
+            <div
+              ref={scrollRef}
+              onMouseDown={handlePanStart}
+              className={`flex-1 overflow-x-auto overflow-y-hidden no-scrollbar ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+            >
               <div
                 ref={timelineRef}
                 className="relative h-full"
