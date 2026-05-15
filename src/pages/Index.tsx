@@ -18,7 +18,8 @@ import { ThemeDecorations } from "@/components/ThemeDecorations";
 import { CardNavigation } from "@/components/CardNavigation";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
-import { ClipboardList, LayoutDashboard } from "lucide-react";
+import { ImageTaskDialog } from "@/components/ImageTaskDialog";
+import { ClipboardList, LayoutDashboard, ImageIcon } from "lucide-react";
 import { MenuPage } from "@/components/MenuPage";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
@@ -43,20 +44,20 @@ const AppContent = () => {
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
   const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
+  const [imageTaskOpen, setImageTaskOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
   });
 
-  // Atalho global tecla V → abre o modo voz inteligente
+  // Atalhos globais: V → voz inteligente, I → imagem → tarefas
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "v" && e.key !== "V") return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || t.tagName === "SELECT")) return;
-      e.preventDefault();
-      setVoiceTaskOpen(true);
+      if (e.key === "v" || e.key === "V") { e.preventDefault(); setVoiceTaskOpen(true); }
+      else if (e.key === "i" || e.key === "I") { e.preventDefault(); setImageTaskOpen(true); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
