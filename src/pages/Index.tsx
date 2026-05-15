@@ -101,6 +101,13 @@ const AppContent = () => {
               <h1 className="text-base sm:text-xl font-bold tracking-tight truncate uppercase">{tabMeta[activeTab].label}</h1>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setImageTaskOpen(true)}
+                title="Imagem → Tarefas (I)"
+                className="p-2 rounded-md hover:bg-accent text-primary transition-colors"
+              >
+                <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
               <SettingsMenu
                 theme={store.theme}
                 onThemeChange={store.setTheme}
