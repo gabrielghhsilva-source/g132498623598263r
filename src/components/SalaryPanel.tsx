@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ManualExpense, ManualIncome, InvestmentArea, StockPosition } from "@/lib/types";
 import { getAreaTotals } from "@/lib/investmentCalc";
 import { Wallet, Plus, Trash2, Edit3, Check, TrendingDown, TrendingUp, PiggyBank, CreditCard, BarChart3, DollarSign } from "lucide-react";
+import { FinancialCharts } from "@/components/FinancialCharts";
 
 interface Props {
   salary: number;
