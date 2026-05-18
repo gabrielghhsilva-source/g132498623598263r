@@ -124,6 +124,21 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
             />
           </div>
 
+          {/* Visual charts */}
+          <FinancialCharts
+            salary={salary.data.salary}
+            manualIncomes={salary.data.manualIncomes.reduce((s, i) => s + i.amount, 0)}
+            investmentProfit={profit}
+            monthlyInvestments={monthlyContrib}
+            monthlyDebts={0}
+            manualExpenses={totalManualExpenses}
+            pendingDebts={debtPending}
+            finalBalance={finalBalance}
+            totalPatrimony={totals.totalCurrent}
+          />
+
+
+
           {/* Quick debt list */}
           <div className="bg-card border border-border rounded-lg shadow-sm">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
