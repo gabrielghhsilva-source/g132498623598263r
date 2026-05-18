@@ -136,6 +136,19 @@ export function SalaryPanel({
         </div>
       </div>
 
+      {/* Visual Charts */}
+      <FinancialCharts
+        salary={salary}
+        manualIncomes={totalManualIncomes}
+        investmentProfit={investmentProfit}
+        monthlyInvestments={monthlyInvestments}
+        monthlyDebts={monthlyDebts}
+        manualExpenses={totalManualExpenses}
+        finalBalance={finalBalance}
+        totalPatrimony={grandTotals.totalCurrent}
+      />
+
+
       {/* Auto Expenses Breakdown */}
       <div className="glass-card rounded-xl p-5 border border-border">
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
