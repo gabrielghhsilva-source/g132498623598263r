@@ -16,6 +16,7 @@ import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { DebtsPanel } from "@/components/DebtsPanel";
+import { FinancialCharts } from "@/components/FinancialCharts";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
