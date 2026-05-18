@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ManualExpense, ManualIncome, InvestmentArea, StockPosition } from "@/lib/types";
 import { getAreaTotals } from "@/lib/investmentCalc";
 import { Wallet, Plus, Trash2, Edit3, Check, TrendingDown, TrendingUp, PiggyBank, CreditCard, BarChart3, DollarSign } from "lucide-react";
+import { FinancialCharts } from "@/components/FinancialCharts";
 
 interface Props {
   salary: number;
@@ -134,6 +135,19 @@ export function SalaryPanel({
           />
         </div>
       </div>
+
+      {/* Visual Charts */}
+      <FinancialCharts
+        salary={salary}
+        manualIncomes={totalManualIncomes}
+        investmentProfit={investmentProfit}
+        monthlyInvestments={monthlyInvestments}
+        monthlyDebts={monthlyDebts}
+        manualExpenses={totalManualExpenses}
+        finalBalance={finalBalance}
+        totalPatrimony={grandTotals.totalCurrent}
+      />
+
 
       {/* Auto Expenses Breakdown */}
       <div className="glass-card rounded-xl p-5 border border-border">

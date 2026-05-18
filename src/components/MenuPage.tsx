@@ -16,6 +16,7 @@ import { InvestmentDashboard } from "@/components/InvestmentDashboard";
 import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { DebtsPanel } from "@/components/DebtsPanel";
+import { FinancialCharts } from "@/components/FinancialCharts";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
@@ -122,6 +123,21 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               icon={debtStore.overdue.length > 0 ? AlertTriangle : CreditCard}
             />
           </div>
+
+          {/* Visual charts */}
+          <FinancialCharts
+            salary={salary.data.salary}
+            manualIncomes={salary.data.manualIncomes.reduce((s, i) => s + i.amount, 0)}
+            investmentProfit={profit}
+            monthlyInvestments={monthlyContrib}
+            monthlyDebts={0}
+            manualExpenses={totalManualExpenses}
+            pendingDebts={debtPending}
+            finalBalance={finalBalance}
+            totalPatrimony={totals.totalCurrent}
+          />
+
+
 
           {/* Quick debt list */}
           <div className="bg-card border border-border rounded-lg shadow-sm">
