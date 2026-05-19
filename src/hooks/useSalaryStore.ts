@@ -25,8 +25,8 @@ export function useSalaryStore() {
     setData(prev => ({ ...prev, salary }));
   }, []);
 
-  const addExpense = useCallback((name: string, amount: number) => {
-    const expense: ManualExpense = { id: crypto.randomUUID(), name, amount };
+  const addExpense = useCallback((name: string, amount: number, recurring = false) => {
+    const expense: ManualExpense = { id: crypto.randomUUID(), name, amount, recurring };
     setData(prev => ({
       ...prev,
       manualExpenses: [...prev.manualExpenses, expense],

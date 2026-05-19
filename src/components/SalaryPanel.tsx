@@ -11,7 +11,7 @@ interface Props {
   investmentAreas: InvestmentArea[];
   stockPositions: StockPosition[];
   onSetSalary: (v: number) => void;
-  onAddExpense: (name: string, amount: number) => void;
+  onAddExpense: (name: string, amount: number, recurring?: boolean) => void;
   onDeleteExpense: (id: string) => void;
   onAddIncome: (name: string, amount: number) => void;
   onDeleteIncome: (id: string) => void;
@@ -30,6 +30,7 @@ export function SalaryPanel({
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [expName, setExpName] = useState("");
   const [expAmount, setExpAmount] = useState("");
+  const [expRecurring, setExpRecurring] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [incName, setIncName] = useState("");
   const [incAmount, setIncAmount] = useState("");
@@ -69,9 +70,10 @@ export function SalaryPanel({
 
   const handleAddExpense = () => {
     if (!expName.trim() || !expAmount) return;
-    onAddExpense(expName.trim(), Number(expAmount));
+    onAddExpense(expName.trim(), Number(expAmount), expRecurring);
     setExpName("");
     setExpAmount("");
+    setExpRecurring(false);
     setShowAddExpense(false);
   };
 
@@ -141,12 +143,18 @@ export function SalaryPanel({
         salary={salary}
         manualIncomes={totalManualIncomes}
         investmentProfit={investmentProfit}
+        stocksProfit={0}
         monthlyInvestments={monthlyInvestments}
-        monthlyDebts={monthlyDebts}
-        manualExpenses={totalManualExpenses}
+        monthlyDebts={0}
+        expenseBreakdown={[
+          ...allDebts.map(d => ({ name: `Dívida: ${d.name}`, value: d.monthlyAmount, recurring: true })),
+          ...manualExpenses.map(e => ({ name: e.name, value: e.amount, recurring: e.recurring })),
+        ]}
         finalBalance={finalBalance}
         totalPatrimony={grandTotals.totalCurrent}
       />
+
+
 
 
       {/* Auto Expenses Breakdown */}
@@ -240,9 +248,14 @@ export function SalaryPanel({
         <div className="space-y-2">
           {manualExpenses.map(exp => (
             <div key={exp.id} className="flex items-center justify-between bg-destructive/5 rounded-lg px-3 py-2.5 group">
-              <div>
-                <span className="text-sm font-medium">{exp.name}</span>
-                <span className="text-xs text-destructive ml-2">-{formatCurrency(exp.amount)}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                {exp.recurring && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold tracking-wide flex-shrink-0" title="Despesa recorrente todo mês">
+                    ↻ MENSAL
+                  </span>
+                )}
+                <span className="text-sm font-medium truncate">{exp.name}</span>
+                <span className="text-xs text-destructive ml-1 flex-shrink-0">-{formatCurrency(exp.amount)}</span>
               </div>
               <button
                 onClick={() => onDeleteExpense(exp.id)}
@@ -254,25 +267,36 @@ export function SalaryPanel({
           ))}
 
           {showAddExpense ? (
-            <div className="flex gap-2 animate-fade-in">
-              <input
-                value={expName}
-                onChange={e => setExpName(e.target.value)}
-                placeholder="Nome da despesa"
-                className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm outline-none border border-border placeholder:text-muted-foreground"
-                autoFocus
-              />
-              <input
-                type="number"
-                value={expAmount}
-                onChange={e => setExpAmount(e.target.value)}
-                placeholder="Valor"
-                className="w-28 bg-muted rounded-lg px-3 py-2 text-sm outline-none border border-border placeholder:text-muted-foreground"
-              />
-              <button onClick={handleAddExpense} className="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90">
-                <Check className="w-4 h-4" />
-              </button>
-              <button onClick={() => setShowAddExpense(false)} className="px-3 py-2 text-sm rounded-lg hover:bg-muted text-muted-foreground">✕</button>
+            <div className="space-y-2 animate-fade-in">
+              <div className="flex gap-2">
+                <input
+                  value={expName}
+                  onChange={e => setExpName(e.target.value)}
+                  placeholder="Nome da despesa"
+                  className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm outline-none border border-border placeholder:text-muted-foreground"
+                  autoFocus
+                />
+                <input
+                  type="number"
+                  value={expAmount}
+                  onChange={e => setExpAmount(e.target.value)}
+                  placeholder="Valor"
+                  className="w-28 bg-muted rounded-lg px-3 py-2 text-sm outline-none border border-border placeholder:text-muted-foreground"
+                />
+                <button onClick={handleAddExpense} className="px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90">
+                  <Check className="w-4 h-4" />
+                </button>
+                <button onClick={() => setShowAddExpense(false)} className="px-3 py-2 text-sm rounded-lg hover:bg-muted text-muted-foreground">✕</button>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors px-1">
+                <input
+                  type="checkbox"
+                  checked={expRecurring}
+                  onChange={e => setExpRecurring(e.target.checked)}
+                  className="rounded border-border accent-primary"
+                />
+                <span>↻ Despesa recorrente (todo mês)</span>
+              </label>
             </div>
           ) : (
             <button
@@ -281,6 +305,7 @@ export function SalaryPanel({
             >
               <Plus className="w-4 h-4" /> Nova despesa manual
             </button>
+
           )}
         </div>
       </div>

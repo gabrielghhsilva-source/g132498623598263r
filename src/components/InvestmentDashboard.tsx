@@ -300,7 +300,13 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `M${v}`} />
           <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number) => formatCurrency(value)} />
+          <Tooltip
+            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--primary) / 0.6)", borderRadius: 10, fontSize: 12, padding: "10px 14px", color: "hsl(var(--popover-foreground))", fontWeight: 600, boxShadow: "0 8px 24px -8px hsl(var(--primary) / 0.35)" }}
+            itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+            labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 700, marginBottom: 4 }}
+            labelFormatter={l => `Mês ${l}`}
+            formatter={(value: number) => formatCurrency(value)}
+          />
           <Area type="monotone" dataKey="invested" stackId="1" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground) / 0.2)" name="Investido" />
           <Area type="monotone" dataKey="total" stroke={color} fill={`${color}33`} name="Total" />
         </AreaChart>
@@ -406,40 +412,87 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   onCancel: () => void;
 }) {
   const [name, setName] = useState("");
-  const [initial, setInitial] = useState("");
-  const [prev, setPrev] = useState("");
   const [monthly, setMonthly] = useState("");
-  const [rate, setRate] = useState("");
-  const [rateType, setRateType] = useState<"monthly" | "annual">("monthly");
+  const [invested, setInvested] = useState("");
+  const [thisMonth, setThisMonth] = useState("");
+  const [accruedProfit, setAccruedProfit] = useState("");
+  const [monthlyProfit, setMonthlyProfit] = useState("");
+
   const handleAdd = () => {
     if (!name.trim()) return;
+    const monthlyN = Number(monthly) || 0;
+    const investedN = Number(invested) || 0;
+    const accruedN = Number(accruedProfit) || 0;
+    const monthlyProfitN = Number(monthlyProfit) || 0;
+    const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
+
+    // Derive rate% from R$ profit/month over the principal already invested
+    const base = investedN + accruedN;
+    const rate = base > 0 && monthlyProfitN > 0 ? (monthlyProfitN / base) * 100 : 0;
+
+    const now = new Date();
     onAdd({
-      name: name.trim(), initialValue: Number(initial) || 0, previouslyInvested: Number(prev) || 0,
-      monthlyContribution: Number(monthly) || 0, rateOfReturn: Number(rate) || 0, rateType,
-      passiveIncome: 0, startDate: new Date().toISOString().split("T")[0],
+      name: name.trim(),
+      initialValue: accruedN,
+      previouslyInvested: investedN,
+      monthlyContribution: monthlyN,
+      rateOfReturn: rate,
+      rateType: "monthly",
+      passiveIncome: 0,
+      startDate: now.toISOString().split("T")[0],
+      ...(thisMonthN !== null && {
+        monthlyOverride: { month: now.getMonth(), year: now.getFullYear(), amount: thisMonthN },
+      }),
     });
   };
 
   return (
-    <div className="bg-secondary/30 rounded-lg border border-border p-3 space-y-2 animate-fade-in">
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome do investimento" className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border focus:border-primary/40 placeholder:text-muted-foreground" />
-      <div className="grid grid-cols-2 gap-2">
-        <input type="number" value={initial} onChange={e => setInitial(e.target.value)} placeholder="Valor inicial" className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
-        <input type="number" value={prev} onChange={e => setPrev(e.target.value)} placeholder="Já investido antes" className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
-        <input type="number" value={monthly} onChange={e => setMonthly(e.target.value)} placeholder="Aporte mensal" className="bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
-        <div className="flex gap-1">
-          <input type="number" value={rate} onChange={e => setRate(e.target.value)} placeholder="Taxa %" className="flex-1 bg-secondary/60 rounded-lg px-3 py-1.5 text-xs outline-none border border-border placeholder:text-muted-foreground" />
-          <select value={rateType} onChange={e => setRateType(e.target.value as "monthly" | "annual")} className="bg-secondary rounded-lg px-2 py-1 text-xs border-none outline-none text-foreground">
-            <option value="monthly">a.m.</option>
-            <option value="annual">a.a.</option>
-          </select>
-        </div>
-        
+    <div className="bg-secondary/30 rounded-lg border border-border p-3 space-y-2.5 animate-fade-in">
+      <input
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Nome do investimento"
+        className="w-full bg-secondary/60 rounded-lg px-3 py-2 text-sm outline-none border border-border focus:border-primary/40 placeholder:text-muted-foreground"
+        autoFocus
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <Field label="Aporte mensal" hint="Valor que entra todo mês">
+          <input type="number" value={monthly} onChange={e => setMonthly(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Quantidade investida" hint="Total já investido como capital">
+          <input type="number" value={invested} onChange={e => setInvested(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Investimento deste mês" hint="Substitui o aporte automático no mês atual">
+          <input type="number" value={thisMonth} onChange={e => setThisMonth(e.target.value)} placeholder="opcional"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Juros já gerados" hint="Quanto o capital anterior já rendeu">
+          <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Lucro mensal (juros)" hint="Quanto rende em R$ todo mês" full>
+          <input type="number" value={monthlyProfit} onChange={e => setMonthlyProfit(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
       </div>
-      <div className="flex justify-end gap-2">
+
+      <div className="flex justify-end gap-2 pt-1">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
         <button onClick={handleAdd} className="px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:opacity-90 font-medium">Adicionar</button>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, hint, full, children }: { label: string; hint?: string; full?: boolean; children: React.ReactNode }) {
+  return (
+    <div className={full ? "sm:col-span-2" : ""}>
+      <label className="block text-[11px] font-semibold text-foreground/80 mb-0.5">{label}</label>
+      {children}
+      {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
     </div>
   );
 }
