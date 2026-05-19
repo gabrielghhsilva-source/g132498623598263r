@@ -416,7 +416,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [invested, setInvested] = useState("");
   const [thisMonth, setThisMonth] = useState("");
   const [accruedProfit, setAccruedProfit] = useState("");
-  const [monthlyProfit, setMonthlyProfit] = useState("");
+  const [monthlyRate, setMonthlyRate] = useState("");
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -427,8 +427,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
     const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
 
     // Derive rate% from R$ profit/month over the principal already invested
-    const base = investedN + accruedN;
-    const rate = base > 0 && monthlyProfitN > 0 ? (monthlyProfitN / base) * 100 : 0;
+    const rate = Number(monthlyRate) || 0;
 
     const now = new Date();
     onAdd({
@@ -474,10 +473,10 @@ function AddInvestmentForm({ onAdd, onCancel }: {
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
         <Field label="Lucro mensal (juros)" hint="Quanto rende em R$ todo mês" full>
-          <input type="number" value={monthlyProfit} onChange={e => setMonthlyProfit(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-      </div>
+          <Field label="Taxa de juros mensal (%)" hint="Ex: 0.8 para 0,8% ao mês" full>
+  <input type="number" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="0,8"
+    className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+</Field>
 
       <div className="flex justify-end gap-2 pt-1">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
