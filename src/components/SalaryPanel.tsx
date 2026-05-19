@@ -11,7 +11,7 @@ interface Props {
   investmentAreas: InvestmentArea[];
   stockPositions: StockPosition[];
   onSetSalary: (v: number) => void;
-  onAddExpense: (name: string, amount: number) => void;
+  onAddExpense: (name: string, amount: number, recurring?: boolean) => void;
   onDeleteExpense: (id: string) => void;
   onAddIncome: (name: string, amount: number) => void;
   onDeleteIncome: (id: string) => void;
@@ -30,6 +30,7 @@ export function SalaryPanel({
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [expName, setExpName] = useState("");
   const [expAmount, setExpAmount] = useState("");
+  const [expRecurring, setExpRecurring] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [incName, setIncName] = useState("");
   const [incAmount, setIncAmount] = useState("");
@@ -69,9 +70,10 @@ export function SalaryPanel({
 
   const handleAddExpense = () => {
     if (!expName.trim() || !expAmount) return;
-    onAddExpense(expName.trim(), Number(expAmount));
+    onAddExpense(expName.trim(), Number(expAmount), expRecurring);
     setExpName("");
     setExpAmount("");
+    setExpRecurring(false);
     setShowAddExpense(false);
   };
 
