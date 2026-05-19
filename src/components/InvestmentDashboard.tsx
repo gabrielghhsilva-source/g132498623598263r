@@ -472,7 +472,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Lucro mensal (juros)" hint="Quanto rende em R$ todo mês" full>
+        <Field label="Lucro mensal (juros)" hint="Quanto rende em % todo mês" full>
           <Field label="Taxa de juros mensal (%)" hint="Ex: 0.8 para 0,8% ao mês" full>
   <input type="number" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="0,8"
     className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
