@@ -300,7 +300,13 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `M${v}`} />
           <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number) => formatCurrency(value)} />
+          <Tooltip
+            contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--primary) / 0.6)", borderRadius: 10, fontSize: 12, padding: "10px 14px", color: "hsl(var(--popover-foreground))", fontWeight: 600, boxShadow: "0 8px 24px -8px hsl(var(--primary) / 0.35)" }}
+            itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+            labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 700, marginBottom: 4 }}
+            labelFormatter={l => `Mês ${l}`}
+            formatter={(value: number) => formatCurrency(value)}
+          />
           <Area type="monotone" dataKey="invested" stackId="1" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground) / 0.2)" name="Investido" />
           <Area type="monotone" dataKey="total" stroke={color} fill={`${color}33`} name="Total" />
         </AreaChart>

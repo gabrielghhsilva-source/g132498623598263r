@@ -129,13 +129,18 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
             salary={salary.data.salary}
             manualIncomes={salary.data.manualIncomes.reduce((s, i) => s + i.amount, 0)}
             investmentProfit={profit}
+            stocksProfit={0}
             monthlyInvestments={monthlyContrib}
             monthlyDebts={0}
-            manualExpenses={totalManualExpenses}
+            expenseBreakdown={[
+              ...invest.areas.flatMap(a => (a.debts || []).map(d => ({ name: `Dívida: ${d.name}`, value: d.monthlyAmount, recurring: true }))),
+              ...salary.data.manualExpenses.map(e => ({ name: e.name, value: e.amount, recurring: e.recurring })),
+            ]}
             pendingDebts={debtPending}
             finalBalance={finalBalance}
             totalPatrimony={totals.totalCurrent}
           />
+
 
 
 
