@@ -477,7 +477,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   <input type="number" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="0,8"
     className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
 </Field>
-
+</div>
       <div className="flex justify-end gap-2 pt-1">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
         <button onClick={handleAdd} className="px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:opacity-90 font-medium">Adicionar</button>
