@@ -196,6 +196,7 @@ export interface ManualExpense {
   id: string;
   name: string;
   amount: number;
+  recurring?: boolean;
 }
 
 export interface ManualIncome {
