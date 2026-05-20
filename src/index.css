@@ -452,7 +452,7 @@
 }
 .fut-surface:hover::after {
   opacity: 1;
-  animation: fut-sheen 1.1s ease-out forwards;
+  animation: fut-sheen 2.2s ease-in-out infinite;
 }
 
 /* Borda fina pulsante sutil para destacar item ao vivo / com prazo hoje */
