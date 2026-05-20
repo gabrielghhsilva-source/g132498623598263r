@@ -144,20 +144,31 @@ export function FinancialCharts({
   const totalOut = monthlyInvestments + monthlyDebts + totalManualExpenses + pendingDebts;
   const flowRatio = totalIn > 0 ? Math.min(100, (totalOut / totalIn) * 100) : 0;
 
-  // Projeção 6 meses
+  // Projeção 6 meses — saldo, patrimônio e impacto dos lucros (juros + ações) acumulados
   const projection = useMemo(() => {
     const monthlyNet = finalBalance;
-    const data: { mes: string; saldo: number; patrimonio: number }[] = [];
+    const data: { mes: string; saldo: number; patrimonio: number; lucroInvest: number; lucroAcoes: number; lucroTotal: number }[] = [];
     let acc = 0;
     let pat = totalPatrimony;
+    let accInv = 0;
+    let accStk = 0;
     const labels = ["Mês 1", "Mês 2", "Mês 3", "Mês 4", "Mês 5", "Mês 6"];
     for (let i = 0; i < 6; i++) {
       acc += monthlyNet;
-      pat += monthlyInvestments + Math.max(0, monthlyNet) * 0.2;
-      data.push({ mes: labels[i], saldo: Math.round(acc), patrimonio: Math.round(pat) });
+      accInv += investmentProfit;
+      accStk += stocksProfit;
+      pat += monthlyInvestments + investmentProfit + stocksProfit;
+      data.push({
+        mes: labels[i],
+        saldo: Math.round(acc),
+        patrimonio: Math.round(pat),
+        lucroInvest: Math.round(accInv),
+        lucroAcoes: Math.round(accStk),
+        lucroTotal: Math.round(accInv + accStk),
+      });
     }
     return data;
-  }, [finalBalance, monthlyInvestments, totalPatrimony]);
+  }, [finalBalance, monthlyInvestments, totalPatrimony, investmentProfit, stocksProfit]);
 
   return (
     <div className="space-y-3">
