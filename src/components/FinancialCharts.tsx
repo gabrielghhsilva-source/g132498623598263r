@@ -144,20 +144,31 @@ export function FinancialCharts({
   const totalOut = monthlyInvestments + monthlyDebts + totalManualExpenses + pendingDebts;
   const flowRatio = totalIn > 0 ? Math.min(100, (totalOut / totalIn) * 100) : 0;
 
-  // Projeção 6 meses
+  // Projeção 6 meses — saldo, patrimônio e impacto dos lucros (juros + ações) acumulados
   const projection = useMemo(() => {
     const monthlyNet = finalBalance;
-    const data: { mes: string; saldo: number; patrimonio: number }[] = [];
+    const data: { mes: string; saldo: number; patrimonio: number; lucroInvest: number; lucroAcoes: number; lucroTotal: number }[] = [];
     let acc = 0;
     let pat = totalPatrimony;
+    let accInv = 0;
+    let accStk = 0;
     const labels = ["Mês 1", "Mês 2", "Mês 3", "Mês 4", "Mês 5", "Mês 6"];
     for (let i = 0; i < 6; i++) {
       acc += monthlyNet;
-      pat += monthlyInvestments + Math.max(0, monthlyNet) * 0.2;
-      data.push({ mes: labels[i], saldo: Math.round(acc), patrimonio: Math.round(pat) });
+      accInv += investmentProfit;
+      accStk += stocksProfit;
+      pat += monthlyInvestments + investmentProfit + stocksProfit;
+      data.push({
+        mes: labels[i],
+        saldo: Math.round(acc),
+        patrimonio: Math.round(pat),
+        lucroInvest: Math.round(accInv),
+        lucroAcoes: Math.round(accStk),
+        lucroTotal: Math.round(accInv + accStk),
+      });
     }
     return data;
-  }, [finalBalance, monthlyInvestments, totalPatrimony]);
+  }, [finalBalance, monthlyInvestments, totalPatrimony, investmentProfit, stocksProfit]);
 
   return (
     <div className="space-y-3">
@@ -294,7 +305,7 @@ export function FinancialCharts({
         </ChartCard>
 
         {/* Projeção */}
-        <ChartCard title="Projeção de saldo (6 meses)" icon={LineIcon} subtitle="Se você mantiver o ritmo atual" wide>
+        <ChartCard title="Projeção de saldo (6 meses)" icon={LineIcon} subtitle={separated ? "Lucros de juros e ações separados" : "Se você mantiver o ritmo atual"} wide>
           <div className="h-56 -ml-2">
             <ResponsiveContainer>
               <AreaChart data={projection}>
@@ -307,6 +318,18 @@ export function FinancialCharts({
                     <stop offset="0%" stopColor={COLOR_PROFIT_INV} stopOpacity={0.45} />
                     <stop offset="100%" stopColor={COLOR_PROFIT_INV} stopOpacity={0} />
                   </linearGradient>
+                  <linearGradient id="area-pinv2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={COLOR_PROFIT_INV} stopOpacity={0.7} />
+                    <stop offset="100%" stopColor={COLOR_PROFIT_INV} stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="area-pstk2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={COLOR_PROFIT_STK} stopOpacity={0.7} />
+                    <stop offset="100%" stopColor={COLOR_PROFIT_STK} stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="area-ptot" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={COLOR_PROFIT_INV} stopOpacity={0.55} />
+                    <stop offset="100%" stopColor={COLOR_PROFIT_STK} stopOpacity={0.05} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 6" stroke="hsl(var(--border) / 0.4)" vertical={false} />
                 <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
@@ -315,6 +338,14 @@ export function FinancialCharts({
                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} iconType="circle" />
                 <Area type="monotone" dataKey="patrimonio" name="Patrimônio projetado" stroke={COLOR_PROFIT_INV} strokeWidth={2} fill="url(#area-pat)" />
                 <Area type="monotone" dataKey="saldo" name="Saldo acumulado" stroke={COLOR_BALANCE} strokeWidth={2} fill="url(#area-saldo)" />
+                {separated ? (
+                  <>
+                    <Area type="monotone" dataKey="lucroInvest" name="Lucro Invest. acum." stroke={COLOR_PROFIT_INV} strokeWidth={2} strokeDasharray="4 4" fill="url(#area-pinv2)" />
+                    <Area type="monotone" dataKey="lucroAcoes" name="Lucro Ações acum." stroke={COLOR_PROFIT_STK} strokeWidth={2} strokeDasharray="4 4" fill="url(#area-pstk2)" />
+                  </>
+                ) : (
+                  <Area type="monotone" dataKey="lucroTotal" name="Lucro acumulado (juros + ações)" stroke={COLOR_PROFIT_STK} strokeWidth={2} strokeDasharray="4 4" fill="url(#area-ptot)" />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>

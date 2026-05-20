@@ -279,7 +279,7 @@ function InvestmentAreaCard({
 
 function AreaGrowthChart({ investments, color }: { investments: Investment[]; color: string }) {
   const months = 12;
-  const combinedData: { month: number; invested: number; total: number }[] = [];
+  const combinedData: { month: number; capital: number; juros: number; total: number }[] = [];
   for (let m = 0; m <= months; m++) {
     let totalInvested = 0;
     let totalValue = 0;
@@ -290,13 +290,27 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
         totalValue += growth[m].total;
       }
     }
-    combinedData.push({ month: m, invested: Math.round(totalInvested), total: Math.round(totalValue) });
+    const capital = Math.round(totalInvested);
+    const juros = Math.max(0, Math.round(totalValue - totalInvested));
+    combinedData.push({ month: m, capital, juros, total: Math.round(totalValue) });
   }
+
+  const PROFIT_GREEN = "hsl(142 70% 45%)";
 
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer>
         <AreaChart data={combinedData}>
+          <defs>
+            <linearGradient id={`grad-capital-${color}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.55} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.15} />
+            </linearGradient>
+            <linearGradient id="grad-juros-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={PROFIT_GREEN} stopOpacity={0.7} />
+              <stop offset="100%" stopColor={PROFIT_GREEN} stopOpacity={0.15} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `M${v}`} />
           <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
@@ -307,8 +321,8 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
             labelFormatter={l => `Mês ${l}`}
             formatter={(value: number) => formatCurrency(value)}
           />
-          <Area type="monotone" dataKey="invested" stackId="1" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground) / 0.2)" name="Investido" />
-          <Area type="monotone" dataKey="total" stroke={color} fill={`${color}33`} name="Total" />
+          <Area type="monotone" dataKey="capital" stackId="1" stroke={color} strokeWidth={2} fill={`url(#grad-capital-${color})`} name="Capital alocado" />
+          <Area type="monotone" dataKey="juros" stackId="1" stroke={PROFIT_GREEN} strokeWidth={2} fill="url(#grad-juros-area)" name="Lucro (juros)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
