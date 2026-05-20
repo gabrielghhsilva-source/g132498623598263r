@@ -416,19 +416,15 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [invested, setInvested] = useState("");
   const [thisMonth, setThisMonth] = useState("");
   const [accruedProfit, setAccruedProfit] = useState("");
-  const [monthlyProfit, setMonthlyProfit] = useState("");
+  const [monthlyRate, setMonthlyRate] = useState("");
 
   const handleAdd = () => {
     if (!name.trim()) return;
     const monthlyN = Number(monthly) || 0;
     const investedN = Number(invested) || 0;
     const accruedN = Number(accruedProfit) || 0;
-    const monthlyProfitN = Number(monthlyProfit) || 0;
+    const rate = Number(monthlyRate) || 0;
     const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
-
-    // Derive rate% from R$ profit/month over the principal already invested
-    const base = investedN + accruedN;
-    const rate = base > 0 && monthlyProfitN > 0 ? (monthlyProfitN / base) * 100 : 0;
 
     const now = new Date();
     onAdd({
@@ -473,8 +469,8 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Lucro mensal (juros)" hint="Quanto rende em R$ todo mês" full>
-          <input type="number" value={monthlyProfit} onChange={e => setMonthlyProfit(e.target.value)} placeholder="R$ 0,00"
+        <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %" full>
+          <input type="number" step="0.01" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="ex: 0,85"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
       </div>
