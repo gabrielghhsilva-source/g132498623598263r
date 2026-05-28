@@ -33,7 +33,7 @@ export function useInvestmentStore() {
     setAreas(prev => prev.filter(a => a.id !== areaId));
   }, []);
 
-  const addInvestment = useCallback((areaId: string, investment: Omit<Investment, "id" | "contributions">) => {
+  const addInvestment = useCallback((areaId: string, investment: Omit<Investment, "id" | "contributions">): string => {
     const inv: Investment = { ...investment, id: crypto.randomUUID(), contributions: [] };
     setAreas(prev => prev.map(a =>
       a.id === areaId ? { ...a, investments: [...a.investments, inv] } : a
