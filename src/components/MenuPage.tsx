@@ -31,9 +31,9 @@ type InvestApi = {
   areas: InvestmentArea[];
   addArea: (n: string, c: string, e: string) => void;
   deleteArea: (id: string) => void;
-  addInvestment: (...args: any[]) => void;
+  addInvestment: (areaId: string, inv: Omit<import("@/lib/types").Investment, "id" | "contributions">) => string;
   deleteInvestment: (...args: any[]) => void;
-  addContribution: (...args: any[]) => void;
+  addContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
   addGoal: (...args: any[]) => void;
   deleteGoal: (...args: any[]) => void;
   addDebt: (...args: any[]) => void;
