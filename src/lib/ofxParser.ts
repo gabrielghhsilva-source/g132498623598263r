@@ -143,6 +143,7 @@ export function parseOFX(raw: string): OfxStatement {
     const type: OfxTransaction["type"] =
       trntype === "CREDIT" || amount > 0 ? "CREDIT" :
       trntype === "DEBIT"  || amount < 0 ? "DEBIT"  : "OTHER";
+    const isInvestment = looksLikeInvestment(memo);
     return {
       id: fitid,
       date: dt,
@@ -150,8 +151,10 @@ export function parseOFX(raw: string): OfxStatement {
       type,
       memo: memo || (amount >= 0 ? "Crédito" : "Débito"),
       party: extractParty(memo),
-      isInvestment: looksLikeInvestment(memo),
+      isInvestment,
+      investmentKind: isInvestment ? classifyInvestmentKind(memo, amount) : null,
     };
+  });
   });
 
   return {
