@@ -14,8 +14,6 @@ export interface OfxTransaction {
   investmentKind: InvestmentKind; // aporte | resgate | rendimento
 }
 
-  isInvestment: boolean; // looks like an investment / brokerage movement
-}
 
 export interface OfxStatement {
   balance: number | null;
