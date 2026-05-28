@@ -1,6 +1,8 @@
 // Minimal OFX (1.x SGML and 2.x XML) parser for bank statements.
 // Extracts transactions and ledger balance.
 
+export type InvestmentKind = "aporte" | "resgate" | "rendimento" | null;
+
 export interface OfxTransaction {
   id: string;            // FITID
   date: string;          // YYYY-MM-DD
@@ -8,6 +10,10 @@ export interface OfxTransaction {
   type: "CREDIT" | "DEBIT" | "OTHER";
   memo: string;          // raw memo
   party: string;         // cleaned counter-party name
+  isInvestment: boolean; // looks like an investment / brokerage movement
+  investmentKind: InvestmentKind; // aporte | resgate | rendimento
+}
+
   isInvestment: boolean; // looks like an investment / brokerage movement
 }
 
