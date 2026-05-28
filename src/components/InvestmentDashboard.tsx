@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { InvestmentArea, Investment, InvestmentGoal, Debt } from "@/lib/types";
 import { getAreaTotals, calculateGrowth, simulateUntilDate, getCurrentValue, simulateGlobalUntilDate } from "@/lib/investmentCalc";
-import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { ContributionAmountInput } from "./ContributionAmountInput";
+import { QuickContributionDialog } from "./QuickContributionDialog";
+import { HistoryBuilderDialog } from "./HistoryBuilderDialog";
 
 const BANK_EMOJIS = ["🏦", "💰", "📊", "🪙", "💎", "🏛️", "📈", "💳", "🔐", "🌐"];
+
+/** Suggest a default contribution step based on the investment name. */
+function suggestStep(name: string): number | undefined {
+  const up = name.toUpperCase();
+  if (/TESOURO|CDB|LCI|LCA/.test(up)) return 100;
+  if (/RDB|CAIXINHA|POUPAN/.test(up)) return 1;
+  return undefined;
+}
 
 interface Props {
   areas: InvestmentArea[];
   onAddArea: (name: string, color: string, logoEmoji: string) => void;
   onDeleteArea: (areaId: string) => void;
-  onAddInvestment: (areaId: string, investment: Omit<Investment, "id" | "contributions">) => void;
+  onAddInvestment: (areaId: string, investment: Omit<Investment, "id" | "contributions">) => string;
   onDeleteInvestment: (areaId: string, investmentId: string) => void;
   onAddContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
+  onAddBulkContributions: (areaId: string, investmentId: string, entries: { date: string; amount: number }[]) => void;
   onAddGoal: (areaId: string, name: string, target: number) => void;
   onDeleteGoal: (areaId: string, goalId: string) => void;
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
