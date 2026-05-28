@@ -3,6 +3,7 @@ import { ManualExpense, ManualIncome, InvestmentArea, StockPosition } from "@/li
 import { getAreaTotals } from "@/lib/investmentCalc";
 import { Wallet, Plus, Trash2, Edit3, Check, TrendingDown, TrendingUp, PiggyBank, CreditCard, BarChart3, DollarSign } from "lucide-react";
 import { FinancialCharts } from "@/components/FinancialCharts";
+import { OfxImporter } from "@/components/OfxImporter";
 
 interface Props {
   salary: number;
