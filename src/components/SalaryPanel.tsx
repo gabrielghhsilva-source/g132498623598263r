@@ -16,6 +16,8 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   onAddIncome: (name: string, amount: number) => void;
   onDeleteIncome: (id: string) => void;
+  onAddInvestment: (areaId: string, inv: Omit<import("@/lib/types").Investment, "id" | "contributions">) => string;
+  onAddContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
 }
 
 function formatCurrency(v: number) {
