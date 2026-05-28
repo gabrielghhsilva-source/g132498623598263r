@@ -38,6 +38,7 @@ export function useInvestmentStore() {
     setAreas(prev => prev.map(a =>
       a.id === areaId ? { ...a, investments: [...a.investments, inv] } : a
     ));
+    return inv.id;
   }, []);
 
   const deleteInvestment = useCallback((areaId: string, investmentId: string) => {
