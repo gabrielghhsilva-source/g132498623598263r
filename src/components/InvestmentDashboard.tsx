@@ -56,12 +56,16 @@ export function InvestmentDashboard({
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Grand total card */}
       <div className="glass-card rounded-xl p-3 sm:p-5">
-        <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-success" />
-          Patrimônio Total
-        </h2>
+        <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+          <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-success" />
+            Patrimônio Total
+          </h2>
+          <QuickContributionDialog areas={areas} onAddContribution={onAddContribution} />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
           <StatBlock label="Valor Atual" value={formatCurrency(grandTotals.totalCurrent)} color="text-foreground" />
