@@ -35,7 +35,7 @@ interface Props {
 
 export function InvestmentDashboard({
   areas, onAddArea, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: Props) {
   const [showAddArea, setShowAddArea] = useState(false);
   const [newAreaName, setNewAreaName] = useState("");
