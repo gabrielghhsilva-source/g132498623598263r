@@ -155,7 +155,6 @@ export function parseOFX(raw: string): OfxStatement {
       investmentKind: isInvestment ? classifyInvestmentKind(memo, amount) : null,
     };
   });
-  });
 
   return {
     balance: balAmt !== null ? Number(balAmt.replace(",", ".")) : null,
