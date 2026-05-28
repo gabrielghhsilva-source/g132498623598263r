@@ -135,8 +135,23 @@ export function SalaryPanel({
             value={formatCurrency(finalBalance)}
             color={finalBalance >= 0 ? "text-success" : "text-destructive"}
             highlight
+        </div>
+
+        {/* OFX importer */}
+        <div className="mt-5 pt-5 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold">Extrato bancário (.ofx)</p>
+            <p className="text-xs text-muted-foreground">Importe seu extrato para preencher entradas, saídas e saldo automaticamente.</p>
+          </div>
+          <OfxImporter
+            onImport={({ setBalance, balance, incomes, expenses }) => {
+              if (setBalance) onSetSalary(balance);
+              incomes.forEach(i => onAddIncome(i.name, i.amount));
+              expenses.forEach(e => onAddExpense(e.name, e.amount, false));
+            }}
           />
         </div>
+      </div>
       </div>
 
       {/* Visual Charts */}
