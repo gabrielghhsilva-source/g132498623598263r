@@ -56,7 +56,6 @@ export function InvestmentDashboard({
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Grand total card */}
       <div className="glass-card rounded-xl p-3 sm:p-5">
         <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
