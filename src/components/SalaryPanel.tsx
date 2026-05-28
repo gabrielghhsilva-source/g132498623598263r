@@ -152,6 +152,7 @@ export function SalaryPanel({
             }}
           />
         </div>
+      </div>
 
 
 
