@@ -211,6 +211,8 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               onDeleteExpense={salary.deleteExpense}
               onAddIncome={salary.addIncome}
               onDeleteIncome={salary.deleteIncome}
+              onAddInvestment={invest.addInvestment}
+              onAddContribution={invest.addContribution}
             />
           )}
           {finTab === "investments" && (
