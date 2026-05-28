@@ -160,7 +160,6 @@ function InvestmentAreaCard({
   onSetMonthlyOverride: (invId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
   onCreateTaskReminder?: (text: string) => void;
 }) {
-}) {
   const [collapsed, setCollapsed] = useState(false);
   const [showAddInv, setShowAddInv] = useState(false);
   const [showAddGoal, setShowAddGoal] = useState(false);
