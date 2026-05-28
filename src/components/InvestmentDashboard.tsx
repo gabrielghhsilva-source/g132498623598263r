@@ -361,10 +361,11 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [contDate, setContDate] = useState("");
+  const [contDate, setContDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [contAmount, setContAmount] = useState("");
   const [showOverride, setShowOverride] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
   const currentVal = getCurrentValue(inv);
   const baseInvested = inv.initialValue + inv.previouslyInvested;
   const profit = currentVal - baseInvested;
