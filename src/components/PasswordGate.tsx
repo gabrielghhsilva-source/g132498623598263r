@@ -152,6 +152,17 @@ export function PasswordGate({ onUnlocked }: Props) {
             </p>
           )}
 
+          <label className="flex items-center gap-2 cursor-pointer select-none" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <input
+              type="checkbox"
+              checked={trustDevice}
+              onChange={e => setTrustDevice(e.target.checked)}
+              className="accent-white/80"
+            />
+            <span className="text-xs">Confiar neste computador (não pedir senha)</span>
+          </label>
+
+
           <button
             type="submit"
             disabled={loading || !password}
