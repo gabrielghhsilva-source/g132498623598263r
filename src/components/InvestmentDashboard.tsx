@@ -546,8 +546,12 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %" full>
+        <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %">
           <input type="number" step="0.01" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="ex: 0,85"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Múltiplo do aporte" hint="Se só aceita múltiplos (ex: 100), informe aqui. Deixe em branco se livre.">
+          <input type="number" value={step} onChange={e => setStep(e.target.value)} placeholder={effectiveStepPlaceholder}
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
       </div>
