@@ -488,6 +488,10 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [thisMonth, setThisMonth] = useState("");
   const [accruedProfit, setAccruedProfit] = useState("");
   const [monthlyRate, setMonthlyRate] = useState("");
+  const [step, setStep] = useState("");
+
+  const suggested = suggestStep(name);
+  const effectiveStepPlaceholder = suggested ? `sugestão: ${suggested}` : "ex: 100 (opcional)";
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -496,6 +500,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
     const accruedN = Number(accruedProfit) || 0;
     const rate = Number(monthlyRate) || 0;
     const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
+    const stepN = step === "" ? suggested : Number(step) || undefined;
 
     const now = new Date();
     onAdd({
@@ -507,6 +512,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
       rateType: "monthly",
       passiveIncome: 0,
       startDate: now.toISOString().split("T")[0],
+      ...(stepN && stepN > 0 && { contributionStep: stepN }),
       ...(thisMonthN !== null && {
         monthlyOverride: { month: now.getMonth(), year: now.getFullYear(), amount: thisMonthN },
       }),
