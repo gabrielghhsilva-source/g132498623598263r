@@ -3,6 +3,7 @@ import { ManualExpense, ManualIncome, InvestmentArea, StockPosition } from "@/li
 import { getAreaTotals } from "@/lib/investmentCalc";
 import { Wallet, Plus, Trash2, Edit3, Check, TrendingDown, TrendingUp, PiggyBank, CreditCard, BarChart3, DollarSign } from "lucide-react";
 import { FinancialCharts } from "@/components/FinancialCharts";
+import { OfxImporter } from "@/components/OfxImporter";
 
 interface Props {
   salary: number;
@@ -136,7 +137,24 @@ export function SalaryPanel({
             highlight
           />
         </div>
+
+        {/* OFX importer */}
+        <div className="mt-5 pt-5 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold">Extrato bancário (.ofx)</p>
+            <p className="text-xs text-muted-foreground">Importe seu extrato para preencher entradas, saídas e saldo automaticamente.</p>
+          </div>
+          <OfxImporter
+            onImport={({ setBalance, balance, incomes, expenses }) => {
+              if (setBalance) onSetSalary(balance);
+              incomes.forEach(i => onAddIncome(i.name, i.amount));
+              expenses.forEach(e => onAddExpense(e.name, e.amount, false));
+            }}
+          />
+        </div>
       </div>
+
+
 
       {/* Visual Charts */}
       <FinancialCharts
