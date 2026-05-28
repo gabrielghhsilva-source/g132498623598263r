@@ -123,5 +123,5 @@ export function useInvestmentStore() {
     ));
   }, []);
 
-  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
+  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addBulkContributions, updateInvestment, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
 }
