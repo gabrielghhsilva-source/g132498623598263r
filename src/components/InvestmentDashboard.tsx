@@ -430,17 +430,48 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
             )}
           </div>
           <div>
-            <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-medium">Aportes manuais ({inv.contributions.length})</p>
+              <button
+                onClick={() => setShowHistory(true)}
+                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                title="Preencher meses anteriores em lote"
+              >
+                <History className="w-3 h-3" /> Preencher histórico
+              </button>
+            </div>
             {inv.contributions.slice(-3).map(c => (
               <p key={c.id} className="text-xs text-muted-foreground">{new Date(c.date + "T12:00:00").toLocaleDateString("pt-BR")}: {formatCurrency(c.amount)}</p>
             ))}
-            <div className="flex gap-2 mt-1">
-              <input type="date" value={contDate} onChange={e => setContDate(e.target.value)} className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border" />
-              <input type="number" value={contAmount} onChange={e => setContAmount(e.target.value)} placeholder="Valor" className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border w-24" />
-              <button onClick={() => { if (contDate && contAmount) { onAddContribution(contDate, Number(contAmount)); setContDate(""); setContAmount(""); } }}
-                className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90">+</button>
+            <div className="flex gap-2 mt-1 items-start">
+              <input type="date" value={contDate} onChange={e => setContDate(e.target.value)} className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border h-[30px]" />
+              <div className="flex-1">
+                <ContributionAmountInput
+                  value={contAmount}
+                  onChange={setContAmount}
+                  step={inv.contributionStep}
+                  quickAmounts={inv.quickAmounts}
+                  placeholder="Valor"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (contDate && contAmount && Number(contAmount) > 0) {
+                    onAddContribution(contDate, Number(contAmount));
+                    setContAmount("");
+                  }
+                }}
+                className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90 h-[30px]"
+              >+</button>
             </div>
           </div>
+          {showHistory && (
+            <HistoryBuilderDialog
+              investment={inv}
+              onClose={() => setShowHistory(false)}
+              onConfirm={entries => { onAddBulkContributions(entries); setShowHistory(false); }}
+            />
+          )}
         </div>
       )}
     </div>
