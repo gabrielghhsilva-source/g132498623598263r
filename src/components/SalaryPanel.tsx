@@ -152,8 +152,8 @@ export function SalaryPanel({
             }}
           />
         </div>
-      </div>
-      </div>
+
+
 
       {/* Visual Charts */}
       <FinancialCharts
