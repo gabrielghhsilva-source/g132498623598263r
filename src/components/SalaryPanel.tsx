@@ -16,6 +16,8 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   onAddIncome: (name: string, amount: number) => void;
   onDeleteIncome: (id: string) => void;
+  onAddInvestment: (areaId: string, inv: Omit<import("@/lib/types").Investment, "id" | "contributions">) => string;
+  onAddContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
 }
 
 function formatCurrency(v: number) {
@@ -25,6 +27,7 @@ function formatCurrency(v: number) {
 export function SalaryPanel({
   salary, manualExpenses, manualIncomes, investmentAreas, stockPositions,
   onSetSalary, onAddExpense, onDeleteExpense, onAddIncome, onDeleteIncome,
+  onAddInvestment, onAddContribution,
 }: Props) {
   const [editingSalary, setEditingSalary] = useState(false);
   const [salaryInput, setSalaryInput] = useState(salary.toString());
@@ -145,6 +148,9 @@ export function SalaryPanel({
             <p className="text-xs text-muted-foreground">Importe seu extrato para preencher entradas, saídas e saldo automaticamente.</p>
           </div>
           <OfxImporter
+            investmentAreas={investmentAreas}
+            onAddInvestment={onAddInvestment}
+            onAddContribution={onAddContribution}
             onImport={({ setBalance, balance, incomes, expenses }) => {
               if (setBalance) onSetSalary(balance);
               incomes.forEach(i => onAddIncome(i.name, i.amount));
