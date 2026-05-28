@@ -59,6 +59,33 @@ export function useInvestmentStore() {
     ));
   }, []);
 
+  const addBulkContributions = useCallback((areaId: string, investmentId: string, entries: { date: string; amount: number }[]) => {
+    const records: ContributionRecord[] = entries
+      .filter(e => e.amount > 0 && e.date)
+      .map(e => ({ id: crypto.randomUUID(), date: e.date, amount: e.amount }));
+    if (records.length === 0) return;
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? {
+        ...a,
+        investments: a.investments.map(i =>
+          i.id === investmentId ? { ...i, contributions: [...i.contributions, ...records] } : i
+        ),
+      } : a
+    ));
+  }, []);
+
+  const updateInvestment = useCallback((areaId: string, investmentId: string, patch: Partial<Investment>) => {
+    setAreas(prev => prev.map(a =>
+      a.id === areaId ? {
+        ...a,
+        investments: a.investments.map(i =>
+          i.id === investmentId ? { ...i, ...patch } : i
+        ),
+      } : a
+    ));
+  }, []);
+
+
   const addGoal = useCallback((areaId: string, name: string, targetAmount: number) => {
     const goal: InvestmentGoal = { id: crypto.randomUUID(), name, targetAmount };
     setAreas(prev => prev.map(a =>
@@ -96,5 +123,5 @@ export function useInvestmentStore() {
     ));
   }, []);
 
-  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
+  return { areas, addArea, deleteArea, addInvestment, deleteInvestment, addContribution, addBulkContributions, updateInvestment, addGoal, deleteGoal, addDebt, deleteDebt, setMonthlyOverride };
 }

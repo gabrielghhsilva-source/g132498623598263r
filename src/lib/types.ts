@@ -162,6 +162,10 @@ export interface Investment {
   startDate: string;
   contributions: ContributionRecord[];
   monthlyOverride?: MonthlyOverride;
+  /** Múltiplo mínimo para aportes (ex: 100 → só aceita 100, 200, 300...). */
+  contributionStep?: number;
+  /** Sugestões clicáveis de valores rápidos. */
+  quickAmounts?: number[];
 }
 
 export interface ContributionRecord {

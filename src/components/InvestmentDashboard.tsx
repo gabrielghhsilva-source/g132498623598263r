@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { InvestmentArea, Investment, InvestmentGoal, Debt } from "@/lib/types";
 import { getAreaTotals, calculateGrowth, simulateUntilDate, getCurrentValue, simulateGlobalUntilDate } from "@/lib/investmentCalc";
-import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { ContributionAmountInput } from "./ContributionAmountInput";
+import { QuickContributionDialog } from "./QuickContributionDialog";
+import { HistoryBuilderDialog } from "./HistoryBuilderDialog";
 
 const BANK_EMOJIS = ["🏦", "💰", "📊", "🪙", "💎", "🏛️", "📈", "💳", "🔐", "🌐"];
+
+/** Suggest a default contribution step based on the investment name. */
+function suggestStep(name: string): number | undefined {
+  const up = name.toUpperCase();
+  if (/TESOURO|CDB|LCI|LCA/.test(up)) return 100;
+  if (/RDB|CAIXINHA|POUPAN/.test(up)) return 1;
+  return undefined;
+}
 
 interface Props {
   areas: InvestmentArea[];
   onAddArea: (name: string, color: string, logoEmoji: string) => void;
   onDeleteArea: (areaId: string) => void;
-  onAddInvestment: (areaId: string, investment: Omit<Investment, "id" | "contributions">) => void;
+  onAddInvestment: (areaId: string, investment: Omit<Investment, "id" | "contributions">) => string;
   onDeleteInvestment: (areaId: string, investmentId: string) => void;
   onAddContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
+  onAddBulkContributions: (areaId: string, investmentId: string, entries: { date: string; amount: number }[]) => void;
   onAddGoal: (areaId: string, name: string, target: number) => void;
   onDeleteGoal: (areaId: string, goalId: string) => void;
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
@@ -23,7 +35,7 @@ interface Props {
 
 export function InvestmentDashboard({
   areas, onAddArea, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: Props) {
   const [showAddArea, setShowAddArea] = useState(false);
   const [newAreaName, setNewAreaName] = useState("");
@@ -46,10 +58,13 @@ export function InvestmentDashboard({
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Grand total card */}
       <div className="glass-card rounded-xl p-3 sm:p-5">
-        <h2 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-success" />
-          Patrimônio Total
-        </h2>
+        <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+          <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-success" />
+            Patrimônio Total
+          </h2>
+          <QuickContributionDialog areas={areas} onAddContribution={onAddContribution} />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
           <StatBlock label="Valor Atual" value={formatCurrency(grandTotals.totalCurrent)} color="text-foreground" />
@@ -79,6 +94,7 @@ export function InvestmentDashboard({
           onAddInvestment={inv => onAddInvestment(area.id, inv)}
           onDeleteInvestment={invId => onDeleteInvestment(area.id, invId)}
           onAddContribution={(invId, date, amount) => onAddContribution(area.id, invId, date, amount)}
+          onAddBulkContributions={(invId, entries) => onAddBulkContributions(area.id, invId, entries)}
           onAddGoal={(name, target) => onAddGoal(area.id, name, target)}
           onDeleteGoal={goalId => onDeleteGoal(area.id, goalId)}
           onAddDebt={(name, amount) => onAddDebt(area.id, name, amount)}
@@ -127,16 +143,16 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
     </div>
   );
 }
-
 function InvestmentAreaCard({
   area, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
   onAddInvestment: (inv: Omit<Investment, "id" | "contributions">) => void;
   onDeleteInvestment: (id: string) => void;
   onAddContribution: (invId: string, date: string, amount: number) => void;
+  onAddBulkContributions: (invId: string, entries: { date: string; amount: number }[]) => void;
   onAddGoal: (name: string, target: number) => void;
   onDeleteGoal: (goalId: string) => void;
   onAddDebt: (name: string, amount: number) => void;
@@ -186,7 +202,15 @@ function InvestmentAreaCard({
 
           {/* Investments */}
           {area.investments.map(inv => (
-            <InvestmentItem key={inv.id} investment={inv} color={area.color} onDelete={() => onDeleteInvestment(inv.id)} onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)} onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)} />
+            <InvestmentItem
+              key={inv.id}
+              investment={inv}
+              color={area.color}
+              onDelete={() => onDeleteInvestment(inv.id)}
+              onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)}
+              onAddBulkContributions={entries => onAddBulkContributions(inv.id, entries)}
+              onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)}
+            />
           ))}
           {showAddInv ? (
             <AddInvestmentForm onAdd={inv => { onAddInvestment(inv); setShowAddInv(false); }} onCancel={() => setShowAddInv(false)} />
@@ -329,17 +353,19 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onSetOverride }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
+  onAddBulkContributions: (entries: { date: string; amount: number }[]) => void;
   onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [contDate, setContDate] = useState("");
+  const [contDate, setContDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [contAmount, setContAmount] = useState("");
   const [showOverride, setShowOverride] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
   const currentVal = getCurrentValue(inv);
   const baseInvested = inv.initialValue + inv.previouslyInvested;
   const profit = currentVal - baseInvested;
@@ -404,17 +430,48 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
             )}
           </div>
           <div>
-            <p className="text-xs font-medium mb-1">Aportes manuais ({inv.contributions.length})</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-medium">Aportes manuais ({inv.contributions.length})</p>
+              <button
+                onClick={() => setShowHistory(true)}
+                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                title="Preencher meses anteriores em lote"
+              >
+                <History className="w-3 h-3" /> Preencher histórico
+              </button>
+            </div>
             {inv.contributions.slice(-3).map(c => (
               <p key={c.id} className="text-xs text-muted-foreground">{new Date(c.date + "T12:00:00").toLocaleDateString("pt-BR")}: {formatCurrency(c.amount)}</p>
             ))}
-            <div className="flex gap-2 mt-1">
-              <input type="date" value={contDate} onChange={e => setContDate(e.target.value)} className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border" />
-              <input type="number" value={contAmount} onChange={e => setContAmount(e.target.value)} placeholder="Valor" className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border w-24" />
-              <button onClick={() => { if (contDate && contAmount) { onAddContribution(contDate, Number(contAmount)); setContDate(""); setContAmount(""); } }}
-                className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90">+</button>
+            <div className="flex gap-2 mt-1 items-start">
+              <input type="date" value={contDate} onChange={e => setContDate(e.target.value)} className="bg-secondary/60 rounded px-2 py-1 text-xs border border-border h-[30px]" />
+              <div className="flex-1">
+                <ContributionAmountInput
+                  value={contAmount}
+                  onChange={setContAmount}
+                  step={inv.contributionStep}
+                  quickAmounts={inv.quickAmounts}
+                  placeholder="Valor"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (contDate && contAmount && Number(contAmount) > 0) {
+                    onAddContribution(contDate, Number(contAmount));
+                    setContAmount("");
+                  }
+                }}
+                className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90 h-[30px]"
+              >+</button>
             </div>
           </div>
+          {showHistory && (
+            <HistoryBuilderDialog
+              investment={inv}
+              onClose={() => setShowHistory(false)}
+              onConfirm={entries => { onAddBulkContributions(entries); setShowHistory(false); }}
+            />
+          )}
         </div>
       )}
     </div>
@@ -431,6 +488,10 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [thisMonth, setThisMonth] = useState("");
   const [accruedProfit, setAccruedProfit] = useState("");
   const [monthlyRate, setMonthlyRate] = useState("");
+  const [step, setStep] = useState("");
+
+  const suggested = suggestStep(name);
+  const effectiveStepPlaceholder = suggested ? `sugestão: ${suggested}` : "ex: 100 (opcional)";
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -439,6 +500,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
     const accruedN = Number(accruedProfit) || 0;
     const rate = Number(monthlyRate) || 0;
     const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
+    const stepN = step === "" ? suggested : Number(step) || undefined;
 
     const now = new Date();
     onAdd({
@@ -450,6 +512,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
       rateType: "monthly",
       passiveIncome: 0,
       startDate: now.toISOString().split("T")[0],
+      ...(stepN && stepN > 0 && { contributionStep: stepN }),
       ...(thisMonthN !== null && {
         monthlyOverride: { month: now.getMonth(), year: now.getFullYear(), amount: thisMonthN },
       }),
@@ -483,8 +546,12 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %" full>
+        <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %">
           <input type="number" step="0.01" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="ex: 0,85"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Múltiplo do aporte" hint="Se só aceita múltiplos (ex: 100), informe aqui. Deixe em branco se livre.">
+          <input type="number" value={step} onChange={e => setStep(e.target.value)} placeholder={effectiveStepPlaceholder}
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
       </div>

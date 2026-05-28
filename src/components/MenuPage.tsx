@@ -34,6 +34,8 @@ type InvestApi = {
   addInvestment: (areaId: string, inv: Omit<import("@/lib/types").Investment, "id" | "contributions">) => string;
   deleteInvestment: (...args: any[]) => void;
   addContribution: (areaId: string, investmentId: string, date: string, amount: number) => void;
+  addBulkContributions: (areaId: string, investmentId: string, entries: { date: string; amount: number }[]) => void;
+  updateInvestment: (areaId: string, investmentId: string, patch: Partial<import("@/lib/types").Investment>) => void;
   addGoal: (...args: any[]) => void;
   deleteGoal: (...args: any[]) => void;
   addDebt: (...args: any[]) => void;
@@ -223,6 +225,7 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               onAddInvestment={invest.addInvestment}
               onDeleteInvestment={invest.deleteInvestment}
               onAddContribution={invest.addContribution}
+              onAddBulkContributions={invest.addBulkContributions}
               onAddGoal={invest.addGoal}
               onDeleteGoal={invest.deleteGoal}
               onAddDebt={invest.addDebt}

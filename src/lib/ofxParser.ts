@@ -1,6 +1,8 @@
 // Minimal OFX (1.x SGML and 2.x XML) parser for bank statements.
 // Extracts transactions and ledger balance.
 
+export type InvestmentKind = "aporte" | "resgate" | "rendimento" | null;
+
 export interface OfxTransaction {
   id: string;            // FITID
   date: string;          // YYYY-MM-DD
@@ -9,7 +11,9 @@ export interface OfxTransaction {
   memo: string;          // raw memo
   party: string;         // cleaned counter-party name
   isInvestment: boolean; // looks like an investment / brokerage movement
+  investmentKind: InvestmentKind; // aporte | resgate | rendimento
 }
+
 
 export interface OfxStatement {
   balance: number | null;
@@ -62,6 +66,7 @@ const NOISE_TOKENS = [
   "QRS", "QRES", "QRCODE", "QR", "DA", "DE", "DO",
 ];
 
+// Expanded with Nubank-specific terms (RDB, Caixinhas, Aplicação automática, etc.).
 const INVESTMENT_KEYWORDS = [
   "APLIC", "APLICACAO", "APLICAÇÃO", "RESGATE",
   "INVEST", "INVESTIMENTO", "CDB", "LCI", "LCA",
@@ -70,7 +75,26 @@ const INVESTMENT_KEYWORDS = [
   "NUINVEST", "XPI", "XP INVEST", "RICO", "BTG", "AVENUE",
   "CORRETORA", "B3", "BOLSA", "ACAO", "AÇÃO", "ACOES", "AÇÕES",
   "PREVIDENCIA", "PREVIDÊNCIA",
+  // Nubank
+  "RDB", "CAIXINHA", "CAIXINHAS", "NUINVEST", "NUBANK INVEST",
+  "RENDIMENTO", "RENDIMENTOS", "JUROS",
 ];
+
+const APORTE_TOKENS = ["APLIC", "INVEST", "APORTE", "DEPOSITO RDB", "COMPRA RDB"];
+const RESGATE_TOKENS = ["RESGATE"];
+const RENDIMENTO_TOKENS = ["RENDIMENTO", "RENDIMENTOS", "JUROS", "RENDA FIXA"];
+
+function classifyInvestmentKind(memo: string, amount: number): InvestmentKind {
+  const up = (memo || "").toUpperCase();
+  if (RENDIMENTO_TOKENS.some(k => up.includes(k)) && amount >= 0) return "rendimento";
+  if (RESGATE_TOKENS.some(k => up.includes(k))) return "resgate";
+  if (APORTE_TOKENS.some(k => up.includes(k))) return "aporte";
+  // Heuristic by sign as fallback
+  if (amount < 0) return "aporte";
+  if (amount > 0) return "resgate";
+  return null;
+}
+
 
 /** Clean an OFX memo into a human-friendly counter-party name. */
 export function extractParty(memo: string): string {
@@ -119,6 +143,7 @@ export function parseOFX(raw: string): OfxStatement {
     const type: OfxTransaction["type"] =
       trntype === "CREDIT" || amount > 0 ? "CREDIT" :
       trntype === "DEBIT"  || amount < 0 ? "DEBIT"  : "OTHER";
+    const isInvestment = looksLikeInvestment(memo);
     return {
       id: fitid,
       date: dt,
@@ -126,7 +151,8 @@ export function parseOFX(raw: string): OfxStatement {
       type,
       memo: memo || (amount >= 0 ? "Crédito" : "Débito"),
       party: extractParty(memo),
-      isInvestment: looksLikeInvestment(memo),
+      isInvestment,
+      investmentKind: isInvestment ? classifyInvestmentKind(memo, amount) : null,
     };
   });
 
