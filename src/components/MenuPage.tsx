@@ -223,6 +223,7 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               onAddInvestment={invest.addInvestment}
               onDeleteInvestment={invest.deleteInvestment}
               onAddContribution={invest.addContribution}
+              onAddBulkContributions={invest.addBulkContributions}
               onAddGoal={invest.addGoal}
               onDeleteGoal={invest.deleteGoal}
               onAddDebt={invest.addDebt}
