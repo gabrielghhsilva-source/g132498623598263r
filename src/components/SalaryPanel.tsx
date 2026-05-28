@@ -27,6 +27,7 @@ function formatCurrency(v: number) {
 export function SalaryPanel({
   salary, manualExpenses, manualIncomes, investmentAreas, stockPositions,
   onSetSalary, onAddExpense, onDeleteExpense, onAddIncome, onDeleteIncome,
+  onAddInvestment, onAddContribution,
 }: Props) {
   const [editingSalary, setEditingSalary] = useState(false);
   const [salaryInput, setSalaryInput] = useState(salary.toString());
