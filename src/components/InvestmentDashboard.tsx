@@ -202,7 +202,15 @@ function InvestmentAreaCard({
 
           {/* Investments */}
           {area.investments.map(inv => (
-            <InvestmentItem key={inv.id} investment={inv} color={area.color} onDelete={() => onDeleteInvestment(inv.id)} onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)} onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)} />
+            <InvestmentItem
+              key={inv.id}
+              investment={inv}
+              color={area.color}
+              onDelete={() => onDeleteInvestment(inv.id)}
+              onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)}
+              onAddBulkContributions={entries => onAddBulkContributions(inv.id, entries)}
+              onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)}
+            />
           ))}
           {showAddInv ? (
             <AddInvestmentForm onAdd={inv => { onAddInvestment(inv); setShowAddInv(false); }} onCancel={() => setShowAddInv(false)} />
