@@ -94,6 +94,7 @@ export function InvestmentDashboard({
           onAddInvestment={inv => onAddInvestment(area.id, inv)}
           onDeleteInvestment={invId => onDeleteInvestment(area.id, invId)}
           onAddContribution={(invId, date, amount) => onAddContribution(area.id, invId, date, amount)}
+          onAddBulkContributions={(invId, entries) => onAddBulkContributions(area.id, invId, entries)}
           onAddGoal={(name, target) => onAddGoal(area.id, name, target)}
           onDeleteGoal={goalId => onDeleteGoal(area.id, goalId)}
           onAddDebt={(name, amount) => onAddDebt(area.id, name, amount)}
