@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { initSecurity } from "@/lib/crypto";
 
@@ -6,12 +6,34 @@ interface Props {
   onUnlocked: () => void;
 }
 
+const TRUSTED_KEY = "trusted-device-pwd";
+
 export function PasswordGate({ onUnlocked }: Props) {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+  const [trustDevice, setTrustDevice] = useState(false);
+  const [autoChecking, setAutoChecking] = useState(true);
+
+  // Try to auto-unlock if this device is trusted
+  useEffect(() => {
+    const stored = localStorage.getItem(TRUSTED_KEY);
+    if (!stored) {
+      setAutoChecking(false);
+      return;
+    }
+    (async () => {
+      const ok = await initSecurity(stored);
+      if (ok) {
+        onUnlocked();
+      } else {
+        localStorage.removeItem(TRUSTED_KEY);
+        setAutoChecking(false);
+      }
+    })();
+  }, [onUnlocked]);
 
   const particles = useMemo(
     () =>
@@ -31,6 +53,9 @@ export function PasswordGate({ onUnlocked }: Props) {
 
     const success = await initSecurity(password);
     if (success) {
+      if (trustDevice) {
+        localStorage.setItem(TRUSTED_KEY, password);
+      }
       onUnlocked();
     } else {
       setError(true);
@@ -38,7 +63,16 @@ export function PasswordGate({ onUnlocked }: Props) {
       setTimeout(() => setShake(false), 600);
     }
     setLoading(false);
-  }, [password, onUnlocked]);
+  }, [password, trustDevice, onUnlocked]);
+
+  if (autoChecking) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)" }}
+      />
+    );
+  }
+
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center"
