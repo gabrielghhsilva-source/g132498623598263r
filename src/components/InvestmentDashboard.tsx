@@ -353,10 +353,11 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onSetOverride }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
+  onAddBulkContributions: (entries: { date: string; amount: number }[]) => void;
   onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
