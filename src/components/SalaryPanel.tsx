@@ -148,6 +148,9 @@ export function SalaryPanel({
             <p className="text-xs text-muted-foreground">Importe seu extrato para preencher entradas, saídas e saldo automaticamente.</p>
           </div>
           <OfxImporter
+            investmentAreas={investmentAreas}
+            onAddInvestment={onAddInvestment}
+            onAddContribution={onAddContribution}
             onImport={({ setBalance, balance, incomes, expenses }) => {
               if (setBalance) onSetSalary(balance);
               incomes.forEach(i => onAddIncome(i.name, i.amount));
