@@ -135,6 +135,7 @@ export function SalaryPanel({
             value={formatCurrency(finalBalance)}
             color={finalBalance >= 0 ? "text-success" : "text-destructive"}
             highlight
+          />
         </div>
 
         {/* OFX importer */}
