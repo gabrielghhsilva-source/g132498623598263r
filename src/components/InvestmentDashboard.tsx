@@ -149,7 +149,7 @@ function InvestmentAreaCard({
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
-  onAddInvestment: (inv: Omit<Investment, "id" | "contributions">) => void;
+  onAddInvestment: (inv: Omit<Investment, "id" | "contributions">) => string;
   onDeleteInvestment: (id: string) => void;
   onAddContribution: (invId: string, date: string, amount: number) => void;
   onAddBulkContributions: (invId: string, entries: { date: string; amount: number }[]) => void;
