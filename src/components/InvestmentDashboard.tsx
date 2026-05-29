@@ -492,69 +492,56 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   onCancel: () => void;
 }) {
   const [name, setName] = useState("");
-  const [monthly, setMonthly] = useState("");
-  const [invested, setInvested] = useState("");
-  const [thisMonth, setThisMonth] = useState("");
-  const [accruedProfit, setAccruedProfit] = useState("");
-  const [monthlyRate, setMonthlyRate] = useState("");
-  const [step, setStep] = useState("");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
   });
+  const [monthlyRate, setMonthlyRate] = useState("");
+  const [baseAmount, setBaseAmount] = useState("");
+  const [multiplier, setMultiplier] = useState(1);
 
   const [showHistory, setShowHistory] = useState(false);
   const [bulkEntries, setBulkEntries] = useState<{ date: string; amount: number }[] | null>(null);
   const [historySummary, setHistorySummary] = useState<{ contrib: number; profit: number; balance: number } | null>(null);
 
+  const base = Number(baseAmount) || 0;
+  const monthlyContribution = base * multiplier;
   const suggested = suggestStep(name);
-  const effectiveStepPlaceholder = suggested ? `sugestão: ${suggested}` : "ex: 100 (opcional)";
+  const effectiveBase = base > 0 ? base : (suggested || 0);
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    const monthlyN = Number(monthly) || 0;
-    const investedN = Number(invested) || 0;
-    const accruedN = Number(accruedProfit) || 0;
     const rate = Number(monthlyRate) || 0;
-    const thisMonthN = thisMonth === "" ? null : Number(thisMonth);
-    const stepN = step === "" ? suggested : Number(step) || undefined;
-
     const now = new Date();
-    // Se o histórico foi preenchido, o "startDate" novo do investimento é hoje
-    // (todo o histórico passado já está embutido em previouslyInvested + initialValue),
-    // assim a calculadora não recontará meses pretéritos.
+    // Se preencheu histórico, o capital e juros passados já entram no saldo inicial
+    // e o startDate vira "hoje" para o cálculo não duplicar meses anteriores.
     const effectiveStart = historySummary ? now.toISOString().split("T")[0] : startDate;
 
     onAdd({
       name: name.trim(),
-      initialValue: accruedN,
-      previouslyInvested: investedN,
-      monthlyContribution: monthlyN,
+      initialValue: historySummary?.profit || 0,
+      previouslyInvested: historySummary?.contrib || 0,
+      monthlyContribution,
       rateOfReturn: rate,
       rateType: "monthly",
       passiveIncome: 0,
       startDate: effectiveStart,
-      ...(stepN && stepN > 0 && { contributionStep: stepN }),
-      ...(thisMonthN !== null && {
-        monthlyOverride: { month: now.getMonth(), year: now.getFullYear(), amount: thisMonthN },
-      }),
+      ...(effectiveBase > 0 && { contributionStep: effectiveBase }),
     }, bulkEntries || undefined);
   };
 
-  // Pseudo investment usado pelo HistoryBuilder antes do investimento existir
   const pseudoInvestment: Investment = {
     id: "draft",
     name: name || "Novo investimento",
     initialValue: 0,
     previouslyInvested: 0,
-    monthlyContribution: Number(monthly) || 0,
+    monthlyContribution,
     rateOfReturn: Number(monthlyRate) || 0,
     rateType: "monthly",
     passiveIncome: 0,
     startDate,
     contributions: [],
-    ...(suggested && !step && { contributionStep: suggested }),
-    ...(step && { contributionStep: Number(step) }),
+    ...(effectiveBase > 0 && { contributionStep: effectiveBase }),
   };
 
   return (
@@ -576,27 +563,33 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           <input type="number" step="0.01" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="ex: 0,85"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Aporte mensal" hint="Valor que entra todo mês a partir de agora">
-          <input type="number" value={monthly} onChange={e => setMonthly(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Múltiplo do aporte" hint="Se só aceita múltiplos (ex: 100), informe aqui.">
-          <input type="number" value={step} onChange={e => setStep(e.target.value)} placeholder={effectiveStepPlaceholder}
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Quantidade investida" hint="Total já investido como capital (preenchido pelo histórico)">
-          <input type="number" value={invested} onChange={e => setInvested(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Juros já gerados" hint="Quanto o capital anterior já rendeu (preenchido pelo histórico)">
-          <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Investimento deste mês" hint="Substitui o aporte automático no mês atual" full>
-          <input type="number" value={thisMonth} onChange={e => setThisMonth(e.target.value)} placeholder="opcional"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
       </div>
+
+      <Field label="Aporte mensal" hint={suggested && !base ? `Sugestão de múltiplo para ${name}: R$ ${suggested}` : "Defina um valor base (múltiplo) e quantas vezes ele entra por mês."} full>
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="relative flex-1 min-w-[120px]">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">R$</span>
+            <input
+              type="number"
+              value={baseAmount}
+              onChange={e => setBaseAmount(e.target.value)}
+              placeholder={suggested ? String(suggested) : "100"}
+              className="w-full pl-8 bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground"
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">×</span>
+          <select
+            value={multiplier}
+            onChange={e => setMultiplier(Number(e.target.value))}
+            className="bg-secondary/60 rounded-lg px-2 py-1.5 text-sm border border-border outline-none"
+          >
+            {[1,2,3,4,5,6,7,8,9,10,15,20].map(n => <option key={n} value={n}>{n}x</option>)}
+          </select>
+          <span className="text-xs font-semibold text-foreground whitespace-nowrap">
+            = {formatCurrency(monthlyContribution)}
+          </span>
+        </div>
+      </Field>
 
       {/* Histórico */}
       <div className="border border-dashed border-primary/30 rounded-lg p-2.5 bg-primary/5 space-y-1.5">
@@ -615,14 +608,20 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           </button>
         </div>
         {historySummary && (
-          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
-            <span>Investido: <span className="text-foreground font-semibold">{formatCurrency(historySummary.contrib)}</span></span>
-            <span>Juros: <span className="text-success font-semibold">{formatCurrency(historySummary.profit)}</span></span>
-            <span>Total: <span className="text-foreground font-semibold">{formatCurrency(historySummary.balance)}</span></span>
+          <div className="text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 items-center">
+            <span className="text-muted-foreground">
+              Investido: <span className="text-success font-semibold">+{formatCurrency(historySummary.contrib)}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Juros: <span className="text-success font-semibold">+{formatCurrency(historySummary.profit)}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Total: <span className="text-foreground font-semibold">{formatCurrency(historySummary.balance)}</span>
+            </span>
             <button
               type="button"
-              onClick={() => { setBulkEntries(null); setHistorySummary(null); setInvested(""); setAccruedProfit(""); }}
-              className="text-destructive hover:underline"
+              onClick={() => { setBulkEntries(null); setHistorySummary(null); }}
+              className="text-destructive hover:underline ml-auto"
             >Limpar</button>
           </div>
         )}
@@ -640,10 +639,7 @@ function AddInvestmentForm({ onAdd, onCancel }: {
           onConfirm={(entries, meta) => {
             setBulkEntries(entries);
             setHistorySummary({ contrib: meta.totalContrib, profit: meta.totalProfit, balance: meta.finalBalance });
-            setInvested(String(Math.round(meta.totalContrib * 100) / 100));
-            setAccruedProfit(String(Math.round(meta.totalProfit * 100) / 100));
             if (meta.rate > 0) {
-              // Converte para taxa mensal se o usuário escolheu anual no builder
               const monthlyR = meta.rateType === "monthly"
                 ? meta.rate
                 : (Math.pow(1 + meta.rate / 100, 1 / 12) - 1) * 100;
