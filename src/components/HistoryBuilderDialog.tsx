@@ -129,7 +129,16 @@ export function HistoryBuilderDialog({ investment, onClose, onConfirm }: Props) 
     const entries = rows
       .map(r => ({ date: r.date, amount: r.contribution }))
       .filter(e => e.amount > 0);
-    onConfirm(entries);
+    onConfirm(entries, {
+      entries,
+      totalContrib,
+      totalProfit,
+      finalBalance,
+      rate: Number(rate) || 0,
+      rateType,
+      initialBalance: Number(initialBalance) || 0,
+      startDate: investment.startDate,
+    });
   };
 
   return (
