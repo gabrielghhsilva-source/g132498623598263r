@@ -488,7 +488,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
 }
 
 function AddInvestmentForm({ onAdd, onCancel }: {
-  onAdd: (inv: Omit<Investment, "id" | "contributions">) => void;
+  onAdd: (inv: Omit<Investment, "id" | "contributions">, bulkEntries?: { date: string; amount: number }[]) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState("");
@@ -498,6 +498,14 @@ function AddInvestmentForm({ onAdd, onCancel }: {
   const [accruedProfit, setAccruedProfit] = useState("");
   const [monthlyRate, setMonthlyRate] = useState("");
   const [step, setStep] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  });
+
+  const [showHistory, setShowHistory] = useState(false);
+  const [bulkEntries, setBulkEntries] = useState<{ date: string; amount: number }[] | null>(null);
+  const [historySummary, setHistorySummary] = useState<{ contrib: number; profit: number; balance: number } | null>(null);
 
   const suggested = suggestStep(name);
   const effectiveStepPlaceholder = suggested ? `sugestão: ${suggested}` : "ex: 100 (opcional)";
@@ -512,6 +520,11 @@ function AddInvestmentForm({ onAdd, onCancel }: {
     const stepN = step === "" ? suggested : Number(step) || undefined;
 
     const now = new Date();
+    // Se o histórico foi preenchido, o "startDate" novo do investimento é hoje
+    // (todo o histórico passado já está embutido em previouslyInvested + initialValue),
+    // assim a calculadora não recontará meses pretéritos.
+    const effectiveStart = historySummary ? now.toISOString().split("T")[0] : startDate;
+
     onAdd({
       name: name.trim(),
       initialValue: accruedN,
@@ -520,12 +533,28 @@ function AddInvestmentForm({ onAdd, onCancel }: {
       rateOfReturn: rate,
       rateType: "monthly",
       passiveIncome: 0,
-      startDate: now.toISOString().split("T")[0],
+      startDate: effectiveStart,
       ...(stepN && stepN > 0 && { contributionStep: stepN }),
       ...(thisMonthN !== null && {
         monthlyOverride: { month: now.getMonth(), year: now.getFullYear(), amount: thisMonthN },
       }),
-    });
+    }, bulkEntries || undefined);
+  };
+
+  // Pseudo investment usado pelo HistoryBuilder antes do investimento existir
+  const pseudoInvestment: Investment = {
+    id: "draft",
+    name: name || "Novo investimento",
+    initialValue: 0,
+    previouslyInvested: 0,
+    monthlyContribution: Number(monthly) || 0,
+    rateOfReturn: Number(monthlyRate) || 0,
+    rateType: "monthly",
+    passiveIncome: 0,
+    startDate,
+    contributions: [],
+    ...(suggested && !step && { contributionStep: suggested }),
+    ...(step && { contributionStep: Number(step) }),
   };
 
   return (
@@ -539,36 +568,91 @@ function AddInvestmentForm({ onAdd, onCancel }: {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <Field label="Aporte mensal" hint="Valor que entra todo mês">
-          <input type="number" value={monthly} onChange={e => setMonthly(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Quantidade investida" hint="Total já investido como capital">
-          <input type="number" value={invested} onChange={e => setInvested(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Investimento deste mês" hint="Substitui o aporte automático no mês atual">
-          <input type="number" value={thisMonth} onChange={e => setThisMonth(e.target.value)} placeholder="opcional"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
-        </Field>
-        <Field label="Juros já gerados" hint="Quanto o capital anterior já rendeu">
-          <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
-            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        <Field label="Investindo desde" hint="Mês/ano de início do investimento">
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border" />
         </Field>
         <Field label="Juros ao mês (%)" hint="Taxa de rendimento mensal em %">
           <input type="number" step="0.01" value={monthlyRate} onChange={e => setMonthlyRate(e.target.value)} placeholder="ex: 0,85"
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
-        <Field label="Múltiplo do aporte" hint="Se só aceita múltiplos (ex: 100), informe aqui. Deixe em branco se livre.">
+        <Field label="Aporte mensal" hint="Valor que entra todo mês a partir de agora">
+          <input type="number" value={monthly} onChange={e => setMonthly(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Múltiplo do aporte" hint="Se só aceita múltiplos (ex: 100), informe aqui.">
           <input type="number" value={step} onChange={e => setStep(e.target.value)} placeholder={effectiveStepPlaceholder}
             className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
         </Field>
+        <Field label="Quantidade investida" hint="Total já investido como capital (preenchido pelo histórico)">
+          <input type="number" value={invested} onChange={e => setInvested(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Juros já gerados" hint="Quanto o capital anterior já rendeu (preenchido pelo histórico)">
+          <input type="number" value={accruedProfit} onChange={e => setAccruedProfit(e.target.value)} placeholder="R$ 0,00"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+        <Field label="Investimento deste mês" hint="Substitui o aporte automático no mês atual" full>
+          <input type="number" value={thisMonth} onChange={e => setThisMonth(e.target.value)} placeholder="opcional"
+            className="w-full bg-secondary/60 rounded-lg px-3 py-1.5 text-sm outline-none border border-border placeholder:text-muted-foreground" />
+        </Field>
+      </div>
+
+      {/* Histórico */}
+      <div className="border border-dashed border-primary/30 rounded-lg p-2.5 bg-primary/5 space-y-1.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+            <History className="w-3.5 h-3.5" />
+            Já investia antes? Preencha o histórico mês a mês
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowHistory(true)}
+            disabled={!startDate}
+            className="px-2.5 py-1 text-[11px] rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 font-semibold"
+          >
+            {historySummary ? "Editar histórico" : "Abrir builder"}
+          </button>
+        </div>
+        {historySummary && (
+          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
+            <span>Investido: <span className="text-foreground font-semibold">{formatCurrency(historySummary.contrib)}</span></span>
+            <span>Juros: <span className="text-success font-semibold">{formatCurrency(historySummary.profit)}</span></span>
+            <span>Total: <span className="text-foreground font-semibold">{formatCurrency(historySummary.balance)}</span></span>
+            <button
+              type="button"
+              onClick={() => { setBulkEntries(null); setHistorySummary(null); setInvested(""); setAccruedProfit(""); }}
+              className="text-destructive hover:underline"
+            >Limpar</button>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
         <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg hover:bg-accent text-muted-foreground">Cancelar</button>
         <button onClick={handleAdd} className="px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:opacity-90 font-medium">Adicionar</button>
       </div>
+
+      {showHistory && (
+        <HistoryBuilderDialog
+          investment={pseudoInvestment}
+          onClose={() => setShowHistory(false)}
+          onConfirm={(entries, meta) => {
+            setBulkEntries(entries);
+            setHistorySummary({ contrib: meta.totalContrib, profit: meta.totalProfit, balance: meta.finalBalance });
+            setInvested(String(Math.round(meta.totalContrib * 100) / 100));
+            setAccruedProfit(String(Math.round(meta.totalProfit * 100) / 100));
+            if (meta.rate > 0) {
+              // Converte para taxa mensal se o usuário escolheu anual no builder
+              const monthlyR = meta.rateType === "monthly"
+                ? meta.rate
+                : (Math.pow(1 + meta.rate / 100, 1 / 12) - 1) * 100;
+              setMonthlyRate(String(Math.round(monthlyR * 10000) / 10000));
+            }
+            setShowHistory(false);
+          }}
+        />
+      )}
     </div>
   );
 }
