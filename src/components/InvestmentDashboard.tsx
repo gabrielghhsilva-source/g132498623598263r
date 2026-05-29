@@ -213,7 +213,16 @@ function InvestmentAreaCard({
             />
           ))}
           {showAddInv ? (
-            <AddInvestmentForm onAdd={inv => { onAddInvestment(inv); setShowAddInv(false); }} onCancel={() => setShowAddInv(false)} />
+            <AddInvestmentForm
+              onAdd={(inv, bulkEntries) => {
+                const id = onAddInvestment(inv);
+                if (bulkEntries && bulkEntries.length > 0) {
+                  onAddBulkContributions(id, bulkEntries);
+                }
+                setShowAddInv(false);
+              }}
+              onCancel={() => setShowAddInv(false)}
+            />
           ) : (
             <button onClick={() => setShowAddInv(true)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
               <Plus className="w-4 h-4" /> Novo Investimento
