@@ -45,6 +45,7 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
   const [stmt, setStmt] = useState<OfxStatement | null>(null);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [useBalance, setUseBalance] = useState(true);
+  const [expensesOnly, setExpensesOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Per-txn investment assignment (only for txns user wants to treat as investments)
@@ -161,9 +162,12 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
         continue;
       }
 
-      if (t.amount >= 0) incomes.push({ name: label, amount: t.amount });
-      else expenses.push({ name: label, amount: Math.abs(t.amount) });
+      if (t.amount >= 0) {
+        if (expensesOnly) continue; // ignora entradas quando o modo "só saídas" está ativo
+        incomes.push({ name: label, amount: t.amount });
+      } else expenses.push({ name: label, amount: Math.abs(t.amount) });
     }
+
 
     onImport({
       setBalance: useBalance && stmt.balance !== null,
@@ -231,7 +235,30 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
                 </div>
               </div>
               {/* Saldo do extrato é apenas informativo — o importador nunca altera o salário. */}
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={expensesOnly}
+                  onChange={e => {
+                    const on = e.target.checked;
+                    setExpensesOnly(on);
+                    if (on && stmt) {
+                      // Desmarca entradas (positivas) que não são investimento — evita importar transferências para si mesmo.
+                      setSelected(s => {
+                        const next = { ...s };
+                        for (const t of stmt.transactions) {
+                          if (!t.isInvestment && t.amount >= 0) next[t.id] = false;
+                        }
+                        return next;
+                      });
+                    }
+                  }}
+                  className="accent-primary"
+                />
+                Importar apenas saídas/dívidas (ignora entradas, ex.: transferências para mim mesmo)
+              </label>
             </div>
+
 
             {/* Investments detected */}
             {investmentTxns.length > 0 && (
