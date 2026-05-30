@@ -162,9 +162,12 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
         continue;
       }
 
-      if (t.amount >= 0) incomes.push({ name: label, amount: t.amount });
-      else expenses.push({ name: label, amount: Math.abs(t.amount) });
+      if (t.amount >= 0) {
+        if (expensesOnly) continue; // ignora entradas quando o modo "só saídas" está ativo
+        incomes.push({ name: label, amount: t.amount });
+      } else expenses.push({ name: label, amount: Math.abs(t.amount) });
     }
+
 
     onImport({
       setBalance: useBalance && stmt.balance !== null,
