@@ -45,6 +45,7 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
   const [stmt, setStmt] = useState<OfxStatement | null>(null);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [useBalance, setUseBalance] = useState(true);
+  const [expensesOnly, setExpensesOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Per-txn investment assignment (only for txns user wants to treat as investments)
