@@ -376,8 +376,14 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   const [overrideAmount, setOverrideAmount] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const currentVal = getCurrentValue(inv);
-  const baseInvested = inv.initialValue + inv.previouslyInvested;
-  const profit = currentVal - baseInvested;
+  // Capital investido (sem juros): histórico de aportes + aportes automáticos + aportes manuais.
+  // NÃO inclui `initialValue` porque esse campo guarda o juros gerado pelo histórico.
+  const startD = new Date(inv.startDate);
+  const nowD = new Date();
+  const monthsElapsed = Math.max(0, (nowD.getFullYear() - startD.getFullYear()) * 12 + (nowD.getMonth() - startD.getMonth()));
+  const manualTotal = inv.contributions.reduce((s, c) => s + c.amount, 0);
+  const investedCapital = inv.previouslyInvested + inv.monthlyContribution * monthsElapsed + manualTotal;
+  const profit = currentVal - investedCapital;
 
   const now = new Date();
   const hasActiveOverride = inv.monthlyOverride && inv.monthlyOverride.month === now.getMonth() && inv.monthlyOverride.year === now.getFullYear();
@@ -391,7 +397,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           <div>
             <p className="text-sm font-medium">{inv.name}</p>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(currentVal)} <span className={profit >= 0 ? "text-success" : "text-destructive"}>({profit >= 0 ? "+" : ""}{formatCurrency(profit)})</span>
+              {formatCurrency(investedCapital)} <span className={profit >= 0 ? "text-success" : "text-destructive"}>({profit >= 0 ? "+" : ""}{formatCurrency(profit)})</span>
             </p>
           </div>
         </div>
