@@ -232,7 +232,30 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
                 </div>
               </div>
               {/* Saldo do extrato é apenas informativo — o importador nunca altera o salário. */}
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={expensesOnly}
+                  onChange={e => {
+                    const on = e.target.checked;
+                    setExpensesOnly(on);
+                    if (on && stmt) {
+                      // Desmarca entradas (positivas) que não são investimento — evita importar transferências para si mesmo.
+                      setSelected(s => {
+                        const next = { ...s };
+                        for (const t of stmt.transactions) {
+                          if (!t.isInvestment && t.amount >= 0) next[t.id] = false;
+                        }
+                        return next;
+                      });
+                    }
+                  }}
+                  className="accent-primary"
+                />
+                Importar apenas saídas/dívidas (ignora entradas, ex.: transferências para mim mesmo)
+              </label>
             </div>
+
 
             {/* Investments detected */}
             {investmentTxns.length > 0 && (
