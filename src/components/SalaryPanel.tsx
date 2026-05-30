@@ -151,8 +151,8 @@ export function SalaryPanel({
             investmentAreas={investmentAreas}
             onAddInvestment={onAddInvestment}
             onAddContribution={onAddContribution}
-            onImport={({ setBalance, balance, incomes, expenses }) => {
-              if (setBalance) onSetSalary(balance);
+            onImport={({ incomes, expenses }) => {
+              // OFX nunca altera o salário — só preenche entradas e saídas extras.
               incomes.forEach(i => onAddIncome(i.name, i.amount));
               expenses.forEach(e => onAddExpense(e.name, e.amount, false));
             }}

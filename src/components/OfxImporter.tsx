@@ -230,17 +230,7 @@ export function OfxImporter({ investmentAreas, onAddInvestment, onAddContributio
                   </p>
                 </div>
               </div>
-              {stmt.balance !== null && (
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useBalance}
-                    onChange={e => setUseBalance(e.target.checked)}
-                    className="accent-primary"
-                  />
-                  Usar o saldo do extrato como "Salário/Saldo atual" {stmt.balanceDate && `(em ${fmtDateBR(stmt.balanceDate)})`}
-                </label>
-              )}
+              {/* Saldo do extrato é apenas informativo — o importador nunca altera o salário. */}
             </div>
 
             {/* Investments detected */}
