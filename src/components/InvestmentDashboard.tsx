@@ -612,22 +612,25 @@ function AddInvestmentForm({ onAdd, onCancel }: {
     if (!name.trim()) return;
     const rate = Number(monthlyRate) || 0;
     const now = new Date();
-    // Se preencheu histórico: o saldo final passado vira `previouslyInvested`
-    // (capital) + `initialValue` (juros), startDate = hoje, e NÃO salvamos
-    // bulkEntries — caso contrário o cálculo duplicaria (histórico já está no saldo).
-    const effectiveStart = historySummary ? now.toISOString().split("T")[0] : startDate;
+    // Se preencheu histórico: salvamos os aportes mês a mês como contributions
+    // (para aparecerem individualmente na trajetória), startDate = hoje para os
+    // aportes automáticos só valerem daqui pra frente, e initialValue guarda
+    // os juros gerados pelo histórico. previouslyInvested fica 0 porque o
+    // capital já está nas contributions.
+    const usingHistory = !!(historySummary && bulkEntries && bulkEntries.length > 0);
+    const effectiveStart = usingHistory ? now.toISOString().split("T")[0] : startDate;
 
     onAdd({
       name: name.trim(),
       initialValue: historySummary?.profit || 0,
-      previouslyInvested: historySummary?.contrib || 0,
+      previouslyInvested: usingHistory ? 0 : (historySummary?.contrib || 0),
       monthlyContribution,
       rateOfReturn: rate,
       rateType: "monthly",
       passiveIncome: 0,
       startDate: effectiveStart,
       ...(effectiveBase > 0 && { contributionStep: effectiveBase }),
-    }, undefined);
+    }, usingHistory ? bulkEntries! : undefined);
   };
 
   const pseudoInvestment: Investment = {
