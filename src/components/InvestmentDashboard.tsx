@@ -497,6 +497,8 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
               onConfirm={entries => { onAddBulkContributions(entries); setShowHistory(false); }}
             />
           )}
+          {showAllContributions && (
+            <AllContributionsDialog investment={inv} onClose={() => setShowAllContributions(false)} />
         </div>
       )}
     </div>
