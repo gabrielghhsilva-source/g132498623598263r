@@ -446,15 +446,24 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
             )}
           </div>
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
               <p className="text-xs font-medium">Aportes manuais ({inv.contributions.length})</p>
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                title="Preencher meses anteriores em lote"
-              >
-                <History className="w-3 h-3" /> Preencher histórico
-              </button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setShowAllContributions(true)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-secondary text-foreground hover:bg-accent transition-colors"
+                  title="Ver trajetória completa de aportes"
+                >
+                  <List className="w-3 h-3" /> Ver todos
+                </button>
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Preencher meses anteriores em lote"
+                >
+                  <History className="w-3 h-3" /> Preencher histórico
+                </button>
+              </div>
             </div>
             {inv.contributions.slice(-3).map(c => (
               <p key={c.id} className="text-xs text-muted-foreground">{new Date(c.date + "T12:00:00").toLocaleDateString("pt-BR")}: {formatCurrency(c.amount)}</p>
