@@ -375,6 +375,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   const [showOverride, setShowOverride] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [showAllContributions, setShowAllContributions] = useState(false);
   const currentVal = getCurrentValue(inv);
   // Capital investido (sem juros): histórico de aportes + aportes automáticos + aportes manuais.
   // NÃO inclui `initialValue` porque esse campo guarda o juros gerado pelo histórico.
