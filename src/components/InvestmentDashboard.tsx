@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { InvestmentArea, Investment, InvestmentGoal, Debt } from "@/lib/types";
 import { getAreaTotals, calculateGrowth, simulateUntilDate, getCurrentValue, simulateGlobalUntilDate } from "@/lib/investmentCalc";
-import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History, List, X } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ContributionAmountInput } from "./ContributionAmountInput";
 import { QuickContributionDialog } from "./QuickContributionDialog";
