@@ -499,6 +499,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           )}
           {showAllContributions && (
             <AllContributionsDialog investment={inv} onClose={() => setShowAllContributions(false)} />
+          )}
         </div>
       )}
     </div>
