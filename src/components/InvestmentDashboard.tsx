@@ -506,6 +506,86 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   );
 }
 
+function AllContributionsDialog({ investment, onClose }: { investment: Investment; onClose: () => void }) {
+  // Build a unified, chronological list:
+  //  - manual contributions (from inv.contributions)
+  //  - implicit monthly auto-contributions (monthlyContribution applied each month from startDate to now,
+  //    respecting monthlyOverride for the current month)
+  const start = new Date(investment.startDate + "T12:00:00");
+  const now = new Date();
+  const autoEntries: { date: string; amount: number; kind: "auto" | "manual" | "inicial" | "override" }[] = [];
+
+  if (investment.previouslyInvested > 0) {
+    autoEntries.push({ date: investment.startDate, amount: investment.previouslyInvested, kind: "inicial" });
+  }
+
+  if (investment.monthlyContribution > 0 || investment.monthlyOverride) {
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const endCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+    while (cursor <= endCursor) {
+      const isCurrent = cursor.getFullYear() === now.getFullYear() && cursor.getMonth() === now.getMonth();
+      const override = investment.monthlyOverride;
+      const useOverride = override && override.month === cursor.getMonth() && override.year === cursor.getFullYear();
+      const amount = useOverride ? override!.amount : investment.monthlyContribution;
+      if (amount > 0) {
+        const day = Math.min(5, new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate());
+        const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        autoEntries.push({ date: dateStr, amount, kind: useOverride ? "override" : "auto" });
+      }
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+  }
+
+  const manualEntries = investment.contributions.map(c => ({ date: c.date, amount: c.amount, kind: "manual" as const }));
+  const all = [...autoEntries, ...manualEntries].sort((a, b) => a.date.localeCompare(b.date));
+  const total = all.reduce((s, e) => s + e.amount, 0);
+
+  const KIND_META: Record<string, { label: string; cls: string }> = {
+    inicial: { label: "Inicial", cls: "bg-primary/15 text-primary" },
+    auto: { label: "Auto", cls: "bg-secondary text-muted-foreground" },
+    override: { label: "Exceção", cls: "bg-amber-500/15 text-amber-500" },
+    manual: { label: "Manual", cls: "bg-success/15 text-success" },
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div>
+            <h3 className="font-semibold text-sm">Trajetória de aportes</h3>
+            <p className="text-xs text-muted-foreground">{investment.name}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-muted"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="px-4 py-2 border-b border-border flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">{all.length} aporte{all.length === 1 ? "" : "s"}</span>
+          <span className="font-medium">Total: {formatCurrency(total)}</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2">
+          {all.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8">Nenhum aporte registrado ainda.</p>
+          ) : (
+            <ul className="space-y-1">
+              {all.map((e, i) => {
+                const meta = KIND_META[e.kind];
+                return (
+                  <li key={i} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-accent/30 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${meta.cls}`}>{meta.label}</span>
+                      <span className="text-muted-foreground">{new Date(e.date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                    </div>
+                    <span className="font-medium text-foreground">{formatCurrency(e.amount)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddInvestmentForm({ onAdd, onCancel }: {
   onAdd: (inv: Omit<Investment, "id" | "contributions">, bulkEntries?: { date: string; amount: number }[]) => void;
   onCancel: () => void;
