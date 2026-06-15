@@ -116,7 +116,13 @@ export function ImageConverter() {
   const [items, setItems] = useState<ConvertedItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [support, setSupport] = useState<Record<OutFormat, boolean> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    detectSupport().then(setSupport);
+  }, []);
+
 
   const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter(f => f.type.startsWith("image/"));
