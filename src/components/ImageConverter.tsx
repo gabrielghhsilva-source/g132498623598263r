@@ -1,7 +1,12 @@
-import { useState, useRef } from "react";
-import { Upload, Download, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck } from "lucide-react";
 
-type OutFormat = "image/png" | "image/jpeg" | "image/webp";
+type OutFormat =
+  | "image/png"
+  | "image/jpeg"
+  | "image/webp"
+  | "image/avif"
+  | "image/bmp";
 
 interface ConvertedItem {
   id: string;
@@ -17,17 +22,61 @@ const FORMAT_LABEL: Record<OutFormat, string> = {
   "image/png": "PNG",
   "image/jpeg": "JPG",
   "image/webp": "WebP",
+  "image/avif": "AVIF",
+  "image/bmp": "BMP",
 };
 const FORMAT_EXT: Record<OutFormat, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "image/avif": "avif",
+  "image/bmp": "bmp",
 };
+const LOSSLESS: OutFormat[] = ["image/png", "image/bmp"];
 
 function formatBytes(b: number) {
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+// Detect which output MIME types the current browser can encode via canvas.
+async function detectSupport(): Promise<Record<OutFormat, boolean>> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 2;
+  const formats: OutFormat[] = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/avif",
+    "image/bmp",
+  ];
+  const result = {} as Record<OutFormat, boolean>;
+  await Promise.all(
+    formats.map(
+      (f) =>
+        new Promise<void>((resolve) => {
+          try {
+            canvas.toBlob(
+              (b) => {
+                result[f] = !!b && b.type === f;
+                resolve();
+              },
+              f,
+              0.9,
+            );
+          } catch {
+            result[f] = false;
+            resolve();
+          }
+        }),
+    ),
+  );
+  // PNG is always available; ensure baseline.
+  result["image/png"] = true;
+  result["image/jpeg"] = result["image/jpeg"] ?? true;
+  return result;
 }
 
 async function convertFile(file: File, outFormat: OutFormat, quality: number): Promise<Blob> {
@@ -44,16 +93,16 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number): P
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas indisponível");
-    if (outFormat === "image/jpeg") {
+    if (outFormat === "image/jpeg" || outFormat === "image/bmp") {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     ctx.drawImage(img, 0, 0);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("Falha ao converter"))),
+        (b) => (b ? resolve(b) : reject(new Error("Falha ao converter (formato não suportado pelo navegador)"))),
         outFormat,
-        outFormat === "image/png" ? undefined : quality,
+        LOSSLESS.includes(outFormat) ? undefined : quality,
       );
     });
   } finally {
