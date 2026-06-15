@@ -258,8 +258,6 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
   );
 }
 
-function _UnusedSectionEnd() { return null; }
-
 function SectionTab({
   active,
   onClick,
