@@ -80,6 +80,7 @@ const AppContent = () => {
   const tabMeta: Record<AppTab, { icon: typeof ClipboardList; label: string; color: string }> = {
     tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
     menu: { icon: LayoutDashboard, label: "Menu", color: "text-blue-500" },
+    tools: { icon: Wrench, label: "Ferramentas", color: "text-emerald-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
