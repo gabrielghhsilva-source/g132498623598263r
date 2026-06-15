@@ -181,6 +181,7 @@ const AppContent = () => {
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}
+          {activeTab === "tools" && <ImageConverter />}
         </main>
 
         <TodayPanel
