@@ -9,6 +9,7 @@ import {
   ArrowDownRight,
   PiggyBank,
   AlertTriangle,
+  Wrench,
 } from "lucide-react";
 import { MenuSection, InvestmentArea, StockPosition, SalaryData, ManualExpense, ManualIncome, DebtItem } from "@/lib/types";
 import { getAreaTotals } from "@/lib/investmentCalc";
@@ -17,6 +18,7 @@ import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { DebtsPanel } from "@/components/DebtsPanel";
 import { FinancialCharts } from "@/components/FinancialCharts";
+import { ImageConverter } from "@/components/ImageConverter";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
@@ -97,6 +99,12 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
             onClick={() => setSection("debts")}
             icon={CreditCard}
             label="Dívidas"
+          />
+          <SectionTab
+            active={section === "tools"}
+            onClick={() => setSection("tools")}
+            icon={Wrench}
+            label="Ferramentas"
           />
         </div>
       </div>
@@ -252,6 +260,8 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
           onDelete={debtStore.deleteDebt}
         />
       )}
+
+      {section === "tools" && <ImageConverter />}
     </div>
   );
 }

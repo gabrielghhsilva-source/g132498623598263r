@@ -223,7 +223,7 @@ export const DEFAULT_SALARY_DATA: SalaryData = {
 
 // Navigation
 export type AppTab = "tasks" | "menu";
-export type MenuSection = "overview" | "financial" | "debts";
+export type MenuSection = "overview" | "financial" | "debts" | "tools";
 
 // Debt management
 export interface DebtItem {
