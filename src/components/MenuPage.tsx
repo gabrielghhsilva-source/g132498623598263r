@@ -260,6 +260,8 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
           onDelete={debtStore.deleteDebt}
         />
       )}
+
+      {section === "tools" && <ImageConverter />}
     </div>
   );
 }
