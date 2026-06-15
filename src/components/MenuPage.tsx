@@ -254,11 +254,11 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
           onDelete={debtStore.deleteDebt}
         />
       )}
-
-      {section === "tools" && <ImageConverter />}
     </div>
   );
 }
+
+function _UnusedSectionEnd() { return null; }
 
 function SectionTab({
   active,
