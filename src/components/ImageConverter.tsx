@@ -1,7 +1,12 @@
-import { useState, useRef } from "react";
-import { Upload, Download, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck } from "lucide-react";
 
-type OutFormat = "image/png" | "image/jpeg" | "image/webp";
+type OutFormat =
+  | "image/png"
+  | "image/jpeg"
+  | "image/webp"
+  | "image/avif"
+  | "image/bmp";
 
 interface ConvertedItem {
   id: string;
@@ -17,17 +22,61 @@ const FORMAT_LABEL: Record<OutFormat, string> = {
   "image/png": "PNG",
   "image/jpeg": "JPG",
   "image/webp": "WebP",
+  "image/avif": "AVIF",
+  "image/bmp": "BMP",
 };
 const FORMAT_EXT: Record<OutFormat, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "image/avif": "avif",
+  "image/bmp": "bmp",
 };
+const LOSSLESS: OutFormat[] = ["image/png", "image/bmp"];
 
 function formatBytes(b: number) {
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+// Detect which output MIME types the current browser can encode via canvas.
+async function detectSupport(): Promise<Record<OutFormat, boolean>> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 2;
+  const formats: OutFormat[] = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/avif",
+    "image/bmp",
+  ];
+  const result = {} as Record<OutFormat, boolean>;
+  await Promise.all(
+    formats.map(
+      (f) =>
+        new Promise<void>((resolve) => {
+          try {
+            canvas.toBlob(
+              (b) => {
+                result[f] = !!b && b.type === f;
+                resolve();
+              },
+              f,
+              0.9,
+            );
+          } catch {
+            result[f] = false;
+            resolve();
+          }
+        }),
+    ),
+  );
+  // PNG is always available; ensure baseline.
+  result["image/png"] = true;
+  result["image/jpeg"] = result["image/jpeg"] ?? true;
+  return result;
 }
 
 async function convertFile(file: File, outFormat: OutFormat, quality: number): Promise<Blob> {
@@ -44,16 +93,16 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number): P
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas indisponível");
-    if (outFormat === "image/jpeg") {
+    if (outFormat === "image/jpeg" || outFormat === "image/bmp") {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     ctx.drawImage(img, 0, 0);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("Falha ao converter"))),
+        (b) => (b ? resolve(b) : reject(new Error("Falha ao converter (formato não suportado pelo navegador)"))),
         outFormat,
-        outFormat === "image/png" ? undefined : quality,
+        LOSSLESS.includes(outFormat) ? undefined : quality,
       );
     });
   } finally {
@@ -67,7 +116,13 @@ export function ImageConverter() {
   const [items, setItems] = useState<ConvertedItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [support, setSupport] = useState<Record<OutFormat, boolean> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    detectSupport().then(setSupport);
+  }, []);
+
 
   const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter(f => f.type.startsWith("image/"));
@@ -129,33 +184,44 @@ export function ImageConverter() {
           <h2 className="text-base font-bold">Conversor de Imagens</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Formato de saída
-            </label>
-            <div className="mt-2 flex gap-1.5">
-              {(Object.keys(FORMAT_LABEL) as OutFormat[]).map(f => (
+        <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-md px-3 py-2">
+          <ShieldCheck className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+          <span>
+            100% local: as imagens são processadas no seu navegador e
+            <strong className="text-foreground"> nunca são enviadas para nenhum servidor</strong>.
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Formato de saída
+          </label>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+            {(Object.keys(FORMAT_LABEL) as OutFormat[]).map(f => {
+              const supported = support ? support[f] : true;
+              return (
                 <button
                   key={f}
-                  onClick={() => setOutFormat(f)}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-semibold transition-colors border ${
+                  onClick={() => supported && setOutFormat(f)}
+                  disabled={!supported}
+                  title={supported ? FORMAT_LABEL[f] : `${FORMAT_LABEL[f]} não suportado neste navegador`}
+                  className={`px-3 py-2 rounded-md text-sm font-semibold transition-colors border ${
                     outFormat === f
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card border-border hover:bg-accent"
-                  }`}
+                  } ${!supported ? "opacity-40 cursor-not-allowed line-through" : ""}`}
                 >
                   {FORMAT_LABEL[f]}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex justify-between">
               <span>Qualidade</span>
               <span className="tabular-nums text-foreground">
-                {outFormat === "image/png" ? "—" : `${Math.round(quality * 100)}%`}
+                {LOSSLESS.includes(outFormat) ? "sem perdas" : `${Math.round(quality * 100)}%`}
               </span>
             </label>
             <input
@@ -164,7 +230,7 @@ export function ImageConverter() {
               max={1}
               step={0.05}
               value={quality}
-              disabled={outFormat === "image/png"}
+              disabled={LOSSLESS.includes(outFormat)}
               onChange={e => setQuality(parseFloat(e.target.value))}
               className="mt-3 w-full accent-primary disabled:opacity-50"
             />

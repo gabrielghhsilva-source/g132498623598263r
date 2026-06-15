@@ -19,8 +19,9 @@ import { CardNavigation } from "@/components/CardNavigation";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
 import { ImageTaskDialog } from "@/components/ImageTaskDialog";
-import { ClipboardList, LayoutDashboard, ImageIcon } from "lucide-react";
+import { ClipboardList, LayoutDashboard, ImageIcon, Wrench } from "lucide-react";
 import { MenuPage } from "@/components/MenuPage";
+import { ImageConverter } from "@/components/ImageConverter";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 import { useEffect } from "react";
@@ -79,6 +80,7 @@ const AppContent = () => {
   const tabMeta: Record<AppTab, { icon: typeof ClipboardList; label: string; color: string }> = {
     tasks: { icon: ClipboardList, label: "Minhas Tarefas", color: "text-primary" },
     menu: { icon: LayoutDashboard, label: "Menu", color: "text-blue-500" },
+    tools: { icon: Wrench, label: "Ferramentas", color: "text-emerald-500" },
   };
 
   const ActiveIcon = tabMeta[activeTab].icon;
@@ -179,6 +181,7 @@ const AppContent = () => {
               onCreateTaskReminder={handleCreateTaskReminder}
             />
           )}
+          {activeTab === "tools" && <ImageConverter />}
         </main>
 
         <TodayPanel
