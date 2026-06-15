@@ -9,7 +9,6 @@ import {
   ArrowDownRight,
   PiggyBank,
   AlertTriangle,
-  Wrench,
 } from "lucide-react";
 import { MenuSection, InvestmentArea, StockPosition, SalaryData, ManualExpense, ManualIncome, DebtItem } from "@/lib/types";
 import { getAreaTotals } from "@/lib/investmentCalc";
@@ -18,7 +17,6 @@ import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { DebtsPanel } from "@/components/DebtsPanel";
 import { FinancialCharts } from "@/components/FinancialCharts";
-import { ImageConverter } from "@/components/ImageConverter";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
