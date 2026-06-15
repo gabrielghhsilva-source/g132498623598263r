@@ -100,6 +100,12 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
             icon={CreditCard}
             label="Dívidas"
           />
+          <SectionTab
+            active={section === "tools"}
+            onClick={() => setSection("tools")}
+            icon={Wrench}
+            label="Ferramentas"
+          />
         </div>
       </div>
 
