@@ -1,11 +1,12 @@
 import { AppTab } from "@/lib/types";
-import { ClipboardList, LayoutDashboard } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Wrench } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const TABS: { id: AppTab; label: string; icon: typeof ClipboardList; color: string }[] = [
   { id: "tasks", label: "Tarefas", icon: ClipboardList, color: "hsl(var(--primary))" },
   { id: "menu", label: "Menu", icon: LayoutDashboard, color: "hsl(217, 91%, 60%)" },
+  { id: "tools", label: "Ferramentas", icon: Wrench, color: "hsl(160, 70%, 45%)" },
 ];
 
 interface Props {
