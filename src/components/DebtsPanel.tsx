@@ -197,7 +197,7 @@ function DebtRow({
       </span>
       <button
         onClick={() => onDelete(debt.id)}
-        className="p-1.5 rounded hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="p-1.5 rounded hover:bg-destructive/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
       >
         <Trash2 className="w-4 h-4 text-destructive" />
       </button>

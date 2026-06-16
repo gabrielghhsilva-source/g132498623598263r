@@ -243,7 +243,7 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
                   <span className="text-sm font-bold">{s.symbol}</span>
                   <p className="text-xs text-muted-foreground">{s.name}</p>
                 </div>
-                <Search className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Search className="w-3 h-3 text-muted-foreground opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
               </button>
             ))}
             {filteredStocks.length === 0 && (
@@ -352,7 +352,7 @@ export function StockMarket({ positions, onAdd, onRemove }: Props) {
                       </p>
                     </div>
                     <button onClick={() => onRemove(pos.id)}
-                      className="p-1.5 rounded hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                      className="p-1.5 rounded hover:bg-destructive/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Trash2 className="w-3.5 h-3.5 text-red-500" />
                     </button>
                   </div>

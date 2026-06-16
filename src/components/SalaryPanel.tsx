@@ -225,7 +225,7 @@ export function SalaryPanel({
               </div>
               <button
                 onClick={() => onDeleteIncome(inc.id)}
-                className="p-1 rounded hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 rounded hover:bg-destructive/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
               </button>
@@ -283,7 +283,7 @@ export function SalaryPanel({
               </div>
               <button
                 onClick={() => onDeleteExpense(exp.id)}
-                className="p-1 rounded hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 rounded hover:bg-destructive/10 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
               </button>
