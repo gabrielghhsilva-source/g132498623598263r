@@ -270,14 +270,14 @@ function SectionTab({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold transition-colors border-b-2 ${
+      className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold transition-colors border-b-2 min-w-0 ${
         active
           ? "border-primary text-primary bg-primary/5"
           : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
       }`}
     >
-      <Icon className="w-4 h-4" />
-      {label}
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="truncate">{label}</span>
     </button>
   );
 }
@@ -296,12 +296,12 @@ function FinTab({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-md transition-colors uppercase tracking-wide ${
+      className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-2 text-[10px] sm:text-xs font-semibold rounded-md transition-colors uppercase tracking-wide min-w-0 ${
         active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
       }`}
     >
-      <Icon className="w-3.5 h-3.5" />
-      {label}
+      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="truncate">{label}</span>
     </button>
   );
 }
