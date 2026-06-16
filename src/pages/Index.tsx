@@ -22,6 +22,7 @@ import { ImageTaskDialog } from "@/components/ImageTaskDialog";
 import { ClipboardList, LayoutDashboard, ImageIcon, Wrench } from "lucide-react";
 import { MenuPage } from "@/components/MenuPage";
 import { ImageConverter } from "@/components/ImageConverter";
+import { ElectronTitleBar } from "@/components/ElectronTitleBar";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
 import { useEffect } from "react";
@@ -87,6 +88,7 @@ const AppContent = () => {
 
   return (
     <>
+      <ElectronTitleBar />
       {!preloaderDone && <Preloader onDone={handlePreloaderDone} />}
       {/* Base background color always present so theme decorations sit above it */}
       <div className="fixed inset-0 -z-20 bg-background" />

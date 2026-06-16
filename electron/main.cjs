@@ -1,8 +1,10 @@
 // Processo principal do Electron — janela "assistente" que desliza pela direita.
 // Atalho global padrão: Ctrl+Space (alterna mostrar/esconder).
 // Ícone na bandeja (system tray) com menu: Abrir / Sair.
+// A janela SÓ esconde quando: usuário clica no botão "X" do app,
+// aperta Ctrl+Space de novo, aperta Esc, ou clica no ícone da bandeja.
 
-const { app, BrowserWindow, globalShortcut, Tray, Menu, screen, nativeImage } = require("electron");
+const { app, BrowserWindow, globalShortcut, Tray, Menu, screen, nativeImage, ipcMain } = require("electron");
 const path = require("path");
 
 const WIN_WIDTH = 460;          // largura do painel lateral
@@ -62,10 +64,9 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
-  // Esconde ao perder foco (comportamento de assistente)
-  mainWindow.on("blur", () => {
-    if (!mainWindow.webContents.isDevToolsOpened()) hideWindow();
-  });
+  // NÃO esconder ao perder foco — o usuário precisa fechar manualmente pelo
+  // botão "X" dentro do app, pelo atalho global, ou pelo Esc.
+  // (Antes: mainWindow.on("blur", ...) — removido a pedido do usuário.)
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -158,8 +159,18 @@ if (!gotLock) {
     createWindow();
     createTray();
 
+    // IPC: o app React chama window.electronAPI.hide() pelo botão "X"
+    ipcMain.handle("assistant:hide", () => hideWindow());
+    ipcMain.handle("assistant:quit", () => { app.isQuitting = true; app.quit(); });
+
     const registered = globalShortcut.register(TOGGLE_SHORTCUT, toggleWindow);
     if (!registered) console.warn(`Falha ao registrar atalho global ${TOGGLE_SHORTCUT}`);
+
+    // Esc esconde a janela quando ela está focada
+    const escRegistered = globalShortcut.register("Escape", () => {
+      if (mainWindow && mainWindow.isFocused()) hideWindow();
+    });
+    if (!escRegistered) console.warn("Falha ao registrar Esc para esconder");
   });
 
   app.on("will-quit", () => globalShortcut.unregisterAll());

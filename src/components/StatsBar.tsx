@@ -20,13 +20,13 @@ export function StatsBar({ stats }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
       {items.map(item => (
-        <div key={item.label} className="glass-card rounded-xl px-4 py-3 flex items-center gap-3">
-          <item.icon className={`w-5 h-5 flex-shrink-0 ${item.className}`} />
-          <div>
-            <p className="text-2xl font-bold leading-none">{item.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+        <div key={item.label} className="glass-card rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 min-w-0">
+          <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${item.className}`} />
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold leading-none tabular-nums">{item.value}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">{item.label}</p>
           </div>
         </div>
       ))}
