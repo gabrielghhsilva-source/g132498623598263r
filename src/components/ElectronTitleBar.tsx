@@ -25,7 +25,13 @@ export function ElectronTitleBar() {
   const [isElectron, setIsElectron] = useState(false);
 
   useEffect(() => {
-    setIsElectron(!!window.electronAPI?.isElectron);
+    const on = !!window.electronAPI?.isElectron;
+    setIsElectron(on);
+    if (on) {
+      // Reserva espaço no topo pra barra não cobrir o header do app
+      document.body.style.paddingTop = "28px";
+      return () => { document.body.style.paddingTop = ""; };
+    }
   }, []);
 
   if (!isElectron) return null;
