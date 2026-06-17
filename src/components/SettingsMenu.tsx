@@ -71,6 +71,14 @@ export function SettingsMenu({
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
+              {googleCalendarSlot && <MenuItem icon={Calendar} label="Google Agenda" onClick={() => setPath("gcal")} hasSubmenu />}
+            </div>
+          )}
+
+          {path === "gcal" && (
+            <div className="p-3 space-y-3 w-[320px] max-w-[calc(100vw-1.5rem)]">
+              <BackButton onClick={() => setPath("root")} label="Google Agenda" />
+              {googleCalendarSlot}
             </div>
           )}
 
