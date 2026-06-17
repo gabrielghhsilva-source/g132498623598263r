@@ -44,6 +44,7 @@ export function normalizeTask(t: Task): Task {
     priority: t.priority || "none",
     tagIds: t.tagIds || [],
     subtasks: t.subtasks || [],
+    autoStatus: t.autoStatus ?? true,
   };
 }
 
