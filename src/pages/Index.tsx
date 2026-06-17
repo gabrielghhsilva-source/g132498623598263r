@@ -25,7 +25,10 @@ import { ImageConverter } from "@/components/ImageConverter";
 import { ElectronTitleBar } from "@/components/ElectronTitleBar";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useGoogleCalendarStore } from "@/hooks/useGoogleCalendarStore";
+import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
+import { GoogleCalendarSettingsPanel } from "@/components/GoogleCalendarSettings";
 
 const AppContent = () => {
   const store = useTaskStore();
