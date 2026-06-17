@@ -1,5 +1,5 @@
 // AES-GCM encryption with PBKDF2 key derivation from password
-const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key", "salary-data"];
+const SENSITIVE_KEYS = ["task-areas", "investment-areas", "stock-portfolio", "alpha-vantage-key", "salary-data", "google-calendar-tokens"];
 
 let cryptoKey: CryptoKey | null = null;
 let appPassword: string | null = null;
