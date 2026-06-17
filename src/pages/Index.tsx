@@ -46,6 +46,32 @@ const AppContent = () => {
     },
   );
 
+  // --- Google Calendar ---
+  const gcal = useGoogleCalendarStore();
+  const ensureTargetArea = useMemo(() => () => {
+    if (gcal.settings.targetAreaId && store.areas.some(a => a.id === gcal.settings.targetAreaId)) {
+      return gcal.settings.targetAreaId;
+    }
+    const existing = store.areas.find(a => a.name === "Agenda Google");
+    if (existing) return existing.id;
+    // Cria nova área
+    store.addArea("Agenda Google", "📅");
+    // addArea é assíncrono no estado; chamamos novamente no próximo tick.
+    // Como fallback imediato: usa a primeira área disponível.
+    return store.areas[0]?.id || "";
+  }, [gcal.settings.targetAreaId, store]);
+
+  const sync = useGoogleCalendarSync({
+    areas: store.areas,
+    timezone: store.timezone,
+    settings: gcal.settings,
+    setTaskGoogleMeta: store.setTaskGoogleMeta,
+    upsertGoogleEvent: store.upsertGoogleEvent,
+    updateTaskStatus: store.updateTaskStatus,
+    addLog: gcal.addLog,
+    ensureTargetArea,
+  });
+
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
   const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
