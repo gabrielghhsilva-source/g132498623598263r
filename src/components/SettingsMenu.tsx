@@ -1,5 +1,5 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar } from "lucide-react";
+import { useState, useRef, useEffect, ReactNode } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
 import { NotificationSettingsPanel } from "./NotificationSettings";
