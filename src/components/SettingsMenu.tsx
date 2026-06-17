@@ -25,9 +25,10 @@ interface Props {
   onButtonTextChange: (c: string) => void;
   showThemeDecorations: boolean;
   onShowThemeDecorationsChange: (v: boolean) => void;
+  googleCalendarSlot?: ReactNode;
 }
 
-type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
+type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons" | "gcal";
 
 export function SettingsMenu({
   theme, onThemeChange, customColors, onCustomColorsChange,
