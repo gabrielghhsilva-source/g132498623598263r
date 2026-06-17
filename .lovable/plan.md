@@ -1,74 +1,83 @@
-## Contexto
+# Integração com Google Agenda
 
-O Nubank só exporta um OFX geral da conta — sem campos de "investimento", "rendimento" ou "ativo". Não dá pra puxar dados ricos como uma corretora faria. A saída é dupla:
+## Visão geral
+Sincronização **bidirecional** entre o app e o Google Calendar do **usuário final** (cada pessoa conecta a própria conta), com automação de status por horário, notificações e suporte a recorrências.
 
-1. **Tornar o cadastro manual muito mais rápido** (step fixo + chips + entrada em lote por mês).
-2. **Espremer o máximo do OFX do Nubank**: detectar resgates/aportes "RDB", "Caixinha", "Aplicação automática", etc., e oferecer um fluxo guiado que cria/atualiza o investimento de uma vez.
-
-Nada de Open Finance / Pluggy — exige empresa regulada e é pago.
+> ⚠️ Importante: como cada usuário precisa conectar a **própria conta Google**, isso exige **OAuth por usuário** (não o conector de workspace). Você (ou cada usuário) vai precisar criar credenciais OAuth no Google Cloud Console uma vez. Eu te guio passo a passo quando começarmos.
 
 ---
 
-## O que vai mudar
+## O que vai funcionar
 
-### 1. Campo "step" e "valores rápidos" por investimento
-- Novo campo opcional `contributionStep` (ex: 100) no `Investment`.
-- Novo campo opcional `quickAmounts: number[]` (ex: `[100, 200, 300, 500]`).
-- Se `contributionStep` estiver definido, o input de aporte vira `<input type="number" step="100" min="100">` e valida múltiplo no submit.
-- Se `quickAmounts` estiver definido, aparecem chips clicáveis acima do input. Se não estiver mas tiver `step`, geramos chips automáticos (`step`, `2*step`, `3*step`, `5*step`).
-- Aparece tanto no formulário de aporte manual quanto no fluxo do OFX.
+### 1. Importar eventos da Agenda → Tasks
+- Lê eventos dos próximos N dias (configurável, padrão 14).
+- Cria uma task espelhada com nome, descrição, data, hora início e fim.
+- Eventos recorrentes do Google viram tasks recorrentes no app.
+- Área de destino configurável (ex: "Agenda Google") ou regra por palavra-chave/cor do evento.
 
-### 2. "Aporte rápido" global
-- Botão flutuante no `InvestmentDashboard` (ou atalho `A`): abre dialog com:
-  - Seletor de investimento (busca por nome).
-  - Chips de valor + input com step.
-  - Data (default hoje).
-- Cria o `ContributionRecord` direto, sem precisar abrir a área.
+### 2. Automação de status por horário (o pulo do gato)
+Um relógio interno checa a cada minuto:
+- **Antes do início** → `A fazer`
+- **Entre início e fim** → `Fazendo` (muda automaticamente)
+- **Depois do fim** → `Pronto` (só se você não marcou manualmente; respeita override do usuário)
+- Toggle por task: "Auto-status pelo horário" (liga/desliga individualmente).
 
-### 3. Builder de histórico mensal (lote)
-- Botão "Preencher histórico" em cada investimento.
-- Tabela: linhas = meses (do `startDate` até hoje), colunas = `Aporte` e `Valor no fim do mês` (opcional, pra registrar rendimento real).
-- Suporta colar do Excel (split por tab/quebra de linha).
-- "Repetir último valor" e "Aplicar a todos" pra acelerar.
-- Gera N `ContributionRecord` de uma vez + (opcional) salva snapshots de valor mensal pra mostrar lucro real em vez de só projetado.
+### 3. Notificações
+- Usa o sistema de notificações que já existe no app.
+- Notifica X min antes do início (configurável, reusa `NotificationSettings`).
+- Notificação extra opcional no fim do evento ("Você terminou X?").
 
-### 4. OFX do Nubank mais inteligente
-- Ampliar `INVESTMENT_KEYWORDS` em `ofxParser.ts` com termos reais do Nubank: `RDB`, `RESGATE RDB`, `APLIC AUTOMATICA`, `CAIXINHA`, `RENDIMENTO`, `JUROS RDB`, `RENDA EXTRA`, etc.
-- Classificar cada transação de investimento como `aporte`, `resgate` ou `rendimento` (heurística por palavra-chave + sinal).
-- No `OfxImporter`, agrupar essas transações por "alvo" detectado (ex: tudo que tem "RDB" vai pro mesmo grupo) e mostrar:
-  - "Detectamos 8 movimentos que parecem ser do mesmo investimento. Vincular a um existente / criar novo?"
-  - Se criar novo: já preenche `startDate` com a data do primeiro aporte e soma os rendimentos detectados como `previouslyInvested`/valor inicial.
-- Rendimentos detectados não viram receita do salário — viram histórico do investimento.
+### 4. Exportar Tasks → Agenda
+- Toda task com data + horário pode ser enviada à agenda.
+- Mapeia **prioridade → cor do evento**:
+  - Urgente → Vermelho (Tomato)
+  - Alta → Laranja (Tangerine)
+  - Média → Amarelo (Banana)
+  - Baixa → Azul (Peacock)
+  - Nenhuma → Padrão
+- Descrição da task vira descrição do evento.
+- Subtasks viram checklist no corpo da descrição.
+- Atualizações no app (texto, hora, prioridade) propagam para o evento.
+- Exclusão no app remove da agenda (com confirmação).
 
-### 5. Pequenas melhorias de UX
-- Ao criar investimento, sugerir `contributionStep` baseado no nome (ex: contém "Tesouro" → 100; contém "RDB"/"Caixinha" → 1).
-- Mostrar no card do investimento o último aporte (data + valor) pra dar feedback rápido.
+### 5. Recorrências
+- Cria eventos com RRULE no Google (diário, semanal, mensal).
+- Mapeia `RecurrenceRule` do app → RRULE iCal.
+- Funciona nos dois sentidos.
+
+### 6. Anti-conflito (evita loop infinito de sync)
+- Cada item guarda `googleEventId` + `lastSyncedAt` + hash do conteúdo.
+- "Última escrita ganha" baseada em timestamp.
+- Botão "Forçar sync agora" + sync automático a cada 5 min quando o app está aberto.
+
+---
+
+## Ideias extras que sugiro incluir
+
+1. **Múltiplas agendas** — escolher quais agendas do Google sincronizar (ex: só "Pessoal", ignorar "Aniversários").
+2. **Filtro por palavra-chave** — eventos com `[ignore]` no título não viram task.
+3. **Detecção de conflito de horário** — alerta se você criar task que se sobrepõe a outro evento.
+4. **Resumo do dia** — ao abrir o app, painel "Sua agenda de hoje" já mesclada com tasks.
+5. **Modo "só leitura"** — opção para apenas importar, sem escrever na agenda (mais seguro pra testar).
+6. **Botão pausar sync** — útil quando você está reorganizando muita coisa.
+7. **Log de sincronização** — pequeno histórico das últimas operações (debug).
 
 ---
 
 ## Detalhes técnicos
 
-**Arquivos a tocar:**
-- `src/lib/types.ts` — adicionar `contributionStep?: number`, `quickAmounts?: number[]`, opcional `valueSnapshots?: { date: string; value: number }[]` em `Investment`.
-- `src/hooks/useInvestmentStore.ts` — método `addBulkContributions(areaId, investmentId, records[])` e `addValueSnapshot`.
-- `src/lib/ofxParser.ts` — expandir keywords, novo campo `investmentKind: "aporte" | "resgate" | "rendimento" | null`.
-- `src/components/OfxImporter.tsx` — agrupar por keyword detectada, novo painel "vincular grupo a investimento".
-- `src/components/InvestmentDashboard.tsx` — botão "Aporte rápido" + botão "Preencher histórico".
-- Novos componentes:
-  - `src/components/QuickContributionDialog.tsx` — dialog global de aporte.
-  - `src/components/HistoryBuilderDialog.tsx` — tabela mensal de lote.
-  - `src/components/ContributionAmountInput.tsx` — input reutilizável com chips + step.
-
-**Compatibilidade:** todos os campos novos são opcionais, dados antigos no localStorage continuam funcionando.
-
-**Tests:** adicionar testes pra `addBulkContributions` e pra classificação de `investmentKind` no parser.
+- **Auth**: OAuth 2.0 do Google com escopo `https://www.googleapis.com/auth/calendar`. Tokens (access + refresh) criptografados no `localStorage` (mesmo esquema do `secureSet`).
+- **Refresh**: feito client-side antes de cada chamada quando o access token está perto de expirar.
+- **API**: Google Calendar API v3, chamadas diretas via `fetch` (sem backend, mantém offline-first do app).
+- **Polling**: `setInterval` de 5 min para sync + `setInterval` de 1 min para auto-status.
+- **Edge function opcional**: só se quisermos esconder o client_secret. Para apps desktop/PWA pessoais, o fluxo PKCE permite OAuth sem client_secret (mais simples e seguro).
+- **Arquivos novos**: `src/lib/googleCalendar.ts` (API), `src/hooks/useGoogleCalendarSync.ts` (sync), `src/components/GoogleCalendarSettings.tsx` (UI nas Settings), campos novos em `Task` (`googleEventId`, `googleCalendarId`, `autoStatus`, `lastSyncedAt`).
 
 ---
 
-## Fora do escopo
+## Perguntas antes de começar
 
-- Conexão direta com Nubank/Open Finance (inviável).
-- Cálculo automático de IR/come-cotas.
-- Importar XML de notas de corretagem (você não usa corretora).
-
-Confirma que faz sentido assim e eu mando bala?
+1. **Quem vai conectar a agenda?** Só você (eu posso codificar com client_id fixo seu) ou qualquer usuário do app (cada um conecta a própria)?
+2. **Direção do sync de cara**: bidirecional completo desde o início, ou começamos **só importando** do Google e depois ligamos o envio (mais seguro pra testar sem bagunçar sua agenda real)?
+3. **Auto-status**: ligado por padrão em todas as tasks vindas da agenda, ou opt-in por task?
+4. **Janela de importação**: 14 dias à frente é OK, ou prefere outro padrão (7, 30)?
