@@ -160,6 +160,22 @@ const AppContent = () => {
                 onButtonTextChange={store.setButtonTextColor}
                 showThemeDecorations={store.showThemeDecorations}
                 onShowThemeDecorationsChange={store.setShowThemeDecorations}
+                googleCalendarSlot={
+                  <GoogleCalendarSettingsPanel
+                    settings={gcal.settings}
+                    onUpdate={gcal.updateSettings}
+                    log={gcal.log}
+                    onClearLog={gcal.clearLog}
+                    isConnected={sync.isConnected}
+                    isSyncing={sync.isSyncing}
+                    calendars={sync.calendars}
+                    onConnect={sync.connect}
+                    onDisconnect={sync.disconnect}
+                    onSyncNow={sync.runSync}
+                    onRefreshCalendars={sync.refreshCalendars}
+                    areas={store.areas}
+                  />
+                }
               />
             </div>
           </div>
