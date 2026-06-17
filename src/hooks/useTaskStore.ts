@@ -400,6 +400,7 @@ export function useTaskStore() {
     showThemeDecorations, setShowThemeDecorations,
     addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, updateTaskEnd,
     updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
+    setTaskAutoStatus, setTaskGoogleMeta, upsertGoogleEvent,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
