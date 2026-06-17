@@ -252,6 +252,55 @@ export function useTaskStore() {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, tagIds })));
   }, []);
 
+  const setTaskAutoStatus = useCallback((areaId: string, taskId: string, autoStatus: boolean) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, autoStatus })));
+  }, []);
+
+  /** Atualiza metadados do Google Calendar de uma task (id do evento, hash, etc). */
+  const setTaskGoogleMeta = useCallback((areaId: string, taskId: string, meta: Partial<Pick<Task, "googleEventId" | "googleCalendarId" | "googleLastHash" | "googleSyncedAt">>) => {
+    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, ...meta })));
+  }, []);
+
+  /**
+   * Insere uma task vinda do Google. Se já existir (por googleEventId), atualiza in-place.
+   * Caso contrário, cria nova na área `targetAreaId`.
+   */
+  const upsertGoogleEvent = useCallback((targetAreaId: string, patch: Partial<Task> & { googleEventId: string; googleCalendarId: string }, autoStatusDefault: boolean) => {
+    setAreas(prev => {
+      // Procura por googleEventId em todas as áreas
+      for (const a of prev) {
+        const existing = a.tasks.find(t => t.googleEventId === patch.googleEventId);
+        if (existing) {
+          return updateTaskInAreas(prev, a.id, existing.id, t => ({ ...t, ...patch, googleSyncedAt: new Date().toISOString() }));
+        }
+      }
+      // Nova: cria na área alvo
+      const task: Task = {
+        id: crypto.randomUUID(),
+        text: patch.text || "Evento sem título",
+        status: "todo",
+        style: { size: "base", weight: "normal", color: "#000000" },
+        dueDate: patch.dueDate,
+        dueTime: patch.dueTime,
+        endDate: patch.endDate,
+        endTime: patch.endTime,
+        createdAt: new Date().toISOString(),
+        comments: [],
+        priority: patch.priority || "none",
+        tagIds: [],
+        subtasks: [],
+        autoStatus: autoStatusDefault,
+        googleEventId: patch.googleEventId,
+        googleCalendarId: patch.googleCalendarId,
+        googleLastHash: patch.googleLastHash,
+        googleSyncedAt: new Date().toISOString(),
+        recurrence: patch.recurrence,
+      };
+      return addTaskToArea(prev, targetAreaId, task);
+    });
+  }, []);
+
+
   const deleteTask = useCallback((areaId: string, taskId: string) => {
     setAreas(prev => removeTaskFromArea(prev, areaId, taskId));
   }, []);
@@ -351,6 +400,7 @@ export function useTaskStore() {
     showThemeDecorations, setShowThemeDecorations,
     addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, updateTaskEnd,
     updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
+    setTaskAutoStatus, setTaskGoogleMeta, upsertGoogleEvent,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,

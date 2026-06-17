@@ -13,6 +13,7 @@
 - [Themes & Colors](mem://style/temas-e-cores) — Pre-defined and fully custom themes including button styling
 - [Backgrounds](mem://style/planos-de-fundo) — Advanced backgrounds: solid, gradients, particles, local media
 - [Card Navigation](mem://ui/navegacao-por-cartas) — Card stack nav with fan effect and proximity buffer
+- [Google Calendar](mem://features/google-calendar) — Sync bidirecional, auto-status por horário, mapeamento cores/RRULE
 - [UI Experience](mem://ui/experiencia-do-usuario) — Preloader, sliding panels, smooth transitions, unified Settings
 - [Task Management](mem://features/organizacao-de-tarefas) — Task areas, long-press reorder, individual minimization
 - [Task Details](mem://features/personalizacao-de-tarefas) — Task visuals, comments, and weekly/monthly auto-recurrence

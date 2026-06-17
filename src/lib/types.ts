@@ -57,6 +57,12 @@ export interface Task {
   priority?: TaskPriority;
   tagIds?: string[];
   subtasks?: Subtask[];
+  // Google Calendar sync metadata
+  googleEventId?: string;
+  googleCalendarId?: string;
+  googleLastHash?: string;
+  googleSyncedAt?: string;
+  autoStatus?: boolean;
 }
 
 export interface TaskArea {

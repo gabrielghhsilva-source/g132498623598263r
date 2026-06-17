@@ -25,7 +25,10 @@ import { ImageConverter } from "@/components/ImageConverter";
 import { ElectronTitleBar } from "@/components/ElectronTitleBar";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useGoogleCalendarStore } from "@/hooks/useGoogleCalendarStore";
+import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
+import { GoogleCalendarSettingsPanel } from "@/components/GoogleCalendarSettings";
 
 const AppContent = () => {
   const store = useTaskStore();
@@ -42,6 +45,32 @@ const AppContent = () => {
       refs.forEach((r) => store.snoozeTask(r.areaId, r.taskId, minutes));
     },
   );
+
+  // --- Google Calendar ---
+  const gcal = useGoogleCalendarStore();
+  const ensureTargetArea = useMemo(() => () => {
+    if (gcal.settings.targetAreaId && store.areas.some(a => a.id === gcal.settings.targetAreaId)) {
+      return gcal.settings.targetAreaId;
+    }
+    const existing = store.areas.find(a => a.name === "Agenda Google");
+    if (existing) return existing.id;
+    // Cria nova área
+    store.addArea("Agenda Google", "📅");
+    // addArea é assíncrono no estado; chamamos novamente no próximo tick.
+    // Como fallback imediato: usa a primeira área disponível.
+    return store.areas[0]?.id || "";
+  }, [gcal.settings.targetAreaId, store]);
+
+  const sync = useGoogleCalendarSync({
+    areas: store.areas,
+    timezone: store.timezone,
+    settings: gcal.settings,
+    setTaskGoogleMeta: store.setTaskGoogleMeta,
+    upsertGoogleEvent: store.upsertGoogleEvent,
+    updateTaskStatus: store.updateTaskStatus,
+    addLog: gcal.addLog,
+    ensureTargetArea,
+  });
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
@@ -131,6 +160,22 @@ const AppContent = () => {
                 onButtonTextChange={store.setButtonTextColor}
                 showThemeDecorations={store.showThemeDecorations}
                 onShowThemeDecorationsChange={store.setShowThemeDecorations}
+                googleCalendarSlot={
+                  <GoogleCalendarSettingsPanel
+                    settings={gcal.settings}
+                    onUpdate={gcal.updateSettings}
+                    log={gcal.log}
+                    onClearLog={gcal.clearLog}
+                    isConnected={sync.isConnected}
+                    isSyncing={sync.isSyncing}
+                    calendars={sync.calendars}
+                    onConnect={sync.connect}
+                    onDisconnect={sync.disconnect}
+                    onSyncNow={sync.runSync}
+                    onRefreshCalendars={sync.refreshCalendars}
+                    areas={store.areas}
+                  />
+                }
               />
             </div>
           </div>

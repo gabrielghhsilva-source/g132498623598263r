@@ -1,5 +1,5 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar } from "lucide-react";
+import { useState, useRef, useEffect, ReactNode } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
 import { NotificationSettingsPanel } from "./NotificationSettings";
@@ -25,9 +25,10 @@ interface Props {
   onButtonTextChange: (c: string) => void;
   showThemeDecorations: boolean;
   onShowThemeDecorationsChange: (v: boolean) => void;
+  googleCalendarSlot?: ReactNode;
 }
 
-type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons";
+type MenuPath = null | "root" | "themes" | "themes-colors" | "themes-bg" | "time" | "time-tz" | "time-notif" | "buttons" | "gcal";
 
 export function SettingsMenu({
   theme, onThemeChange, customColors, onCustomColorsChange,
@@ -36,6 +37,7 @@ export function SettingsMenu({
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
   showThemeDecorations, onShowThemeDecorationsChange,
+  googleCalendarSlot,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -69,6 +71,14 @@ export function SettingsMenu({
               <MenuItem icon={Palette} label="Temas" onClick={() => setPath("themes")} hasSubmenu />
               <MenuItem icon={Clock} label="Horário" onClick={() => setPath("time")} hasSubmenu />
               <MenuItem icon={Paintbrush} label="Botões" onClick={() => setPath("buttons")} hasSubmenu />
+              {googleCalendarSlot && <MenuItem icon={Calendar} label="Google Agenda" onClick={() => setPath("gcal")} hasSubmenu />}
+            </div>
+          )}
+
+          {path === "gcal" && (
+            <div className="p-3 space-y-3 w-[320px] max-w-[calc(100vw-1.5rem)]">
+              <BackButton onClick={() => setPath("root")} label="Google Agenda" />
+              {googleCalendarSlot}
             </div>
           )}
 
