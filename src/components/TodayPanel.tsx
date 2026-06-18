@@ -71,32 +71,43 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
   const [isPanning, setIsPanning] = useState(false);
   const TIMELINE_WIDTH = SLOTS_PER_DAY * slotWidth;
 
-  // Click-and-hold horizontal pan on the timeline scroll container
-  const handlePanStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // Pointer-events horizontal pan on the timeline scroll container.
+  // Uses setPointerCapture so we keep receiving move events even when the
+  // pointer crosses draggable cards / native HTML5 drag would otherwise
+  // hijack the gesture (which was causing the "snap back" bug).
+  const handlePanStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     const target = e.target as HTMLElement;
     // Don't start panning if user grabbed a card, resize handle, or button
-    if (target.closest('[draggable="true"], button, [data-no-pan]')) return;
+    if (target.closest('[draggable="true"], button, input, textarea, a, [data-no-pan]')) return;
     const el = scrollRef.current;
     if (!el) return;
     e.preventDefault();
     const startX = e.clientX;
     const startScroll = el.scrollLeft;
+    const pointerId = e.pointerId;
+    try { el.setPointerCapture(pointerId); } catch {}
     setIsPanning(true);
     document.body.style.userSelect = "none";
-    document.body.style.cursor = "grabbing";
-    const onMove = (ev: MouseEvent) => {
+
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
       el.scrollLeft = startScroll - (ev.clientX - startX);
     };
-    const onUp = () => {
+    const cleanup = () => {
       setIsPanning(false);
       document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      try { el.releasePointerCapture(pointerId); } catch {}
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", cleanup);
+      el.removeEventListener("pointercancel", cleanup);
+      el.removeEventListener("lostpointercapture", cleanup);
     };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", cleanup);
+    el.addEventListener("pointercancel", cleanup);
+    el.addEventListener("lostpointercapture", cleanup);
   }, []);
 
   // Scroll wheel: vertical wheel scrolls horizontally on the timeline
