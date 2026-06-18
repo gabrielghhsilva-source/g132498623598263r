@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar, Layers } from "lucide-react";
 import { useState, useRef, useEffect, ReactNode } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
@@ -25,6 +25,8 @@ interface Props {
   onButtonTextChange: (c: string) => void;
   showThemeDecorations: boolean;
   onShowThemeDecorationsChange: (v: boolean) => void;
+  glassMode: boolean;
+  onGlassModeChange: (v: boolean) => void;
   googleCalendarSlot?: ReactNode;
 }
 
@@ -37,6 +39,7 @@ export function SettingsMenu({
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
   showThemeDecorations, onShowThemeDecorationsChange,
+  glassMode, onGlassModeChange,
   googleCalendarSlot,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
@@ -97,6 +100,18 @@ export function SettingsMenu({
                 </div>
                 <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${showThemeDecorations ? "bg-primary" : "bg-muted"}`}>
                   <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow transition-transform ${showThemeDecorations ? "translate-x-4" : "translate-x-0.5"}`} />
+                </span>
+              </button>
+              <button
+                onClick={() => onGlassModeChange(!glassMode)}
+                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm hover:bg-accent transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-muted-foreground" />
+                  <span>Modo Glass</span>
+                </div>
+                <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${glassMode ? "bg-primary" : "bg-muted"}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow transition-transform ${glassMode ? "translate-x-4" : "translate-x-0.5"}`} />
                 </span>
               </button>
             </div>
