@@ -373,7 +373,8 @@ export function TodayPanel({ tasks, onMarkDone, onUpdateTime, onUpdateEnd }: Pro
             {/* Horizontal timeline */}
             <div
               ref={scrollRef}
-              onMouseDown={handlePanStart}
+              onPointerDown={handlePanStart}
+              style={{ touchAction: "pan-y" }}
               className={`flex-1 overflow-x-auto overflow-y-hidden no-scrollbar ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
             >
               <div
