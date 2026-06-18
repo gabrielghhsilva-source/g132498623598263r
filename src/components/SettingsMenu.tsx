@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar } from "lucide-react";
+import { Settings, ChevronRight, Palette, Clock, ImageIcon, Bell, Paintbrush, Sparkles, Calendar, Layers } from "lucide-react";
 import { useState, useRef, useEffect, ReactNode } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { TimezoneSelector } from "./TimezoneSelector";
