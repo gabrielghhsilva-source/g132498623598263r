@@ -32,6 +32,22 @@ import { GoogleCalendarSettingsPanel } from "@/components/GoogleCalendarSettings
 
 const AppContent = () => {
   const store = useTaskStore();
+  const [glassMode, setGlassModeState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("glass-mode") === "on";
+  });
+  const setGlassMode = useCallback((v: boolean) => {
+    setGlassModeState(v);
+    try { localStorage.setItem("glass-mode", v ? "on" : "off"); } catch {}
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.glass = v ? "on" : "off";
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.glass = glassMode ? "on" : "off";
+    }
+  }, [glassMode]);
   const notifStore = useNotificationStore();
   const investStore = useInvestmentStore();
   const bgStore = useBackgroundStore();
