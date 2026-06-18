@@ -25,6 +25,8 @@ interface Props {
   onButtonTextChange: (c: string) => void;
   showThemeDecorations: boolean;
   onShowThemeDecorationsChange: (v: boolean) => void;
+  glassMode: boolean;
+  onGlassModeChange: (v: boolean) => void;
   googleCalendarSlot?: ReactNode;
 }
 
