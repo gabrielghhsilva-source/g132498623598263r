@@ -160,6 +160,8 @@ const AppContent = () => {
                 onButtonTextChange={store.setButtonTextColor}
                 showThemeDecorations={store.showThemeDecorations}
                 onShowThemeDecorationsChange={store.setShowThemeDecorations}
+                glassMode={glassMode}
+                onGlassModeChange={setGlassMode}
                 googleCalendarSlot={
                   <GoogleCalendarSettingsPanel
                     settings={gcal.settings}
