@@ -39,6 +39,7 @@ export function SettingsMenu({
   backgroundSettings, onBackgroundUpdate,
   buttonBgColor, buttonTextColor, onButtonBgChange, onButtonTextChange,
   showThemeDecorations, onShowThemeDecorationsChange,
+  glassMode, onGlassModeChange,
   googleCalendarSlot,
 }: Props) {
   const [path, setPath] = useState<MenuPath>(null);
