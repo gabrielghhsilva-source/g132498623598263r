@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
 import { useNotificationSystem } from "@/hooks/useNotificationSystem";
@@ -77,16 +77,37 @@ const AppContent = () => {
     return store.areas[0]?.id || "";
   }, [gcal.settings.targetAreaId, store]);
 
+  const ensureAppCalendarIdRef = useRef<(() => Promise<string>) | null>(null);
+  const ensureAppCalendarId = useCallback(async () => {
+    if (gcal.settings.appCalendarId) return gcal.settings.appCalendarId;
+    const id = await ensureAppCalendarIdRef.current!();
+    gcal.updateSettings({ appCalendarId: id });
+    return id;
+  }, [gcal]);
+
   const sync = useGoogleCalendarSync({
     areas: store.areas,
     timezone: store.timezone,
     settings: gcal.settings,
+    clientInstanceId: gcal.clientInstanceId,
     setTaskGoogleMeta: store.setTaskGoogleMeta,
     upsertGoogleEvent: store.upsertGoogleEvent,
     updateTaskStatus: store.updateTaskStatus,
+    deleteTask: store.deleteTask,
     addLog: gcal.addLog,
     ensureTargetArea,
+    ensureAppCalendarId,
   });
+  ensureAppCalendarIdRef.current = sync.ensureAppCalendar;
+
+  // Intercepta delete local → também remove no Google
+  const deleteTaskWithRemote = useCallback((areaId: string, taskId: string) => {
+    const area = store.areas.find(a => a.id === areaId);
+    const task = area?.tasks.find(t => t.id === taskId);
+    if (task?.googleEventId) sync.deleteRemoteEvent(task);
+    store.deleteTask(areaId, taskId);
+  }, [store, sync]);
+
 
   const [activeTab, setActiveTab] = useState<AppTab>("tasks");
   const [addAreaOpen, setAddAreaOpen] = useState(false);
@@ -187,6 +208,8 @@ const AppContent = () => {
                     isConnected={sync.isConnected}
                     isSyncing={sync.isSyncing}
                     calendars={sync.calendars}
+                    lastSyncAt={sync.lastSyncAt}
+                    outboxSize={sync.outboxSize}
                     onConnect={sync.connect}
                     onDisconnect={sync.disconnect}
                     onSyncNow={sync.runSync}
@@ -218,7 +241,7 @@ const AppContent = () => {
                 onUpdatePriority={store.updateTaskPriority}
                 onUpdateTags={store.updateTaskTags}
                 onMoveTask={store.moveTask}
-                onDeleteTask={store.deleteTask}
+                onDeleteTask={deleteTaskWithRemote}
                 onDeleteArea={store.deleteArea}
                 onAddSubtask={store.addSubtaskTo}
                 onToggleSubtask={store.toggleSubtaskOf}

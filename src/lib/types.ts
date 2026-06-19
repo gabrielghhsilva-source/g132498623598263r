@@ -62,6 +62,8 @@ export interface Task {
   googleCalendarId?: string;
   googleLastHash?: string;
   googleSyncedAt?: string;
+  googleEtag?: string;
+  googleUpdated?: string;
   autoStatus?: boolean;
 }
 

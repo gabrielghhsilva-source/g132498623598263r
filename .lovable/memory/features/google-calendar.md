@@ -16,9 +16,15 @@ Sincronização Google Calendar (uso pessoal, OAuth via GIS no browser, sem back
 - Cores: urgent→11 (Tomato), high→6 (Tangerine), medium→5 (Banana), low→7 (Peacock), none→default.
 - Daily = weekly com `daysOfWeek: [0..6]`. RRULE FREQ=DAILY ↔ todos os 7 dias.
 - Auto-status: roda a cada 30s; só age se `task.autoStatus !== false`. Antes→todo, durante→in-progress, depois→done.
-- Anti-loop: `taskContentHash` (FNV-1a). Push só se hash mudou. `googleLastHash` salvo na task.
+- Anti-loop: `taskContentHash` (FNV-1a) + `googleEtag` (If-Match). Push só se hash mudou. 412 → reimporta.
 - Eventos importados vão para área "Agenda Google" (auto-criada) ou área escolhida em settings.
-- All-day events (sem `dateTime`) são ignorados na importação.
+- All-day events (sem `dateTime`) são ignorados na importação. Exceções de recorrência (`recurringEventId`) também (MVP).
+- `singleEvents=false` na listagem: importa o mestre com RRULE, evita duplicar ocorrências.
+- Escrita default em agenda dedicada "App Tasks" criada via `calendar.app.created` (toggle `useAppCalendarOnly`).
+- Delete G→App: diff de IDs por janela; tasks órfãs removidas (toggle `deleteOnRemoteRemoval`).
+- Delete App→G: enfileirado em outbox localStorage se offline; drena em `online` + sync.
+- Lock anti-duplicação entre abas/clientes: `google-calendar-sync-lock` com `clientInstanceId` + TTL 60s.
+- Escopos OAuth: `calendar.events` + `calendar.calendarlist.readonly` + `calendar.app.created` (mínimo necessário).
 
 **Setup do usuário (uma vez):**
 1. Google Cloud Console → criar OAuth Client ID (Web app)

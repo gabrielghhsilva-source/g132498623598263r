@@ -11,7 +11,13 @@ declare global {
 }
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
-const SCOPES = "https://www.googleapis.com/auth/calendar";
+// Escopos mínimos: ler eventos + criar/editar nas agendas autorizadas
+// + listar calendários (read-only) + criar app calendar dedicado.
+const SCOPES = [
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+  "https://www.googleapis.com/auth/calendar.app.created",
+].join(" ");
 const TOKEN_KEY = "google-calendar-tokens";
 
 let gisLoaded: Promise<void> | null = null;
@@ -90,7 +96,6 @@ export async function getValidAccessToken(clientId: string): Promise<string> {
   if (stored && stored.accessToken && stored.expiresAt > Date.now()) {
     return stored.accessToken;
   }
-  // Tenta silencioso
   try {
     return await requestAccessToken(clientId, { silent: true });
   } catch {
@@ -100,12 +105,19 @@ export async function getValidAccessToken(clientId: string): Promise<string> {
 
 const API_BASE = "https://www.googleapis.com/calendar/v3";
 
+export class PreconditionFailedError extends Error {
+  constructor(public readonly remoteEtag?: string) {
+    super("Conflito: evento foi modificado no Google desde a última sincronização");
+    this.name = "PreconditionFailedError";
+  }
+}
+
 async function apiCall(
   clientId: string,
   path: string,
   init: RequestInit = {},
   retry = true,
-): Promise<any> {
+): Promise<{ data: any; etag?: string }> {
   const token = await getValidAccessToken(clientId);
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -119,12 +131,16 @@ async function apiCall(
     clearStoredToken();
     return apiCall(clientId, path, init, false);
   }
+  if (res.status === 412) {
+    throw new PreconditionFailedError(res.headers.get("etag") || undefined);
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Google Calendar API ${res.status}: ${text}`);
   }
-  if (res.status === 204) return null;
-  return res.json();
+  if (res.status === 204) return { data: null };
+  const data = await res.json();
+  return { data, etag: res.headers.get("etag") || data?.etag };
 }
 
 export interface GoogleCalendarMeta {
@@ -135,13 +151,22 @@ export interface GoogleCalendarMeta {
 }
 
 export async function listCalendars(clientId: string): Promise<GoogleCalendarMeta[]> {
-  const data = await apiCall(clientId, "/users/me/calendarList?minAccessRole=writer");
+  const { data } = await apiCall(clientId, "/users/me/calendarList");
   return (data.items || []).map((c: any) => ({
     id: c.id,
     summary: c.summary,
     primary: c.primary,
     backgroundColor: c.backgroundColor,
   }));
+}
+
+/** Cria uma agenda secundária dedicada ao app (escopo calendar.app.created). */
+export async function createAppCalendar(clientId: string, summary = "App Tasks"): Promise<GoogleCalendarMeta> {
+  const { data } = await apiCall(clientId, "/calendars", {
+    method: "POST",
+    body: JSON.stringify({ summary, description: "Agenda gerenciada pelo app de tarefas (não edite manualmente)." }),
+  });
+  return { id: data.id, summary: data.summary };
 }
 
 export interface GoogleEvent {
@@ -154,6 +179,7 @@ export interface GoogleEvent {
   recurrence?: string[];
   recurringEventId?: string;
   updated?: string;
+  etag?: string;
   status?: string;
 }
 
@@ -166,12 +192,20 @@ export async function listEvents(
   const params = new URLSearchParams({
     timeMin: timeMinISO,
     timeMax: timeMaxISO,
-    singleEvents: "true",
-    orderBy: "startTime",
+    // singleEvents=false: importa o evento mestre com RRULE em vez de expandir
+    // cada ocorrência, evitando duplicação de recorrências.
+    singleEvents: "false",
     maxResults: "2500",
+    showDeleted: "false",
   });
-  const data = await apiCall(clientId, `/calendars/${encodeURIComponent(calendarId)}/events?${params}`);
-  return (data.items || []).filter((e: any) => e.status !== "cancelled");
+  const { data } = await apiCall(clientId, `/calendars/${encodeURIComponent(calendarId)}/events?${params}`);
+  return (data.items || []).filter((e: any) => {
+    if (e.status === "cancelled") return false;
+    // Ignora exceções de recorrência (instâncias modificadas) — o mestre já
+    // representa a série; instâncias individuais ficam fora do MVP.
+    if (e.recurringEventId) return false;
+    return true;
+  });
 }
 
 export interface EventInput {
@@ -180,13 +214,13 @@ export interface EventInput {
   startISO: string;
   endISO: string;
   colorId?: string;
-  recurrence?: string[]; // ["RRULE:FREQ=DAILY"]
+  recurrence?: string[];
 }
 
 export async function createEvent(
   clientId: string, calendarId: string, input: EventInput,
-): Promise<GoogleEvent> {
-  return apiCall(clientId, `/calendars/${encodeURIComponent(calendarId)}/events`, {
+): Promise<{ event: GoogleEvent; etag?: string }> {
+  const { data, etag } = await apiCall(clientId, `/calendars/${encodeURIComponent(calendarId)}/events`, {
     method: "POST",
     body: JSON.stringify({
       summary: input.summary,
@@ -197,22 +231,35 @@ export async function createEvent(
       recurrence: input.recurrence,
     }),
   });
+  return { event: data, etag };
 }
 
 export async function updateEvent(
-  clientId: string, calendarId: string, eventId: string, input: EventInput,
-): Promise<GoogleEvent> {
-  return apiCall(clientId, `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      summary: input.summary,
-      description: input.description,
-      start: { dateTime: input.startISO },
-      end: { dateTime: input.endISO },
-      colorId: input.colorId,
-      recurrence: input.recurrence,
-    }),
-  });
+  clientId: string,
+  calendarId: string,
+  eventId: string,
+  input: EventInput,
+  ifMatchEtag?: string,
+): Promise<{ event: GoogleEvent; etag?: string }> {
+  const headers: Record<string, string> = {};
+  if (ifMatchEtag) headers["If-Match"] = ifMatchEtag;
+  const { data, etag } = await apiCall(
+    clientId,
+    `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        summary: input.summary,
+        description: input.description,
+        start: { dateTime: input.startISO },
+        end: { dateTime: input.endISO },
+        colorId: input.colorId,
+        recurrence: input.recurrence,
+      }),
+    },
+  );
+  return { event: data, etag };
 }
 
 export async function deleteEvent(

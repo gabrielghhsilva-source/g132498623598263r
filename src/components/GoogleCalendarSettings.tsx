@@ -14,6 +14,8 @@ interface Props {
   isConnected: boolean;
   isSyncing: boolean;
   calendars: GoogleCalendarMeta[];
+  lastSyncAt?: string | null;
+  outboxSize?: number;
   onConnect: () => Promise<void>;
   onDisconnect: () => void;
   onSyncNow: () => Promise<void>;
@@ -23,7 +25,7 @@ interface Props {
 
 export function GoogleCalendarSettingsPanel({
   settings, onUpdate, log, onClearLog,
-  isConnected, isSyncing, calendars,
+  isConnected, isSyncing, calendars, lastSyncAt, outboxSize = 0,
   onConnect, onDisconnect, onSyncNow, onRefreshCalendars,
   areas,
 }: Props) {
@@ -122,7 +124,25 @@ export function GoogleCalendarSettingsPanel({
               checked={settings.autoStatusDefault}
               onChange={v => onUpdate({ autoStatusDefault: v })}
             />
+            <Toggle
+              label='Escrever só em agenda dedicada "App Tasks"'
+              checked={settings.useAppCalendarOnly}
+              onChange={v => onUpdate({ useAppCalendarOnly: v })}
+            />
+            <Toggle
+              label="Deletar task local quando evento sumir do Google"
+              checked={settings.deleteOnRemoteRemoval}
+              onChange={v => onUpdate({ deleteOnRemoteRemoval: v })}
+            />
           </div>
+
+          {(lastSyncAt || outboxSize > 0) && (
+            <div className="text-[10px] text-muted-foreground px-3 py-1.5 rounded bg-muted/30 space-y-0.5">
+              {lastSyncAt && <div>Última sync: {new Date(lastSyncAt).toLocaleString()}</div>}
+              {outboxSize > 0 && <div>Pendentes offline: {outboxSize}</div>}
+              {settings.appCalendarId && <div>Agenda app: {settings.appCalendarId}</div>}
+            </div>
+          )}
 
           {/* Direção */}
           <div className="space-y-1.5">
