@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 export interface GoogleCalendarSettings {
   clientId: string;
@@ -9,6 +9,12 @@ export interface GoogleCalendarSettings {
   daysAhead: number;
   autoStatusDefault: boolean;
   targetAreaId?: string;
+  /** Agenda secundária dedicada criada pelo app (escrita só vai pra ela). */
+  appCalendarId?: string;
+  /** Quando true, exportação só escreve em appCalendarId. */
+  useAppCalendarOnly: boolean;
+  /** Deletar task local quando o evento sumir do Google. */
+  deleteOnRemoteRemoval: boolean;
 }
 
 export const DEFAULT_GCAL_SETTINGS: GoogleCalendarSettings = {
@@ -19,6 +25,8 @@ export const DEFAULT_GCAL_SETTINGS: GoogleCalendarSettings = {
   syncDirection: "both",
   daysAhead: 7,
   autoStatusDefault: true,
+  useAppCalendarOnly: true,
+  deleteOnRemoteRemoval: true,
 };
 
 export interface SyncLogEntry {
@@ -29,12 +37,25 @@ export interface SyncLogEntry {
 
 const SETTINGS_KEY = "google-calendar-settings";
 const LOG_KEY = "google-calendar-sync-log";
+const CLIENT_ID_LS = "google-calendar-client-instance";
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch { return fallback; }
+}
+
+/** ID estável deste cliente (browser/electron instance) p/ lock anti-duplicação. */
+export function getClientInstanceId(): string {
+  try {
+    let id = localStorage.getItem(CLIENT_ID_LS);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(CLIENT_ID_LS, id);
+    }
+    return id;
+  } catch { return "anon"; }
 }
 
 export function useGoogleCalendarStore() {
@@ -56,5 +77,7 @@ export function useGoogleCalendarStore() {
 
   const clearLog = useCallback(() => setLogState([]), []);
 
-  return { settings, updateSettings, log, addLog, clearLog };
+  const clientInstanceId = useMemo(() => getClientInstanceId(), []);
+
+  return { settings, updateSettings, log, addLog, clearLog, clientInstanceId };
 }
