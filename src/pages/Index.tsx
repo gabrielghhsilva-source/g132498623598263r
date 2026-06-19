@@ -208,6 +208,8 @@ const AppContent = () => {
                     isConnected={sync.isConnected}
                     isSyncing={sync.isSyncing}
                     calendars={sync.calendars}
+                    lastSyncAt={sync.lastSyncAt}
+                    outboxSize={sync.outboxSize}
                     onConnect={sync.connect}
                     onDisconnect={sync.disconnect}
                     onSyncNow={sync.runSync}
