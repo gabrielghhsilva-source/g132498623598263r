@@ -277,6 +277,21 @@ const AppContent = () => {
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
           onUpdateTime={store.updateTaskTime}
           onUpdateEnd={store.updateTaskEnd}
+          onAssignToday={(taskId) => {
+            for (const a of store.areas) {
+              const t = a.tasks.find(x => x.id === taskId);
+              if (t) {
+                const today = new Date().toISOString().split("T")[0];
+                store.updateTaskTime(a.id, t.id, t.dueTime, today);
+                return;
+              }
+            }
+          }}
+          onClearDueDate={(areaId, taskId) => {
+            const a = store.areas.find(x => x.id === areaId);
+            const t = a?.tasks.find(x => x.id === taskId);
+            if (t) store.updateTaskTime(areaId, taskId, undefined, "");
+          }}
         />
 
         <NotificationPopup

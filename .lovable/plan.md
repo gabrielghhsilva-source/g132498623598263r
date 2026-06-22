@@ -1,83 +1,63 @@
-# Integração com Google Agenda
+# Roadmap aprovado
 
-## Visão geral
-Sincronização **bidirecional** entre o app e o Google Calendar do **usuário final** (cada pessoa conecta a própria conta), com automação de status por horário, notificações e suporte a recorrências.
-
-> ⚠️ Importante: como cada usuário precisa conectar a **própria conta Google**, isso exige **OAuth por usuário** (não o conector de workspace). Você (ou cada usuário) vai precisar criar credenciais OAuth no Google Cloud Console uma vez. Eu te guio passo a passo quando começarmos.
-
----
-
-## O que vai funcionar
-
-### 1. Importar eventos da Agenda → Tasks
-- Lê eventos dos próximos N dias (configurável, padrão 14).
-- Cria uma task espelhada com nome, descrição, data, hora início e fim.
-- Eventos recorrentes do Google viram tasks recorrentes no app.
-- Área de destino configurável (ex: "Agenda Google") ou regra por palavra-chave/cor do evento.
-
-### 2. Automação de status por horário (o pulo do gato)
-Um relógio interno checa a cada minuto:
-- **Antes do início** → `A fazer`
-- **Entre início e fim** → `Fazendo` (muda automaticamente)
-- **Depois do fim** → `Pronto` (só se você não marcou manualmente; respeita override do usuário)
-- Toggle por task: "Auto-status pelo horário" (liga/desliga individualmente).
-
-### 3. Notificações
-- Usa o sistema de notificações que já existe no app.
-- Notifica X min antes do início (configurável, reusa `NotificationSettings`).
-- Notificação extra opcional no fim do evento ("Você terminou X?").
-
-### 4. Exportar Tasks → Agenda
-- Toda task com data + horário pode ser enviada à agenda.
-- Mapeia **prioridade → cor do evento**:
-  - Urgente → Vermelho (Tomato)
-  - Alta → Laranja (Tangerine)
-  - Média → Amarelo (Banana)
-  - Baixa → Azul (Peacock)
-  - Nenhuma → Padrão
-- Descrição da task vira descrição do evento.
-- Subtasks viram checklist no corpo da descrição.
-- Atualizações no app (texto, hora, prioridade) propagam para o evento.
-- Exclusão no app remove da agenda (com confirmação).
-
-### 5. Recorrências
-- Cria eventos com RRULE no Google (diário, semanal, mensal).
-- Mapeia `RecurrenceRule` do app → RRULE iCal.
-- Funciona nos dois sentidos.
-
-### 6. Anti-conflito (evita loop infinito de sync)
-- Cada item guarda `googleEventId` + `lastSyncedAt` + hash do conteúdo.
-- "Última escrita ganha" baseada em timestamp.
-- Botão "Forçar sync agora" + sync automático a cada 5 min quando o app está aberto.
+Decisões travadas:
+- Hoje = **botão flutuante** que abre **painel cheio**, modo padrão **Lista**.
+- Todas as 20 ideias entram, divididas em fases pra não quebrar nada.
 
 ---
 
-## Ideias extras que sugiro incluir
+## Fase 1 — Rework do "Hoje" (entrega imediata)
 
-1. **Múltiplas agendas** — escolher quais agendas do Google sincronizar (ex: só "Pessoal", ignorar "Aniversários").
-2. **Filtro por palavra-chave** — eventos com `[ignore]` no título não viram task.
-3. **Detecção de conflito de horário** — alerta se você criar task que se sobrepõe a outro evento.
-4. **Resumo do dia** — ao abrir o app, painel "Sua agenda de hoje" já mesclada com tasks.
-5. **Modo "só leitura"** — opção para apenas importar, sem escrever na agenda (mais seguro pra testar).
-6. **Botão pausar sync** — útil quando você está reorganizando muita coisa.
-7. **Log de sincronização** — pequeno histórico das últimas operações (debug).
+- Remover aba lateral atual; criar **FAB** (canto inferior direito) com badge de contagem.
+- Atalho `T` abre/fecha. Estado persistido em localStorage.
+- Painel cheio (Sheet lateral direita, largura redimensionável, mín 360 / máx 720px).
+- Header com toggle de modo: **Lista** (default) · Timeline (atual) · Agenda.
+- Modo Lista:
+  - Checkbox grande, edição inline de texto e horário, swipe/atalhos pra adiar (1h, amanhã).
+  - Drag interno pra reordenar.
+  - Drag de uma task do Kanban → solta no FAB/painel = define dueDate hoje.
+  - Drag pra fora do painel = remove dueDate.
+- Bloco "Foco agora" no topo: próxima task + countdown + botão Pomodoro (25/5).
+
+## Fase 2 — Performance (silencioso, sem mudança visual)
+
+1. Debounce de 300ms no save do localStorage.
+2. `React.memo` + selectors no Kanban.
+3. `React.lazy` nas abas Menu e Ferramentas.
+4. Migração localStorage → IndexedDB (com fallback) pro store de tasks.
+5. Web Worker pro crypto.
+6. Virtual scroll no Kanban (só se coluna > 50 cards).
+
+## Fase 3 — Produtividade core
+
+7. **Command Palette `Ctrl+K`** (criar/buscar/navegar/ações).
+8. **Undo global `Ctrl+Z`** (stack de 20 ações reversíveis).
+9. **Bulk actions** no Kanban (shift-click + barra de ações).
+10. **Snooze rápido** com gestos no card (swipe →).
+11. **Atalhos contextuais** documentados em `?`.
+
+## Fase 4 — Captura e organização
+
+12. **Smart Inbox** (área default pra entradas rápidas sem categoria).
+13. **Templates de task** (salvar/aplicar).
+14. **Recorrência inteligente** (a cada X dias úteis, último dia do mês, etc.).
+15. **Calendário mensal** (nova view dentro do Kanban toggle).
+
+## Fase 5 — Foco e visualização
+
+16. **Modo Focus** (esconde tudo menos a task ativa + timer).
+17. **Modo apresentação** (zoom + UI mínima pra mostrar pra alguém).
+18. **Stats avançado** (heatmap anual, streak, tempo por tag).
+19. **PWA badge** com contagem de tasks pendentes.
+
+## Fase 6 — Dados
+
+20. **Export/Import .json criptografado** (backup manual).
 
 ---
 
-## Detalhes técnicos
+## Execução
 
-- **Auth**: OAuth 2.0 do Google com escopo `https://www.googleapis.com/auth/calendar`. Tokens (access + refresh) criptografados no `localStorage` (mesmo esquema do `secureSet`).
-- **Refresh**: feito client-side antes de cada chamada quando o access token está perto de expirar.
-- **API**: Google Calendar API v3, chamadas diretas via `fetch` (sem backend, mantém offline-first do app).
-- **Polling**: `setInterval` de 5 min para sync + `setInterval` de 1 min para auto-status.
-- **Edge function opcional**: só se quisermos esconder o client_secret. Para apps desktop/PWA pessoais, o fluxo PKCE permite OAuth sem client_secret (mais simples e seguro).
-- **Arquivos novos**: `src/lib/googleCalendar.ts` (API), `src/hooks/useGoogleCalendarSync.ts` (sync), `src/components/GoogleCalendarSettings.tsx` (UI nas Settings), campos novos em `Task` (`googleEventId`, `googleCalendarId`, `autoStatus`, `lastSyncedAt`).
+Faço **Fase 1 agora** (escopo bem definido, alto impacto). Depois você escolhe se vamos por ordem ou pula pra alguma fase específica.
 
----
-
-## Perguntas antes de começar
-
-1. **Quem vai conectar a agenda?** Só você (eu posso codificar com client_id fixo seu) ou qualquer usuário do app (cada um conecta a própria)?
-2. **Direção do sync de cara**: bidirecional completo desde o início, ou começamos **só importando** do Google e depois ligamos o envio (mais seguro pra testar sem bagunçar sua agenda real)?
-3. **Auto-status**: ligado por padrão em todas as tasks vindas da agenda, ou opt-in por task?
-4. **Janela de importação**: 14 dias à frente é OK, ou prefere outro padrão (7, 30)?
+Confirma que posso começar a Fase 1 ou prefere reordenar algo?
