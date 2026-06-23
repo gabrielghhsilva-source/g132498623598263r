@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, lazy, Suspense } from "react";
 import { useTaskStore } from "@/hooks/useTaskStore";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
 import { useNotificationSystem } from "@/hooks/useNotificationSystem";
@@ -20,8 +20,8 @@ import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
 import { ImageTaskDialog } from "@/components/ImageTaskDialog";
 import { ClipboardList, LayoutDashboard, ImageIcon, Wrench } from "lucide-react";
-import { MenuPage } from "@/components/MenuPage";
-import { ImageConverter } from "@/components/ImageConverter";
+const MenuPage = lazy(() => import("@/components/MenuPage").then(m => ({ default: m.MenuPage })));
+const ImageConverter = lazy(() => import("@/components/ImageConverter").then(m => ({ default: m.ImageConverter })));
 import { ElectronTitleBar } from "@/components/ElectronTitleBar";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
@@ -262,14 +262,20 @@ const AppContent = () => {
             </>
           )}
           {activeTab === "menu" && (
-            <MenuPage
-              invest={investStore}
-              stocks={stockStore}
-              salary={salaryStore}
-              onCreateTaskReminder={handleCreateTaskReminder}
-            />
+            <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
+              <MenuPage
+                invest={investStore}
+                stocks={stockStore}
+                salary={salaryStore}
+                onCreateTaskReminder={handleCreateTaskReminder}
+              />
+            </Suspense>
           )}
-          {activeTab === "tools" && <ImageConverter />}
+          {activeTab === "tools" && (
+            <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
+              <ImageConverter />
+            </Suspense>
+          )}
         </main>
 
         <TodayPanel
