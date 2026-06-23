@@ -375,6 +375,36 @@ const AppContent = () => {
             setActiveTab("tasks");
           }}
         />
+
+        <CommandPalette
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          areas={store.areas}
+          onCreateTask={() => {
+            setActiveTab("tasks");
+            setTimeout(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "n" })), 50);
+          }}
+          onJumpToTask={(areaId) => {
+            setActiveTab("tasks");
+            setTimeout(() => {
+              const el = document.querySelector(`[data-area-id="${areaId}"]`) as HTMLElement | null;
+              el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+            }, 50);
+          }}
+          onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+          onDeleteTask={(areaId, taskId) => deleteTaskWithRemote(areaId, taskId)}
+          onChangeTab={setActiveTab}
+          onExport={handleExport}
+          onImport={handleImportClick}
+          onUndo={() => store.undoDelete()}
+        />
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
       </div>
     </>
   );
