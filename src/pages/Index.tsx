@@ -113,23 +113,65 @@ const AppContent = () => {
   const [addAreaOpen, setAddAreaOpen] = useState(false);
   const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
   const [imageTaskOpen, setImageTaskOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
   });
 
-  // Atalhos globais: V → voz inteligente, I → imagem → tarefas
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = useCallback(() => {
+    const data = store.exportData();
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cavecreate-backup-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [store]);
+
+  const handleImportClick = useCallback(() => importInputRef.current?.click(), []);
+  const handleImportFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const text = await f.text();
+    const mode = window.confirm("OK = SUBSTITUIR tudo. Cancelar = MESCLAR com seus dados atuais.") ? "replace" : "merge";
+    try {
+      store.importData(text, mode);
+      alert("Importação concluída.");
+    } catch (err) {
+      alert("Falha ao importar: " + (err as Error).message);
+    } finally {
+      e.target.value = "";
+    }
+  }, [store]);
+
+  // Atalhos globais: V → voz, I → imagem, Ctrl+K → command palette, Ctrl+Z → undo delete
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || t.tagName === "SELECT")) return;
+      const inField = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || t.tagName === "SELECT");
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen(p => !p);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        if (inField) return;
+        e.preventDefault();
+        store.undoDelete();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (inField) return;
       if (e.key === "v" || e.key === "V") { e.preventDefault(); setVoiceTaskOpen(true); }
       else if (e.key === "i" || e.key === "I") { e.preventDefault(); setImageTaskOpen(true); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [store]);
 
   const handlePreloaderDone = useCallback(() => {
     sessionStorage.setItem("preloader-shown", "true");
