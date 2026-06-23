@@ -118,11 +118,18 @@ export function useTaskStore() {
     return () => { cancelled = true; };
   }, []);
 
+  // Debounce persistence: avoid blocking the main thread on every keystroke
   useEffect(() => {
-    secureSet("task-areas", JSON.stringify(areas));
-    saveCloudState("tasks_areas", areas);
+    const t = setTimeout(() => {
+      secureSet("task-areas", JSON.stringify(areas));
+      saveCloudState("tasks_areas", areas);
+    }, 300);
+    return () => clearTimeout(t);
   }, [areas]);
-  useEffect(() => { secureSet("task-tags", JSON.stringify(tags)); }, [tags]);
+  useEffect(() => {
+    const t = setTimeout(() => secureSet("task-tags", JSON.stringify(tags)), 300);
+    return () => clearTimeout(t);
+  }, [tags]);
 
   useEffect(() => {
     localStorage.setItem("task-theme", JSON.stringify(theme));
