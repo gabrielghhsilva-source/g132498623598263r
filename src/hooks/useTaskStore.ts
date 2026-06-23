@@ -308,8 +308,72 @@ export function useTaskStore() {
   }, []);
 
 
+  // --- Undo stack (delete only, last 20) ---
+  const undoStackRef = (globalThis as any).__lvUndoStackRef || { current: [] as Array<{ areaId: string; task: Task; index: number }> };
+  (globalThis as any).__lvUndoStackRef = undoStackRef;
+
   const deleteTask = useCallback((areaId: string, taskId: string) => {
-    setAreas(prev => removeTaskFromArea(prev, areaId, taskId));
+    setAreas(prev => {
+      const area = prev.find(a => a.id === areaId);
+      const idx = area?.tasks.findIndex(t => t.id === taskId) ?? -1;
+      const task = idx >= 0 ? area!.tasks[idx] : null;
+      if (task) {
+        undoStackRef.current.push({ areaId, task, index: idx });
+        if (undoStackRef.current.length > 20) undoStackRef.current.shift();
+      }
+      return removeTaskFromArea(prev, areaId, taskId);
+    });
+  }, []);
+
+  const undoDelete = useCallback((): boolean => {
+    const last = undoStackRef.current.pop();
+    if (!last) return false;
+    setAreas(prev => prev.map(a => {
+      if (a.id !== last.areaId) return a;
+      const tasks = [...a.tasks];
+      const insertAt = Math.min(last.index, tasks.length);
+      tasks.splice(insertAt, 0, last.task);
+      return { ...a, tasks };
+    }));
+    return true;
+  }, []);
+
+  // --- Export / Import (JSON, sem criptografia, fácil migração) ---
+  const exportData = useCallback(() => {
+    const payload = { version: 1, exportedAt: new Date().toISOString(), areas, tags };
+    return JSON.stringify(payload, null, 2);
+  }, [areas, tags]);
+
+  const importData = useCallback((raw: string, mode: "merge" | "replace" = "replace") => {
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.areas)) throw new Error("Arquivo inválido");
+    const incomingAreas: TaskArea[] = parsed.areas.map((a: TaskArea) => ({
+      ...a,
+      tasks: (a.tasks || []).map(normalizeTask),
+    }));
+    const incomingTags: TaskTag[] = Array.isArray(parsed.tags) ? parsed.tags : [];
+    if (mode === "replace") {
+      setAreas(incomingAreas);
+      setTags(incomingTags);
+    } else {
+      setAreas(prev => {
+        const map = new Map(prev.map(a => [a.id, a]));
+        for (const a of incomingAreas) {
+          if (map.has(a.id)) {
+            const existing = map.get(a.id)!;
+            const taskIds = new Set(existing.tasks.map(t => t.id));
+            map.set(a.id, { ...existing, tasks: [...existing.tasks, ...a.tasks.filter(t => !taskIds.has(t.id))] });
+          } else {
+            map.set(a.id, a);
+          }
+        }
+        return Array.from(map.values());
+      });
+      setTags(prev => {
+        const ids = new Set(prev.map(t => t.id));
+        return [...prev, ...incomingTags.filter(t => !ids.has(t.id))];
+      });
+    }
   }, []);
 
   const moveTask = useCallback((fromAreaId: string, toAreaId: string, taskId: string, toIndex?: number) => {
@@ -412,6 +476,7 @@ export function useTaskStore() {
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
     addTag, updateTag, deleteTag,
+    undoDelete, exportData, importData,
     stats, todayTasks, allTasksWithArea,
   };
 }
