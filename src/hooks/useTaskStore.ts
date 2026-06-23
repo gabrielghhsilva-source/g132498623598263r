@@ -476,6 +476,7 @@ export function useTaskStore() {
     toggleCollapse, addArea, deleteArea, reorderAreas,
     addComment, deleteComment,
     addTag, updateTag, deleteTag,
+    undoDelete, exportData, importData,
     stats, todayTasks, allTasksWithArea,
   };
 }
