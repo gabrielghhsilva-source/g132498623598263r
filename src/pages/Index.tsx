@@ -29,6 +29,7 @@ import { useEffect, useMemo } from "react";
 import { useGoogleCalendarStore } from "@/hooks/useGoogleCalendarStore";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { GoogleCalendarSettingsPanel } from "@/components/GoogleCalendarSettings";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const AppContent = () => {
   const store = useTaskStore();
