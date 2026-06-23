@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { TaskArea, TaskTag, Task } from "@/lib/types";
 import { KanbanCard } from "./KanbanCard";
 import { Plus, MoreVertical, Trash2, X } from "lucide-react";
@@ -20,7 +20,7 @@ interface Props {
   onDropOnColumn: () => void;
 }
 
-export function KanbanColumn({
+function KanbanColumnImpl({
   area, tags, timezone, isCustom, draggingTaskId, dragOverColumnId,
   onTaskClick, onQuickAdd, onQuickToggleDone, onDeleteArea,
   onDragStart, onDragEnd, onDragOverColumn, onDropOnColumn,
@@ -182,3 +182,5 @@ export function KanbanColumn({
     </div>
   );
 }
+
+export const KanbanColumn = memo(KanbanColumnImpl);

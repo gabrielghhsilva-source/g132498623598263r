@@ -21,12 +21,12 @@ Decisões travadas:
 
 ## Fase 2 — Performance (silencioso, sem mudança visual)
 
-1. Debounce de 300ms no save do localStorage.
-2. `React.memo` + selectors no Kanban.
-3. `React.lazy` nas abas Menu e Ferramentas.
-4. Migração localStorage → IndexedDB (com fallback) pro store de tasks.
-5. Web Worker pro crypto.
-6. Virtual scroll no Kanban (só se coluna > 50 cards).
+1. ✅ Debounce de 300ms no save de areas/tags (localStorage + cloud).
+2. ✅ `React.memo` em KanbanColumn e KanbanCard.
+3. ✅ `React.lazy` em MenuPage e ImageConverter (com Suspense fallback).
+4. ⏭️ Migração localStorage → IndexedDB — adiada (envolveria reescrever camada crypto; ganho marginal pro tamanho atual).
+5. ⏭️ Web Worker pro crypto — adiada (crypto.subtle já é não-bloqueante; complexidade alta).
+6. ⏭️ Virtual scroll no Kanban — só quando alguma coluna passar de 50 cards.
 
 ## Fase 3 — Produtividade core
 

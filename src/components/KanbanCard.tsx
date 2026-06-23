@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Task, TaskTag, TaskStatus, PRIORITY_META } from "@/lib/types";
 import { isTaskOverdue } from "@/lib/timeUtils";
 import { TagBadges } from "./TagPicker";
@@ -22,7 +23,7 @@ interface Props {
   onQuickToggleDone: () => void;
 }
 
-export function KanbanCard({ task, tags, timezone, isDragging, onClick, onDragStart, onDragEnd, onQuickToggleDone }: Props) {
+function KanbanCardImpl({ task, tags, timezone, isDragging, onClick, onDragStart, onDragEnd, onQuickToggleDone }: Props) {
   const isOverdue = isTaskOverdue(task.dueDate, task.dueTime, task.status, timezone);
   const taskTags = tags.filter(t => task.tagIds?.includes(t.id));
   const priority = task.priority || "none";
@@ -126,3 +127,5 @@ export function KanbanCard({ task, tags, timezone, isDragging, onClick, onDragSt
     </div>
   );
 }
+
+export const KanbanCard = memo(KanbanCardImpl);
