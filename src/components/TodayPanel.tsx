@@ -13,14 +13,19 @@ interface TodayTask extends Task {
 
 interface Props {
   tasks: TodayTask[];
+  /** Instâncias recorrentes já concluídas hoje. Mantidas separadas para não poluir a agenda. */
+  doneRecurring?: TodayTask[];
   onMarkDone: (areaId: string, taskId: string) => void;
   onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
   onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
+  /** Marca uma recorrente concluída como pendente novamente. */
+  onMarkUndone?: (areaId: string, taskId: string) => void;
   /** Called when a task is dropped on the FAB or panel to assign today as dueDate. */
   onAssignToday?: (taskId: string) => void;
   /** Called when a task is dragged out of the panel to clear its dueDate. */
   onClearDueDate?: (areaId: string, taskId: string) => void;
 }
+
 
 type ViewMode = "list" | "timeline" | "agenda";
 
@@ -45,8 +50,9 @@ function timeStrToMinutes(time: string): number {
 }
 
 export function TodayPanel({
-  tasks, onMarkDone, onUpdateTime, onUpdateEnd, onAssignToday, onClearDueDate,
+  tasks, doneRecurring = [], onMarkDone, onUpdateTime, onUpdateEnd, onMarkUndone, onAssignToday, onClearDueDate,
 }: Props) {
+
   const [open, setOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(OPEN_STORAGE_KEY) === "1";
