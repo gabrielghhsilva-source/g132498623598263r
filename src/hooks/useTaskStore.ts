@@ -98,11 +98,12 @@ function clearCustomColors() {
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
     const loaded = loadSecure("task-areas", DEFAULT_AREAS);
-    return loaded.map(a => ({
+    return ensureInbox(loaded.map(a => ({
       ...a,
       tasks: a.tasks.map(normalizeTask),
-    }));
+    })));
   });
+
   const [tags, setTags] = useState<TaskTag[]>(() => loadSecure("task-tags", DEFAULT_TAGS));
   const [theme, setThemeState] = useState<ThemeId>(() => loadPlain("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadPlain("task-custom-colors", DEFAULT_CUSTOM_COLORS));
@@ -116,8 +117,9 @@ export function useTaskStore() {
     let cancelled = false;
     loadCloudState<TaskArea[]>("tasks_areas").then(cloud => {
       if (cancelled || !cloud) return;
-      setAreas(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) })));
+      setAreas(ensureInbox(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) }))));
     });
+
     return () => { cancelled = true; };
   }, []);
 
