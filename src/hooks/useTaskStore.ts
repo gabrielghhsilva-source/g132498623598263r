@@ -23,6 +23,22 @@ const DEFAULT_AREAS: TaskArea[] = [
 
 const DEFAULT_TAGS: TaskTag[] = [];
 
+/** Garante que a área Caixa de entrada exista e esteja protegida (sempre 1ª). */
+function ensureInbox(list: TaskArea[]): TaskArea[] {
+  const idx = list.findIndex(a => a.id === INBOX_AREA_ID);
+  if (idx === -1) {
+    return [{ id: INBOX_AREA_ID, name: "Caixa de entrada", icon: "📥", tasks: [], collapsed: false, protected: true }, ...list];
+  }
+  // Garante flag protected mesmo em dados antigos
+  if (!list[idx].protected) {
+    const next = [...list];
+    next[idx] = { ...next[idx], protected: true };
+    return next;
+  }
+  return list;
+}
+
+
 const DEFAULT_CUSTOM_COLORS: CustomThemeColors = {
   background: "#f7f7f7",
   foreground: "#171717",
