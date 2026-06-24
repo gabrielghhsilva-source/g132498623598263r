@@ -37,7 +37,8 @@ export function DoneColumn({
     try { localStorage.setItem("kanban-hide-done", hidden ? "1" : "0"); } catch {}
   }, [hidden]);
 
-  const doneTasks: DoneTaskWithOrigin[] = areas.flatMap(area =>
+  const todayStr = new Date().toISOString().split("T")[0];
+  const allDone: DoneTaskWithOrigin[] = areas.flatMap(area =>
     area.tasks
       .filter(t => t.status === "done")
       .map(t => ({
@@ -47,6 +48,10 @@ export function DoneColumn({
         __originAreaIcon: area.icon,
       }))
   );
+  const recurringToday = allDone.filter(t => !!t.recurrenceSourceId && t.dueDate === todayStr);
+  const others = allDone.filter(t => !(!!t.recurrenceSourceId && t.dueDate === todayStr));
+  const doneTasks = allDone; // mantém contagem total
+
 
   const isDragOver = dragOverColumnId === COLUMN_ID && draggingTaskId !== null;
 
