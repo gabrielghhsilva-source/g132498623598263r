@@ -73,7 +73,10 @@ export interface TaskArea {
   icon: string;
   tasks: Task[];
   collapsed: boolean;
+  /** Áreas protegidas não podem ser deletadas (ex: Caixa de entrada). */
+  protected?: boolean;
 }
+
 
 export type ThemeId = "mono-light" | "mono-dark" | "beige" | "cyan" | "lavender" | "rose" | "custom";
 

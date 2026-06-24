@@ -10,13 +10,16 @@ import {
   addCommentToTask, deleteCommentFromTask,
 } from "@/lib/taskOperations";
 
+const INBOX_AREA_ID = "inbox";
 const DEFAULT_AREAS: TaskArea[] = [
+  { id: INBOX_AREA_ID, name: "Caixa de entrada", icon: "📥", tasks: [], collapsed: false, protected: true },
   { id: "work", name: "Trabalho", icon: "💼", tasks: [], collapsed: false },
   { id: "games", name: "Jogos", icon: "🎮", tasks: [], collapsed: false },
   { id: "leisure", name: "Lazer", icon: "☀️", tasks: [], collapsed: false },
   { id: "home", name: "Afazeres Domésticos", icon: "🏠", tasks: [], collapsed: false },
   { id: "investments", name: "Investimentos", icon: "📈", tasks: [], collapsed: false },
 ];
+
 
 const DEFAULT_TAGS: TaskTag[] = [];
 
