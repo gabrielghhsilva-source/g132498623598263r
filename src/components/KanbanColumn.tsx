@@ -38,7 +38,9 @@ function KanbanColumnImpl({
     setQuickText("");
   };
 
+  const canDelete = isCustom && !area.protected;
   const isDragOver = dragOverColumnId === area.id && draggingTaskId !== null;
+
   const doneCount = area.tasks.filter(t => t.status === "done").length;
 
   return (
@@ -67,7 +69,7 @@ function KanbanColumnImpl({
           >
             <Plus className="w-4 h-4 text-muted-foreground" />
           </button>
-          {isCustom && (
+          {canDelete && (
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
