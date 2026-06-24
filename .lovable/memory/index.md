@@ -17,6 +17,8 @@
 - [UI Experience](mem://ui/experiencia-do-usuario) — Preloader, sliding panels, smooth transitions, unified Settings
 - [Task Management](mem://features/organizacao-de-tarefas) — Task areas, long-press reorder, individual minimization
 - [Task Details](mem://features/personalizacao-de-tarefas) — Task visuals, comments, and weekly/monthly auto-recurrence
+- [Agenda Recorrente](mem://features/agenda-recorrente) — Recorrentes concluídas em seção separada, inbox protegida, PWA badge
+
 - [Tasks Kanban](mem://features/kanban-de-tarefas) — Board horizontal estilo ClickUp, DnD entre áreas, prioridade, tags, subtarefas, atalho N
 - [Task Stats](mem://features/indicadores-de-progresso) — Real-time stats for done, to do, in progress, delayed tasks
 - [Notifications](mem://features/notificacoes-e-prazos) — Custom alerts, custom sound upload, overdue handling
