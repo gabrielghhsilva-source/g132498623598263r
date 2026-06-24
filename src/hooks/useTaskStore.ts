@@ -523,7 +523,7 @@ export function useTaskStore() {
     addComment, deleteComment,
     addTag, updateTag, deleteTag,
     undoDelete, exportData, importData,
-    stats, todayTasks, allTasksWithArea,
+    stats, todayTasks, todayDoneRecurring, allTasksWithArea,
   };
 }
 
