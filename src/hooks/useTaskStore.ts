@@ -10,7 +10,9 @@ import {
   addCommentToTask, deleteCommentFromTask,
 } from "@/lib/taskOperations";
 
+const INBOX_AREA_ID = "inbox";
 const DEFAULT_AREAS: TaskArea[] = [
+  { id: INBOX_AREA_ID, name: "Caixa de entrada", icon: "📥", tasks: [], collapsed: false, protected: true },
   { id: "work", name: "Trabalho", icon: "💼", tasks: [], collapsed: false },
   { id: "games", name: "Jogos", icon: "🎮", tasks: [], collapsed: false },
   { id: "leisure", name: "Lazer", icon: "☀️", tasks: [], collapsed: false },
@@ -18,7 +20,24 @@ const DEFAULT_AREAS: TaskArea[] = [
   { id: "investments", name: "Investimentos", icon: "📈", tasks: [], collapsed: false },
 ];
 
+
 const DEFAULT_TAGS: TaskTag[] = [];
+
+/** Garante que a área Caixa de entrada exista e esteja protegida (sempre 1ª). */
+function ensureInbox(list: TaskArea[]): TaskArea[] {
+  const idx = list.findIndex(a => a.id === INBOX_AREA_ID);
+  if (idx === -1) {
+    return [{ id: INBOX_AREA_ID, name: "Caixa de entrada", icon: "📥", tasks: [], collapsed: false, protected: true }, ...list];
+  }
+  // Garante flag protected mesmo em dados antigos
+  if (!list[idx].protected) {
+    const next = [...list];
+    next[idx] = { ...next[idx], protected: true };
+    return next;
+  }
+  return list;
+}
+
 
 const DEFAULT_CUSTOM_COLORS: CustomThemeColors = {
   background: "#f7f7f7",
@@ -95,11 +114,12 @@ function clearCustomColors() {
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
     const loaded = loadSecure("task-areas", DEFAULT_AREAS);
-    return loaded.map(a => ({
+    return ensureInbox(loaded.map(a => ({
       ...a,
       tasks: a.tasks.map(normalizeTask),
-    }));
+    })));
   });
+
   const [tags, setTags] = useState<TaskTag[]>(() => loadSecure("task-tags", DEFAULT_TAGS));
   const [theme, setThemeState] = useState<ThemeId>(() => loadPlain("task-theme", "mono-light" as ThemeId));
   const [customColors, setCustomColorsState] = useState<CustomThemeColors>(() => loadPlain("task-custom-colors", DEFAULT_CUSTOM_COLORS));
@@ -113,8 +133,9 @@ export function useTaskStore() {
     let cancelled = false;
     loadCloudState<TaskArea[]>("tasks_areas").then(cloud => {
       if (cancelled || !cloud) return;
-      setAreas(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) })));
+      setAreas(ensureInbox(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) }))));
     });
+
     return () => { cancelled = true; };
   }, []);
 
@@ -413,8 +434,9 @@ export function useTaskStore() {
   }, []);
 
   const deleteArea = useCallback((areaId: string) => {
-    setAreas(prev => prev.filter(a => a.id !== areaId));
+    setAreas(prev => prev.filter(a => !(a.id === areaId && !a.protected)));
   }, []);
+
 
   const reorderAreas = useCallback((fromIndex: number, toIndex: number) => {
     setAreas(prev => {
@@ -459,9 +481,33 @@ export function useTaskStore() {
       .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
   );
 
+  /** Instâncias recorrentes concluídas hoje — exibidas separadamente para não poluir a agenda. */
+  const todayDoneRecurring = areas.flatMap(a =>
+    a.tasks
+      .filter(t => t.status === "done" && t.dueDate === todayStr && !!t.recurrenceSourceId)
+      .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+  );
+
   const allTasksWithArea = areas.flatMap(a =>
     a.tasks.map(t => ({ task: t, areaName: a.name, areaId: a.id }))
   );
+
+  // PWA badge: reflete a contagem de tasks pendentes de hoje no ícone do app
+  useEffect(() => {
+    const count = todayTasks.length;
+    try {
+      // API nativa (Chrome desktop/Android, Edge)
+      const nav: any = navigator;
+      if (typeof nav.setAppBadge === "function") {
+        if (count > 0) nav.setAppBadge(count).catch(() => {});
+        else nav.clearAppBadge?.().catch(() => {});
+      }
+      // Mensagem para o service worker (fallback / consistência)
+      navigator.serviceWorker?.controller?.postMessage({ type: "SET_BADGE", count });
+    } catch { /* noop */ }
+  }, [todayTasks.length]);
+
+
 
   return {
     areas, tags,
@@ -477,7 +523,7 @@ export function useTaskStore() {
     addComment, deleteComment,
     addTag, updateTag, deleteTag,
     undoDelete, exportData, importData,
-    stats, todayTasks, allTasksWithArea,
+    stats, todayTasks, todayDoneRecurring, allTasksWithArea,
   };
 }
 

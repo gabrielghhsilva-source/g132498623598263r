@@ -13,6 +13,19 @@ self.addEventListener("activate", (event) => {
 
 // Recebe mensagens do app principal para disparar notificações
 self.addEventListener("message", (event) => {
+  // Atualiza badge do ícone do app (PWA instalado) com a contagem de tasks de hoje
+  if (event.data?.type === "SET_BADGE") {
+    const count = Number(event.data.count) || 0;
+    try {
+      if (count > 0 && self.navigator.setAppBadge) {
+        self.navigator.setAppBadge(count).catch(() => {});
+      } else if (self.navigator.clearAppBadge) {
+        self.navigator.clearAppBadge().catch(() => {});
+      }
+    } catch { /* noop */ }
+    return;
+  }
+
   if (event.data?.type === "SHOW_NOTIFICATION") {
     const { title, body, icon, tag, taskRefs } = event.data.payload || {};
     const hasRefs = Array.isArray(taskRefs) && taskRefs.length > 0;
@@ -38,6 +51,7 @@ self.addEventListener("message", (event) => {
     });
   }
 });
+
 
 // Lida com clique nos botões / corpo da notificação
 self.addEventListener("notificationclick", (event) => {

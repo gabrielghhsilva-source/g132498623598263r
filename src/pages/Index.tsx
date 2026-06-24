@@ -323,7 +323,10 @@ const AppContent = () => {
 
         <TodayPanel
           tasks={store.todayTasks}
+          doneRecurring={store.todayDoneRecurring}
+          onMarkUndone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "todo")}
           onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+
           onUpdateTime={store.updateTaskTime}
           onUpdateEnd={store.updateTaskEnd}
           onAssignToday={(taskId) => {

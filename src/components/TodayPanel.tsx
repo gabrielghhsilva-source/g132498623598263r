@@ -13,14 +13,19 @@ interface TodayTask extends Task {
 
 interface Props {
   tasks: TodayTask[];
+  /** Instâncias recorrentes já concluídas hoje. Mantidas separadas para não poluir a agenda. */
+  doneRecurring?: TodayTask[];
   onMarkDone: (areaId: string, taskId: string) => void;
   onUpdateTime: (areaId: string, taskId: string, dueTime: string | undefined, dueDate?: string) => void;
   onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
+  /** Marca uma recorrente concluída como pendente novamente. */
+  onMarkUndone?: (areaId: string, taskId: string) => void;
   /** Called when a task is dropped on the FAB or panel to assign today as dueDate. */
   onAssignToday?: (taskId: string) => void;
   /** Called when a task is dragged out of the panel to clear its dueDate. */
   onClearDueDate?: (areaId: string, taskId: string) => void;
 }
+
 
 type ViewMode = "list" | "timeline" | "agenda";
 
@@ -45,8 +50,9 @@ function timeStrToMinutes(time: string): number {
 }
 
 export function TodayPanel({
-  tasks, onMarkDone, onUpdateTime, onUpdateEnd, onAssignToday, onClearDueDate,
+  tasks, doneRecurring = [], onMarkDone, onUpdateTime, onUpdateEnd, onMarkUndone, onAssignToday, onClearDueDate,
 }: Props) {
+
   const [open, setOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(OPEN_STORAGE_KEY) === "1";
@@ -211,30 +217,36 @@ export function TodayPanel({
             )}
 
             {/* Conteúdo */}
-            <div className="flex-1 overflow-hidden min-h-0">
-              {view === "list" && (
-                <ListView
-                  tasks={tasks}
-                  onMarkDone={onMarkDone}
-                  onUpdateTime={onUpdateTime}
-                  onClearDueDate={onClearDueDate}
-                />
-              )}
-              {view === "timeline" && (
-                <TimelineView
-                  tasks={tasks}
-                  onMarkDone={onMarkDone}
-                  onUpdateTime={onUpdateTime}
-                  onUpdateEnd={onUpdateEnd}
-                />
-              )}
-              {view === "agenda" && (
-                <AgendaView
-                  tasks={tasks}
-                  onMarkDone={onMarkDone}
-                  nowMins={nowMins}
-                />
-              )}
+            <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+              <div className="flex-1 overflow-hidden min-h-0">
+                {view === "list" && (
+                  <ListView
+                    tasks={tasks}
+                    onMarkDone={onMarkDone}
+                    onUpdateTime={onUpdateTime}
+                    onClearDueDate={onClearDueDate}
+                  />
+                )}
+                {view === "timeline" && (
+                  <TimelineView
+                    tasks={tasks}
+                    onMarkDone={onMarkDone}
+                    onUpdateTime={onUpdateTime}
+                    onUpdateEnd={onUpdateEnd}
+                  />
+                )}
+                {view === "agenda" && (
+                  <AgendaView
+                    tasks={tasks}
+                    onMarkDone={onMarkDone}
+                    nowMins={nowMins}
+                  />
+                )}
+              </div>
+              <DoneRecurringSection
+                tasks={doneRecurring}
+                onMarkUndone={onMarkUndone}
+              />
             </div>
           </aside>
         </>
@@ -242,6 +254,48 @@ export function TodayPanel({
     </>
   );
 }
+
+/** Seção colapsável no rodapé do painel listando recorrentes concluídas hoje. */
+function DoneRecurringSection({
+  tasks, onMarkUndone,
+}: {
+  tasks: TodayTask[];
+  onMarkUndone?: (areaId: string, taskId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (tasks.length === 0) return null;
+  return (
+    <div className="border-t border-border bg-success/5 flex-shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-success hover:bg-success/10 transition-colors"
+      >
+        <span className="flex items-center gap-1.5">
+          <Check className="w-3.5 h-3.5" /> Feitas hoje (repetitivas) · {tasks.length}
+        </span>
+        <ChevronLeft className={`w-3.5 h-3.5 transition-transform ${open ? "-rotate-90" : "rotate-90"}`} />
+      </button>
+      {open && (
+        <div className="max-h-48 overflow-y-auto px-3 py-2 space-y-1">
+          {tasks.map(t => (
+            <div key={t.id} className="flex items-center gap-2 text-xs py-1 px-2 rounded hover:bg-card/60">
+              <button
+                onClick={() => onMarkUndone?.(t.areaId, t.id)}
+                className="w-4 h-4 rounded-full bg-success/30 border border-success flex items-center justify-center flex-shrink-0 hover:bg-success/50"
+                title="Desfazer conclusão"
+              >
+                <Check className="w-2.5 h-2.5 text-success" />
+              </button>
+              <span className="line-through text-muted-foreground truncate flex-1">{t.text}</span>
+              <span className="text-[10px] opacity-60 flex-shrink-0">{t.areaIcon}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /* ============================ View toggle ============================ */
 function ViewToggle({ current, onChange }: { current: ViewMode; onChange: (v: ViewMode) => void }) {
