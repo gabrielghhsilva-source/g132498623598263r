@@ -95,35 +95,69 @@ export function DoneColumn({
         </button>
       </div>
 
-      <div data-kanban-column-scroll className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2 min-h-[200px] max-h-[calc(100vh-280px)]">
+      <div data-kanban-column-scroll className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-3 min-h-[200px] max-h-[calc(100vh-280px)]">
         {doneTasks.length === 0 && (
           <div className="text-center py-8 text-xs text-muted-foreground italic">
             Nenhuma tarefa concluída ainda. Marque uma como feita e ela aparece aqui.
           </div>
         )}
 
-        {doneTasks.map(task => (
-          <div key={`${task.__originAreaId}-${task.id}`} className="space-y-1">
-            <div className="flex items-center gap-1 px-1 text-[10px] text-muted-foreground">
-              <span>{task.__originAreaIcon}</span>
-              <span className="truncate">{task.__originAreaName}</span>
+        {recurringToday.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-success/80">
+              🔁 Repetitivas (hoje) · {recurringToday.length}
             </div>
-            <KanbanCard
-              task={task}
-              tags={tags}
-              timezone={timezone}
-              isDragging={draggingTaskId === task.id}
-              onClick={() => onTaskClick(task.__originAreaId, task)}
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", task.id);
-              }}
-              onDragEnd={() => {}}
-              onQuickToggleDone={() => onMarkUndone(task.__originAreaId, task.id)}
-            />
+            {recurringToday.map(task => (
+              <div key={`${task.__originAreaId}-${task.id}`} className="space-y-1">
+                <div className="flex items-center gap-1 px-1 text-[10px] text-muted-foreground">
+                  <span>{task.__originAreaIcon}</span>
+                  <span className="truncate">{task.__originAreaName}</span>
+                </div>
+                <KanbanCard
+                  task={task}
+                  tags={tags}
+                  timezone={timezone}
+                  isDragging={draggingTaskId === task.id}
+                  onClick={() => onTaskClick(task.__originAreaId, task)}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", task.id); }}
+                  onDragEnd={() => {}}
+                  onQuickToggleDone={() => onMarkUndone(task.__originAreaId, task.id)}
+                />
+              </div>
+            ))}
+            {others.length > 0 && <div className="border-t border-border/40 my-2" />}
           </div>
-        ))}
+        )}
+
+        {others.length > 0 && (
+          <div className="space-y-2">
+            {recurringToday.length > 0 && (
+              <div className="flex items-center gap-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Outras · {others.length}
+              </div>
+            )}
+            {others.map(task => (
+              <div key={`${task.__originAreaId}-${task.id}`} className="space-y-1">
+                <div className="flex items-center gap-1 px-1 text-[10px] text-muted-foreground">
+                  <span>{task.__originAreaIcon}</span>
+                  <span className="truncate">{task.__originAreaName}</span>
+                </div>
+                <KanbanCard
+                  task={task}
+                  tags={tags}
+                  timezone={timezone}
+                  isDragging={draggingTaskId === task.id}
+                  onClick={() => onTaskClick(task.__originAreaId, task)}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", task.id); }}
+                  onDragEnd={() => {}}
+                  onQuickToggleDone={() => onMarkUndone(task.__originAreaId, task.id)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
