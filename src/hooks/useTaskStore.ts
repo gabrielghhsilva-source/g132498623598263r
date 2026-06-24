@@ -434,8 +434,9 @@ export function useTaskStore() {
   }, []);
 
   const deleteArea = useCallback((areaId: string) => {
-    setAreas(prev => prev.filter(a => a.id !== areaId));
+    setAreas(prev => prev.filter(a => !(a.id === areaId && !a.protected)));
   }, []);
+
 
   const reorderAreas = useCallback((fromIndex: number, toIndex: number) => {
     setAreas(prev => {
@@ -480,9 +481,33 @@ export function useTaskStore() {
       .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
   );
 
+  /** Instâncias recorrentes concluídas hoje — exibidas separadamente para não poluir a agenda. */
+  const todayDoneRecurring = areas.flatMap(a =>
+    a.tasks
+      .filter(t => t.status === "done" && t.dueDate === todayStr && !!t.recurrenceSourceId)
+      .map(t => ({ ...t, areaName: a.name, areaIcon: a.icon, areaId: a.id }))
+  );
+
   const allTasksWithArea = areas.flatMap(a =>
     a.tasks.map(t => ({ task: t, areaName: a.name, areaId: a.id }))
   );
+
+  // PWA badge: reflete a contagem de tasks pendentes de hoje no ícone do app
+  useEffect(() => {
+    const count = todayTasks.length;
+    try {
+      // API nativa (Chrome desktop/Android, Edge)
+      const nav: any = navigator;
+      if (typeof nav.setAppBadge === "function") {
+        if (count > 0) nav.setAppBadge(count).catch(() => {});
+        else nav.clearAppBadge?.().catch(() => {});
+      }
+      // Mensagem para o service worker (fallback / consistência)
+      navigator.serviceWorker?.controller?.postMessage({ type: "SET_BADGE", count });
+    } catch { /* noop */ }
+  }, [todayTasks.length]);
+
+
 
   return {
     areas, tags,
