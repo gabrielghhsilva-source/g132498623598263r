@@ -30,9 +30,11 @@ import { useGoogleCalendarStore } from "@/hooks/useGoogleCalendarStore";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { GoogleCalendarSettingsPanel } from "@/components/GoogleCalendarSettings";
 import { CommandPalette } from "@/components/CommandPalette";
+import { useTaskTemplateStore } from "@/hooks/useTaskTemplateStore";
 
 const AppContent = () => {
   const store = useTaskStore();
+  const templateStore = useTaskTemplateStore();
   const [glassMode, setGlassModeState] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("glass-mode") === "on";
@@ -283,6 +285,7 @@ const AppContent = () => {
                 onUpdateEnd={store.updateTaskEnd}
                 onUpdatePriority={store.updateTaskPriority}
                 onUpdateTags={store.updateTaskTags}
+                onUpdateRecurrence={store.updateTaskRecurrence}
                 onMoveTask={store.moveTask}
                 onDeleteTask={deleteTaskWithRemote}
                 onDeleteArea={store.deleteArea}
@@ -295,6 +298,9 @@ const AppContent = () => {
                 onAddTag={store.addTag}
                 onDeleteTag={store.deleteTag}
                 onAddArea={() => setAddAreaOpen(true)}
+                templates={templateStore.templates}
+                onCreateTemplate={(areaId, task) => templateStore.createFromTask(areaId, task)}
+                onDeleteTemplate={templateStore.deleteTemplate}
               />
               <AddAreaDialog
                 onAdd={store.addArea}

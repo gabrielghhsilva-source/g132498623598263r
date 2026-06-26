@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { Task, TaskStatus, TaskTag, TaskPriority, TaskTextStyle } from "@/lib/types";
+import { Task, TaskStatus, TaskTag, TaskPriority, TaskTextStyle, RecurrenceRule } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { SubtaskList } from "./SubtaskList";
-import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Bold, Paintbrush, Move } from "lucide-react";
+import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Paintbrush, Move, Copy, Repeat } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
+const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+type RepeatMode = "none" | "daily" | "weekly" | "monthly";
 
 interface AreaOption { id: string; name: string; icon: string; }
 
@@ -26,6 +28,7 @@ interface Props {
   onUpdateEnd: (endDate: string | undefined, endTime: string | undefined) => void;
   onUpdatePriority: (p: TaskPriority) => void;
   onUpdateTags: (ids: string[]) => void;
+  onUpdateRecurrence: (recurrence: RecurrenceRule | undefined) => void;
   onAddTag: (name: string, color: string) => TaskTag;
   onDeleteTag: (id: string) => void;
   onAddSubtask: (text: string) => void;
@@ -35,6 +38,7 @@ interface Props {
   onAddComment: (text: string) => void;
   onDeleteComment: (id: string) => void;
   onMove: (toAreaId: string) => void;
+  onCreateTemplate?: () => void;
   onDelete: () => void;
 }
 
@@ -48,6 +52,22 @@ export function TaskDetailDialog(props: Props) {
     if (!newComment.trim()) return;
     props.onAddComment(newComment.trim());
     setNewComment("");
+  };
+
+  const repeatMode = getRepeatMode(task.recurrence);
+  const repeatDays = task.recurrence?.type === "weekly" ? (task.recurrence.daysOfWeek || []) : [];
+  const sourceDate = task.dueDate || new Date().toISOString().split("T")[0];
+  const isRecurringHistoryCopy = !!task.recurrenceSourceId;
+
+  const updateRepeatMode = (mode: RepeatMode) => {
+    props.onUpdateRecurrence(buildRecurrence(mode, repeatDays, sourceDate));
+  };
+
+  const toggleRepeatDay = (day: number) => {
+    const nextDays = repeatDays.includes(day)
+      ? repeatDays.filter(d => d !== day)
+      : [...repeatDays, day].sort();
+    props.onUpdateRecurrence(buildRecurrence("weekly", nextDays, sourceDate));
   };
 
   return (
@@ -83,8 +103,13 @@ export function TaskDetailDialog(props: Props) {
               >
                 <option value="todo">A fazer</option>
                 <option value="in-progress">Em progresso</option>
-                <option value="done">Feita</option>
+                <option value="done">{task.recurrence && !task.recurrenceSourceId ? "Concluir ocorrência" : "Feita"}</option>
               </select>
+              {task.recurrence && !task.recurrenceSourceId && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Ao marcar como feita, a tarefa fica na agenda e avança para a próxima data.
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block flex items-center gap-1">
@@ -106,6 +131,55 @@ export function TaskDetailDialog(props: Props) {
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Prioridade</label>
             <PrioritySelect value={task.priority || "none"} onChange={props.onUpdatePriority} />
+          </div>
+
+          {/* Recurrence */}
+          <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Repeat className="w-3.5 h-3.5" /> Repetição na agenda
+            </label>
+            {isRecurringHistoryCopy ? (
+              <p className="text-[11px] text-muted-foreground">
+                Esta é uma cópia já concluída de uma tarefa repetitiva. Edite a tarefa principal na agenda para mudar a repetição.
+              </p>
+            ) : (
+              <>
+                <select
+                  value={repeatMode}
+                  onChange={e => updateRepeatMode(e.target.value as RepeatMode)}
+                  className="w-full bg-background rounded-lg px-3 py-2 text-sm outline-none border border-border"
+                >
+                  <option value="none">Não repetir</option>
+                  <option value="daily">Todos os dias</option>
+                  <option value="weekly">Dias da semana</option>
+                  <option value="monthly">Todo mês</option>
+                </select>
+                {repeatMode === "weekly" && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {DAY_LABELS.map((label, index) => {
+                      const active = repeatDays.includes(index);
+                      return (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => toggleRepeatDay(index)}
+                          className={`px-2 py-1 rounded-full text-[11px] border transition-colors ${
+                            active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {repeatMode !== "none" && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Ao concluir, uma cópia vai para Prontas e a tarefa original continua na agenda na próxima data.
+                  </p>
+                )}
+              </>
+            )}
           </div>
 
           {/* Tags */}
@@ -262,8 +336,16 @@ export function TaskDetailDialog(props: Props) {
             </div>
           </div>
 
-          {/* Delete */}
-          <div className="flex justify-end pt-2 border-t border-border">
+          {/* Actions */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+            <button
+              onClick={props.onCreateTemplate}
+              disabled={!props.onCreateTemplate}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              Salvar como template
+            </button>
             <button
               onClick={() => { props.onDelete(); onOpenChange(false); }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-destructive hover:bg-destructive/10 transition-colors"
@@ -276,4 +358,20 @@ export function TaskDetailDialog(props: Props) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function getRepeatMode(rule?: RecurrenceRule): RepeatMode {
+  if (!rule) return "none";
+  if (rule.type === "weekly" && (rule.daysOfWeek || []).length === 7) return "daily";
+  if (rule.type === "weekly") return "weekly";
+  if (rule.type === "monthly") return "monthly";
+  return "none";
+}
+
+function buildRecurrence(mode: RepeatMode, days: number[], dueDate: string): RecurrenceRule | undefined {
+  const base = new Date((dueDate || new Date().toISOString().split("T")[0]) + "T12:00:00");
+  if (mode === "daily") return { type: "weekly", daysOfWeek: [0, 1, 2, 3, 4, 5, 6], advanceDays: 0 };
+  if (mode === "weekly") return { type: "weekly", daysOfWeek: days.length ? days : [base.getDay()], advanceDays: 0 };
+  if (mode === "monthly") return { type: "monthly", dayOfMonth: base.getDate(), advanceDays: 0 };
+  return undefined;
 }

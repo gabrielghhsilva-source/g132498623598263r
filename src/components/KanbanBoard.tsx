@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority } from "@/lib/types";
+import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority, TaskTemplate, RecurrenceRule } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
 import { DoneColumn, DONE_COLUMN_ID } from "./DoneColumn";
+import { MonthCalendarView } from "./MonthCalendarView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { QuickAddDialog } from "./QuickAddDialog";
-import { Plus, Keyboard } from "lucide-react";
+import { Plus, Keyboard, Columns3, CalendarDays } from "lucide-react";
 
 const DEFAULT_AREA_IDS = ["work", "games", "leisure", "home", "investments"];
 
@@ -22,6 +23,7 @@ interface Props {
   onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
   onUpdatePriority: (areaId: string, taskId: string, p: TaskPriority) => void;
   onUpdateTags: (areaId: string, taskId: string, ids: string[]) => void;
+  onUpdateRecurrence: (areaId: string, taskId: string, recurrence: RecurrenceRule | undefined) => void;
   onMoveTask: (fromAreaId: string, toAreaId: string, taskId: string, toIndex?: number) => void;
   onDeleteTask: (areaId: string, taskId: string) => void;
   onDeleteArea: (areaId: string) => void;
@@ -34,7 +36,12 @@ interface Props {
   onAddTag: (name: string, color: string) => TaskTag;
   onDeleteTag: (id: string) => void;
   onAddArea: () => void;
+  templates?: TaskTemplate[];
+  onCreateTemplate?: (areaId: string, task: Task) => void;
+  onDeleteTemplate?: (id: string) => void;
 }
+
+type BoardView = "kanban" | "month";
 
 export function KanbanBoard(props: Props) {
   const { areas, tags, timezone } = props;
@@ -47,6 +54,11 @@ export function KanbanBoard(props: Props) {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [boardView, setBoardView] = useState<BoardView>(() => (localStorage.getItem("tasks-board-view") as BoardView) || "kanban");
+
+  useEffect(() => {
+    try { localStorage.setItem("tasks-board-view", boardView); } catch {}
+  }, [boardView]);
 
   // Click-and-drag panning (ClickUp style) + smooth wheel-to-horizontal
   const boardRef = useRef<HTMLDivElement>(null);
@@ -240,71 +252,99 @@ export function KanbanBoard(props: Props) {
           Nova tarefa
           <kbd className="ml-1 px-1.5 py-0.5 rounded bg-primary-foreground/20 text-[10px]">N</kbd>
         </button>
-        <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Keyboard className="w-3 h-3" />
-          Aperte <kbd className="px-1 py-0.5 rounded bg-secondary text-foreground">N</kbd> em qualquer lugar pra criar
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Keyboard className="w-3 h-3" />
+            Aperte <kbd className="px-1 py-0.5 rounded bg-secondary text-foreground">N</kbd> em qualquer lugar pra criar
+          </div>
+          <div className="flex items-center rounded-lg border border-border bg-muted/40 p-0.5">
+            <button
+              onClick={() => setBoardView("kanban")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors ${boardView === "kanban" ? "bg-card shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              title="Quadro Kanban"
+            >
+              <Columns3 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Quadro</span>
+            </button>
+            <button
+              onClick={() => setBoardView("month")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors ${boardView === "month" ? "bg-card shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              title="Calendário mensal"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Mês</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Board */}
-      <div
-        ref={boardRef}
-        onMouseDown={onBoardMouseDown}
-        onWheel={onBoardWheel}
-        className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
-        style={{ scrollBehavior: "auto", overscrollBehaviorX: "contain" }}
-        data-testid="kanban-board"
-      >
-        {areas.map(area => {
-          // Tasks done são exibidas APENAS na coluna virtual "Prontas"
-          const visibleArea: TaskArea = { ...area, tasks: area.tasks.filter(t => t.status !== "done") };
-          return (
-            <KanbanColumn
-              key={area.id}
-              area={visibleArea}
-              tags={tags}
-              timezone={timezone}
-              isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
-              draggingTaskId={draggingTaskId}
-              dragOverColumnId={dragOverColumnId}
-              onTaskClick={(t) => openTaskDetail(area.id, t)}
-              onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
-              onQuickToggleDone={(taskId) => {
-                const t = area.tasks.find(x => x.id === taskId);
-                if (!t) return;
-                props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
-              }}
-              onDeleteArea={() => props.onDeleteArea(area.id)}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOverColumn={() => setDragOverColumnId(area.id)}
-              onDropOnColumn={() => handleDropOnColumn(area.id)}
-            />
-          );
-        })}
-
-        {/* Coluna virtual "Prontas" — agrega todas as tasks done */}
-        <DoneColumn
+      {boardView === "month" ? (
+        <MonthCalendarView
           areas={areas}
           tags={tags}
-          timezone={timezone}
-          draggingTaskId={draggingTaskId}
-          dragOverColumnId={dragOverColumnId}
-          onTaskClick={(areaId, t) => openTaskDetail(areaId, t)}
-          onMarkUndone={(areaId, taskId) => props.onUpdateStatus(areaId, taskId, "todo")}
-          onDropDone={handleDropOnDone}
-          onDragOverColumn={() => setDragOverColumnId(DONE_COLUMN_ID)}
+          onTaskClick={(areaId, task) => openTaskDetail(areaId, task)}
+          onMarkDone={(areaId, taskId) => props.onUpdateStatus(areaId, taskId, "done")}
         />
-
-        {/* Add column */}
-        <button
-          onClick={props.onAddArea}
-          className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+      ) : (
+        <div
+          ref={boardRef}
+          onMouseDown={onBoardMouseDown}
+          onWheel={onBoardWheel}
+          className={`flex gap-3 overflow-x-auto no-scrollbar pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+          style={{ scrollBehavior: "auto", overscrollBehaviorX: "contain" }}
+          data-testid="kanban-board"
         >
-          <Plus className="w-5 h-5" />
-          <span className="text-sm font-medium">Nova área</span>
-        </button>
-      </div>
+          {areas.map(area => {
+            // Tasks done são exibidas APENAS na coluna virtual "Prontas"
+            const visibleArea: TaskArea = { ...area, tasks: area.tasks.filter(t => t.status !== "done") };
+            return (
+              <KanbanColumn
+                key={area.id}
+                area={visibleArea}
+                tags={tags}
+                timezone={timezone}
+                isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
+                draggingTaskId={draggingTaskId}
+                dragOverColumnId={dragOverColumnId}
+                onTaskClick={(t) => openTaskDetail(area.id, t)}
+                onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
+                onQuickToggleDone={(taskId) => {
+                  const t = area.tasks.find(x => x.id === taskId);
+                  if (!t) return;
+                  props.onUpdateStatus(area.id, taskId, t.status === "done" ? "todo" : "done");
+                }}
+                onDeleteArea={() => props.onDeleteArea(area.id)}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOverColumn={() => setDragOverColumnId(area.id)}
+                onDropOnColumn={() => handleDropOnColumn(area.id)}
+              />
+            );
+          })}
+
+          {/* Coluna virtual "Prontas" — agrega todas as tasks done */}
+          <DoneColumn
+            areas={areas}
+            tags={tags}
+            timezone={timezone}
+            draggingTaskId={draggingTaskId}
+            dragOverColumnId={dragOverColumnId}
+            onTaskClick={(areaId, t) => openTaskDetail(areaId, t)}
+            onMarkUndone={(areaId, taskId) => props.onUpdateStatus(areaId, taskId, "todo")}
+            onDropDone={handleDropOnDone}
+            onDragOverColumn={() => setDragOverColumnId(DONE_COLUMN_ID)}
+          />
+
+          {/* Add column */}
+          <button
+            onClick={props.onAddArea}
+            className="flex flex-col items-center justify-center gap-2 w-72 sm:w-80 h-32 flex-shrink-0 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="text-sm font-medium">Nova área</span>
+          </button>
+        </div>
+      )}
 
       {/* Quick add dialog */}
       <QuickAddDialog
@@ -316,6 +356,8 @@ export function KanbanBoard(props: Props) {
         onSubmit={props.onAddTaskFull}
         onAddTag={props.onAddTag}
         onDeleteTag={props.onDeleteTag}
+        templates={props.templates}
+        onDeleteTemplate={props.onDeleteTemplate}
       />
 
       {/* Detail dialog */}
@@ -335,6 +377,7 @@ export function KanbanBoard(props: Props) {
           onUpdateEnd={(endDate, endTime) => props.onUpdateEnd(selectedAreaId, selectedTask.id, endDate, endTime)}
           onUpdatePriority={(p) => props.onUpdatePriority(selectedAreaId, selectedTask.id, p)}
           onUpdateTags={(ids) => props.onUpdateTags(selectedAreaId, selectedTask.id, ids)}
+          onUpdateRecurrence={(recurrence) => props.onUpdateRecurrence(selectedAreaId, selectedTask.id, recurrence)}
           onAddTag={props.onAddTag}
           onDeleteTag={props.onDeleteTag}
           onAddSubtask={(text) => props.onAddSubtask(selectedAreaId, selectedTask.id, text)}
@@ -344,6 +387,7 @@ export function KanbanBoard(props: Props) {
           onAddComment={(text) => props.onAddComment(selectedAreaId, selectedTask.id, text)}
           onDeleteComment={(id) => props.onDeleteComment(selectedAreaId, selectedTask.id, id)}
           onMove={handleMoveSelected}
+          onCreateTemplate={() => props.onCreateTemplate?.(selectedAreaId, selectedTask)}
           onDelete={() => props.onDeleteTask(selectedAreaId, selectedTask.id)}
         />
       )}
