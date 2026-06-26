@@ -77,6 +77,20 @@ export interface TaskArea {
   protected?: boolean;
 }
 
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  areaId?: string;
+  text: string;
+  dueTime?: string;
+  endTime?: string;
+  priority?: TaskPriority;
+  tagIds?: string[];
+  subtasks?: Omit<Subtask, "id" | "done">[];
+  recurrence?: RecurrenceRule;
+  createdAt: string;
+}
+
 
 export type ThemeId = "mono-light" | "mono-dark" | "beige" | "cyan" | "lavender" | "rose" | "custom";
 
