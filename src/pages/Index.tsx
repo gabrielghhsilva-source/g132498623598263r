@@ -285,6 +285,7 @@ const AppContent = () => {
                 onUpdateEnd={store.updateTaskEnd}
                 onUpdatePriority={store.updateTaskPriority}
                 onUpdateTags={store.updateTaskTags}
+                onUpdateRecurrence={store.updateTaskRecurrence}
                 onMoveTask={store.moveTask}
                 onDeleteTask={deleteTaskWithRemote}
                 onDeleteArea={store.deleteArea}
