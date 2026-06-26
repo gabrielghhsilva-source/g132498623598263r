@@ -298,7 +298,7 @@ export function useTaskStore() {
       for (const a of prev) {
         const existing = a.tasks.find(t => t.googleEventId === patch.googleEventId);
         if (existing) {
-          return updateTaskInAreas(prev, a.id, existing.id, t => ({ ...t, ...patch, googleSyncedAt: new Date().toISOString() }));
+          return normalizeRecurringAreas(updateTaskInAreas(prev, a.id, existing.id, t => ({ ...t, ...patch, googleSyncedAt: new Date().toISOString() })), timezone);
         }
       }
       // Nova: cria na área alvo
@@ -323,9 +323,9 @@ export function useTaskStore() {
         googleSyncedAt: new Date().toISOString(),
         recurrence: patch.recurrence,
       };
-      return addTaskToArea(prev, targetAreaId, task);
+      return normalizeRecurringAreas(addTaskToArea(prev, targetAreaId, task), timezone);
     });
-  }, []);
+  }, [timezone]);
 
 
   // --- Undo stack (delete only, last 20) ---
