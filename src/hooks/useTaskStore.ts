@@ -175,6 +175,14 @@ export function useTaskStore() {
     setAreas(prev => normalizeRecurringAreas(prev, timezone));
   }, [timezone]);
 
+  // Mantém recorrências rolando mesmo se o app ficar aberto de um dia para o outro.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setAreas(prev => normalizeRecurringAreas(prev, timezone));
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [timezone]);
+
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
   const setCustomColors = useCallback((colors: CustomThemeColors) => setCustomColorsState(colors), []);
   const setTimezone = useCallback((tz: string) => setTimezoneState(tz), []);
@@ -185,13 +193,13 @@ export function useTaskStore() {
   // Task CRUD
   const addTask = useCallback((areaId: string, text: string, dueDate?: string, recurrence?: RecurrenceRule, dueTime?: string) => {
     const task = makeTask({ text, dueDate, dueTime, recurrence });
-    setAreas(prev => addTaskToArea(prev, areaId, task));
-  }, []);
+    setAreas(prev => normalizeRecurringAreas(addTaskToArea(prev, areaId, task), timezone));
+  }, [timezone]);
 
   const addTaskFull = useCallback((areaId: string, input: AddTaskInput) => {
     const task = makeTask(input);
-    setAreas(prev => addTaskToArea(prev, areaId, task));
-  }, []);
+    setAreas(prev => normalizeRecurringAreas(addTaskToArea(prev, areaId, task), timezone));
+  }, [timezone]);
 
   const updateTaskStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
     setAreas(prev => {
@@ -256,6 +264,15 @@ export function useTaskStore() {
   const updateTaskTags = useCallback((areaId: string, taskId: string, tagIds: string[]) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, tagIds })));
   }, []);
+
+  const updateTaskRecurrence = useCallback((areaId: string, taskId: string, recurrence: RecurrenceRule | undefined) => {
+    setAreas(prev => normalizeRecurringAreas(updateTaskInAreas(prev, areaId, taskId, t => ({
+      ...t,
+      recurrence,
+      googleLastHash: undefined,
+      googleSyncedAt: undefined,
+    })), timezone));
+  }, [timezone]);
 
   const setTaskAutoStatus = useCallback((areaId: string, taskId: string, autoStatus: boolean) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, autoStatus })));
@@ -493,7 +510,7 @@ export function useTaskStore() {
     buttonBgColor, buttonTextColor, setButtonBgColor, setButtonTextColor,
     showThemeDecorations, setShowThemeDecorations,
     addTask, addTaskFull, updateTaskStatus, updateTaskStyle, updateTaskText, updateTaskTime, updateTaskEnd,
-    updateTaskPriority, updateTaskTags, deleteTask, moveTask, snoozeTask,
+    updateTaskPriority, updateTaskTags, updateTaskRecurrence, deleteTask, moveTask, snoozeTask,
     setTaskAutoStatus, setTaskGoogleMeta, upsertGoogleEvent,
     addSubtaskTo, toggleSubtaskOf, deleteSubtaskOf, updateSubtaskTextOf,
     toggleCollapse, addArea, deleteArea, reorderAreas,
