@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Task, TaskTag, TaskArea } from "@/lib/types";
 import { KanbanCard } from "./KanbanCard";
 import { CheckCircle2, EyeOff, Eye } from "lucide-react";
+import { getNowInTimezone } from "@/lib/timeUtils";
 
 interface DoneTaskWithOrigin extends Task {
   __originAreaId: string;
@@ -37,7 +38,7 @@ export function DoneColumn({
     try { localStorage.setItem("kanban-hide-done", hidden ? "1" : "0"); } catch {}
   }, [hidden]);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getNowInTimezone(timezone).date;
   const allDone: DoneTaskWithOrigin[] = areas.flatMap(area =>
     area.tasks
       .filter(t => t.status === "done")
