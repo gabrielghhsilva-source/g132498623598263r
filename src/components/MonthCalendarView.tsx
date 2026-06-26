@@ -74,49 +74,53 @@ export function MonthCalendarView({ areas, tags, onTaskClick, onMarkDone }: Prop
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-b border-border bg-muted/30">
-        {WEEKDAYS.map(day => (
-          <div key={day} className="px-1 sm:px-2 py-2 text-center text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            {day}
+      <div className="overflow-x-auto no-scrollbar">
+        <div className="min-w-[760px] sm:min-w-0">
+          <div className="grid grid-cols-7 border-b border-border bg-muted/30">
+            {WEEKDAYS.map(day => (
+              <div key={day} className="px-1 sm:px-2 py-2 text-center text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {day}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="grid grid-cols-7 auto-rows-[minmax(108px,1fr)] sm:auto-rows-[minmax(140px,1fr)]">
-        {days.map(day => {
-          const dateKey = toDateKey(day.date);
-          const items = tasksByDate.get(dateKey) || [];
-          const isCurrentMonth = day.date.getMonth() === cursor.getMonth();
-          const isToday = dateKey === today;
-          return (
-            <div
-              key={dateKey}
-              className={`min-w-0 border-r border-b border-border p-1.5 sm:p-2 ${isCurrentMonth ? "bg-card/40" : "bg-muted/20 text-muted-foreground"}`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={`h-6 min-w-6 px-1 rounded-full flex items-center justify-center text-[11px] font-semibold ${isToday ? "bg-primary text-primary-foreground" : ""}`}>
-                  {day.date.getDate()}
-                </span>
-                {items.length > 0 && <span className="text-[10px] text-muted-foreground">{items.length}</span>}
-              </div>
+          <div className="grid grid-cols-7 auto-rows-[minmax(108px,1fr)] sm:auto-rows-[minmax(140px,1fr)]">
+            {days.map(day => {
+              const dateKey = toDateKey(day.date);
+              const items = tasksByDate.get(dateKey) || [];
+              const isCurrentMonth = day.date.getMonth() === cursor.getMonth();
+              const isToday = dateKey === today;
+              return (
+                <div
+                  key={dateKey}
+                  className={`min-w-0 border-r border-b border-border p-1.5 sm:p-2 ${isCurrentMonth ? "bg-card/40" : "bg-muted/20 text-muted-foreground"}`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`h-6 min-w-6 px-1 rounded-full flex items-center justify-center text-[11px] font-semibold ${isToday ? "bg-primary text-primary-foreground" : ""}`}>
+                      {day.date.getDate()}
+                    </span>
+                    {items.length > 0 && <span className="text-[10px] text-muted-foreground">{items.length}</span>}
+                  </div>
 
-              <div className="space-y-1 overflow-hidden">
-                {items.slice(0, 4).map(task => (
-                  <CalendarTaskPill
-                    key={task.id}
-                    task={task}
-                    tags={tags}
-                    onOpen={() => onTaskClick(task.areaId, task)}
-                    onDone={() => onMarkDone(task.areaId, task.id)}
-                  />
-                ))}
-                {items.length > 4 && (
-                  <div className="text-[10px] text-muted-foreground px-1">+{items.length - 4} tarefas</div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                  <div className="space-y-1 overflow-hidden">
+                    {items.slice(0, 4).map(task => (
+                      <CalendarTaskPill
+                        key={task.id}
+                        task={task}
+                        tags={tags}
+                        onOpen={() => onTaskClick(task.areaId, task)}
+                        onDone={() => onMarkDone(task.areaId, task.id)}
+                      />
+                    ))}
+                    {items.length > 4 && (
+                      <div className="text-[10px] text-muted-foreground px-1">+{items.length - 4} tarefas</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
