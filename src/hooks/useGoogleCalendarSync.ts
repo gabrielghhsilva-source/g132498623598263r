@@ -295,6 +295,9 @@ export function useGoogleCalendarSync(deps: SyncDeps) {
       for (const area of d.areas) {
         for (const task of area.tasks) {
           if (!task.autoStatus) continue;
+          // Cópias históricas de recorrência são arquivo local; não devem voltar
+          // para "fazendo" pelo relógio automático.
+          if (task.recurrenceSourceId) continue;
           const next = computeAutoStatus({
             dueDate: task.dueDate, dueTime: task.dueTime,
             endDate: task.endDate, endTime: task.endTime,
