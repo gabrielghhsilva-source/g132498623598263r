@@ -604,6 +604,7 @@ function reconcileRecurringTasks(tasks: Task[], today: string, timezone: string)
   const restoredSources: Task[] = [];
   for (const [key, group] of orphanGroups) {
     if (working.some(t => t.id === key && t.recurrence && !t.recurrenceSourceId)) continue;
+    if (working.some(t => t.recurrence && !t.recurrenceSourceId && recurringSignature(t) === recurringSignature(group[0]))) continue;
     const restored = makeRecurringSourceFromOrphans(group, today, existingSourceIds.has(key) ? undefined : key);
     if (restored) {
       restoredSources.push(restored);
