@@ -103,8 +103,13 @@ export function TaskDetailDialog(props: Props) {
               >
                 <option value="todo">A fazer</option>
                 <option value="in-progress">Em progresso</option>
-                <option value="done">Feita</option>
+                <option value="done">{task.recurrence && !task.recurrenceSourceId ? "Concluir ocorrência" : "Feita"}</option>
               </select>
+              {task.recurrence && !task.recurrenceSourceId && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Ao marcar como feita, a tarefa fica na agenda e avança para a próxima data.
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block flex items-center gap-1">
