@@ -262,7 +262,7 @@ export function useTaskStore() {
   }, []);
 
   /** Atualiza metadados do Google Calendar de uma task (id do evento, hash, etc). */
-  const setTaskGoogleMeta = useCallback((areaId: string, taskId: string, meta: Partial<Pick<Task, "googleEventId" | "googleCalendarId" | "googleLastHash" | "googleSyncedAt">>) => {
+  const setTaskGoogleMeta = useCallback((areaId: string, taskId: string, meta: Partial<Pick<Task, "googleEventId" | "googleCalendarId" | "googleLastHash" | "googleSyncedAt" | "googleEtag" | "googleUpdated">>) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, ...meta })));
   }, []);
 
