@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority, TaskTemplate } from "@/lib/types";
+import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority, TaskTemplate, RecurrenceRule } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
 import { DoneColumn, DONE_COLUMN_ID } from "./DoneColumn";
@@ -23,6 +23,7 @@ interface Props {
   onUpdateEnd: (areaId: string, taskId: string, endDate: string | undefined, endTime: string | undefined) => void;
   onUpdatePriority: (areaId: string, taskId: string, p: TaskPriority) => void;
   onUpdateTags: (areaId: string, taskId: string, ids: string[]) => void;
+  onUpdateRecurrence: (areaId: string, taskId: string, recurrence: RecurrenceRule | undefined) => void;
   onMoveTask: (fromAreaId: string, toAreaId: string, taskId: string, toIndex?: number) => void;
   onDeleteTask: (areaId: string, taskId: string) => void;
   onDeleteArea: (areaId: string) => void;
@@ -376,6 +377,7 @@ export function KanbanBoard(props: Props) {
           onUpdateEnd={(endDate, endTime) => props.onUpdateEnd(selectedAreaId, selectedTask.id, endDate, endTime)}
           onUpdatePriority={(p) => props.onUpdatePriority(selectedAreaId, selectedTask.id, p)}
           onUpdateTags={(ids) => props.onUpdateTags(selectedAreaId, selectedTask.id, ids)}
+          onUpdateRecurrence={(recurrence) => props.onUpdateRecurrence(selectedAreaId, selectedTask.id, recurrence)}
           onAddTag={props.onAddTag}
           onDeleteTag={props.onDeleteTag}
           onAddSubtask={(text) => props.onAddSubtask(selectedAreaId, selectedTask.id, text)}
