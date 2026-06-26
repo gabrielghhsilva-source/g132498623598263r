@@ -207,6 +207,8 @@ export function useGoogleCalendarSync(deps: SyncDeps) {
 
         const allTasks = d.areas.flatMap(a => a.tasks.map(t => ({ task: t, areaId: a.id })));
         for (const { task, areaId } of allTasks) {
+          // Cópias concluídas/arquivo local não viram eventos novos no Google.
+          if (task.status === "done" || task.recurrenceSourceId) continue;
           if (!task.dueDate || !task.dueTime) continue;
           // Não re-exporta o que veio do Google (já tem id em outra agenda)
           if (task.googleEventId && task.googleCalendarId && task.googleCalendarId !== writeCalendarId) continue;
