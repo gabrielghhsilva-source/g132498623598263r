@@ -539,11 +539,30 @@ function normalizeRecurringAreas(areas: TaskArea[], timezone: string): TaskArea[
 
 function reconcileRecurringTasks(tasks: Task[], today: string, timezone: string): Task[] {
   const sources = tasks.filter(t => t.recurrence && !t.recurrenceSourceId);
-  if (sources.length === 0) return tasks;
-
   const sourceIds = new Set(sources.map(t => t.id));
   let changed = false;
+  const orphanGroups = new Map<string, Task[]>();
+
+  const addOrphan = (task: Task) => {
+    const key = task.recurrenceSourceId || recurringSignature(task);
+    orphanGroups.set(key, [...(orphanGroups.get(key) || []), task]);
+  };
+
   let working = tasks.filter(t => {
+    if (t.recurrenceSourceId && t.recurrence) {
+      // Instâncias pendentes do modelo antigo nunca devem continuar na agenda;
+      // elas são convertidas em uma única fonte rolante mais abaixo.
+      if (t.status !== "done") {
+        addOrphan(t);
+        changed = true;
+        return false;
+      }
+
+      // Cópias concluídas sem a fonte original antiga viram base para recriar
+      // a tarefa principal na próxima data, mantendo a cópia como histórico.
+      if (!sourceIds.has(t.recurrenceSourceId)) addOrphan(t);
+    }
+
     // Remove instâncias antigas pendentes do modelo anterior. Agora só a fonte
     // rolante fica pendente; as cópias com recurrenceSourceId ficam apenas em done.
     if (t.recurrenceSourceId && sourceIds.has(t.recurrenceSourceId) && t.status !== "done") {
@@ -581,7 +600,19 @@ function reconcileRecurringTasks(tasks: Task[], today: string, timezone: string)
     return task;
   });
 
-  return changed || doneCopies.length > 0 ? [...working, ...doneCopies] : tasks;
+  const existingSourceIds = new Set(working.map(t => t.id));
+  const restoredSources: Task[] = [];
+  for (const [key, group] of orphanGroups) {
+    if (working.some(t => t.id === key && t.recurrence && !t.recurrenceSourceId)) continue;
+    const restored = makeRecurringSourceFromOrphans(group, today, existingSourceIds.has(key) ? undefined : key);
+    if (restored) {
+      restoredSources.push(restored);
+      existingSourceIds.add(restored.id);
+      changed = true;
+    }
+  }
+
+  return changed || doneCopies.length > 0 || restoredSources.length > 0 ? [...working, ...doneCopies, ...restoredSources] : tasks;
 }
 
 function completeRecurringSource(tasks: Task[], sourceId: string, timezone: string): Task[] {
@@ -623,6 +654,39 @@ function makeRecurringDoneCopy(source: Task, completedDate: string): Task {
     subtasks: (source.subtasks || []).map(s => ({ ...s })),
   };
   return copy;
+}
+
+function makeRecurringSourceFromOrphans(group: Task[], today: string, preferredId?: string): Task | null {
+  const withRule = group.filter(t => t.recurrence);
+  if (withRule.length === 0) return null;
+
+  const pendingFuture = withRule
+    .filter(t => t.status !== "done" && !!t.dueDate && t.dueDate >= today)
+    .sort((a, b) => (a.dueDate || "9999-12-31").localeCompare(b.dueDate || "9999-12-31"))[0];
+
+  const latest = pendingFuture || [...withRule].sort((a, b) => {
+    const ad = a.dueDate || a.createdAt || "";
+    const bd = b.dueDate || b.createdAt || "";
+    return bd.localeCompare(ad);
+  })[0];
+
+  const completedOrBaseDate = latest.dueDate || today;
+  const nextDate = latest.status === "done"
+    ? getNextDisplayOccurrence(latest.recurrence!, completedOrBaseDate, today, false)
+    : getNextDisplayOccurrence(latest.recurrence!, completedOrBaseDate, today, true);
+
+  return rollRecurringSource({
+    ...latest,
+    id: preferredId || crypto.randomUUID(),
+    status: "todo",
+    recurrenceSourceId: undefined,
+    googleEventId: undefined,
+    googleCalendarId: undefined,
+    googleLastHash: undefined,
+    googleSyncedAt: undefined,
+    googleEtag: undefined,
+    googleUpdated: undefined,
+  }, nextDate, "todo");
 }
 
 function rollRecurringSource(source: Task, nextDate: string, status: TaskStatus): Task {
@@ -686,4 +750,13 @@ function diffDays(start: string, end: string): number {
   const a = parseLocalDate(start).getTime();
   const b = parseLocalDate(end).getTime();
   return Math.round((b - a) / 86_400_000);
+}
+
+function recurringSignature(task: Task): string {
+  return JSON.stringify({
+    text: task.text,
+    dueTime: task.dueTime,
+    endTime: task.endTime,
+    recurrence: task.recurrence,
+  });
 }
