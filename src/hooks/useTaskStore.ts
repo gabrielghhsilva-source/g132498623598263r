@@ -204,6 +204,11 @@ export function useTaskStore() {
   const updateTaskStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
     setAreas(prev => {
       if (status !== "done") {
+        const area = prev.find(a => a.id === areaId);
+        const task = area?.tasks.find(t => t.id === taskId);
+        // Cópias históricas de recorrência não voltam para a agenda; se forem
+        // desmarcadas, removemos só a cópia para não duplicar a recorrente fonte.
+        if (task?.recurrenceSourceId) return removeTaskFromArea(prev, areaId, taskId);
         return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status }));
       }
 
