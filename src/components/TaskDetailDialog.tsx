@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { SubtaskList } from "./SubtaskList";
-import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Bold, Paintbrush, Move } from "lucide-react";
+import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Paintbrush, Move, Copy } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
@@ -35,6 +35,7 @@ interface Props {
   onAddComment: (text: string) => void;
   onDeleteComment: (id: string) => void;
   onMove: (toAreaId: string) => void;
+  onCreateTemplate?: () => void;
   onDelete: () => void;
 }
 
@@ -262,8 +263,16 @@ export function TaskDetailDialog(props: Props) {
             </div>
           </div>
 
-          {/* Delete */}
-          <div className="flex justify-end pt-2 border-t border-border">
+          {/* Actions */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+            <button
+              onClick={props.onCreateTemplate}
+              disabled={!props.onCreateTemplate}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              Salvar como template
+            </button>
             <button
               onClick={() => { props.onDelete(); onOpenChange(false); }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-destructive hover:bg-destructive/10 transition-colors"
