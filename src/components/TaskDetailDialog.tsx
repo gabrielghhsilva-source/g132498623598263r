@@ -354,3 +354,19 @@ export function TaskDetailDialog(props: Props) {
     </Dialog>
   );
 }
+
+function getRepeatMode(rule?: RecurrenceRule): RepeatMode {
+  if (!rule) return "none";
+  if (rule.type === "weekly" && (rule.daysOfWeek || []).length === 7) return "daily";
+  if (rule.type === "weekly") return "weekly";
+  if (rule.type === "monthly") return "monthly";
+  return "none";
+}
+
+function buildRecurrence(mode: RepeatMode, days: number[], dueDate: string): RecurrenceRule | undefined {
+  const base = new Date((dueDate || new Date().toISOString().split("T")[0]) + "T12:00:00");
+  if (mode === "daily") return { type: "weekly", daysOfWeek: [0, 1, 2, 3, 4, 5, 6], advanceDays: 0 };
+  if (mode === "weekly") return { type: "weekly", daysOfWeek: days.length ? days : [base.getDay()], advanceDays: 0 };
+  if (mode === "monthly") return { type: "monthly", dayOfMonth: base.getDate(), advanceDays: 0 };
+  return undefined;
+}
