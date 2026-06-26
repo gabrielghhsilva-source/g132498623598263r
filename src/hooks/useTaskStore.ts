@@ -114,10 +114,11 @@ function clearCustomColors() {
 export function useTaskStore() {
   const [areas, setAreas] = useState<TaskArea[]>(() => {
     const loaded = loadSecure("task-areas", DEFAULT_AREAS);
-    return ensureInbox(loaded.map(a => ({
+    const initialTz = loadPlain("task-timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    return normalizeRecurringAreas(ensureInbox(loaded.map(a => ({
       ...a,
       tasks: a.tasks.map(normalizeTask),
-    })));
+    }))), initialTz);
   });
 
   const [tags, setTags] = useState<TaskTag[]>(() => loadSecure("task-tags", DEFAULT_TAGS));
@@ -133,7 +134,7 @@ export function useTaskStore() {
     let cancelled = false;
     loadCloudState<TaskArea[]>("tasks_areas").then(cloud => {
       if (cancelled || !cloud) return;
-      setAreas(ensureInbox(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) }))));
+      setAreas(normalizeRecurringAreas(ensureInbox(cloud.map(a => ({ ...a, tasks: (a.tasks || []).map(normalizeTask) }))), timezone));
     });
 
     return () => { cancelled = true; };
@@ -169,49 +170,9 @@ export function useTaskStore() {
   useEffect(() => { localStorage.setItem("task-button-text", JSON.stringify(buttonTextColor)); }, [buttonTextColor]);
   useEffect(() => { localStorage.setItem("task-theme-decorations", JSON.stringify(showThemeDecorations)); }, [showThemeDecorations]);
 
-  // Recurring task generation
+  // Recurring task reconciliation
   useEffect(() => {
-    const lastCheck = loadPlain<string>("task-recurrence-last-check", "");
-    const now = getNowInTimezone(timezone);
-    const today = now.date;
-    if (lastCheck === today) return;
-
-    setAreas(prev => {
-      let updated = [...prev];
-      for (const area of updated) {
-        const recurringTasks = area.tasks.filter(t => t.recurrence && !t.recurrenceSourceId);
-        for (const template of recurringTasks) {
-          const rule = template.recurrence!;
-          const nextDates = getUpcomingDates(rule, 14);
-          for (const date of nextDates) {
-            const advDate = new Date(date);
-            advDate.setDate(advDate.getDate() - rule.advanceDays);
-            const todayDate = new Date(today);
-            if (advDate <= todayDate) {
-              const dateStr = date.toISOString().split("T")[0];
-              const exists = area.tasks.some(t =>
-                t.recurrenceSourceId === template.id && t.dueDate === dateStr
-              );
-              if (!exists) {
-                const newTask = makeTask({
-                  text: template.text,
-                  dueDate: dateStr,
-                  dueTime: template.dueTime,
-                  priority: template.priority,
-                  tagIds: template.tagIds,
-                });
-                newTask.recurrenceSourceId = template.id;
-                newTask.style = { ...template.style };
-                const areaIdx = updated.findIndex(a => a.id === area.id);
-                updated[areaIdx] = { ...updated[areaIdx], tasks: [...updated[areaIdx].tasks, newTask] };
-              }
-            }
-          }
-        }
-      }
-      localStorage.setItem("task-recurrence-last-check", JSON.stringify(today));
-      return updated;
-    });
+    setAreas(prev => normalizeRecurringAreas(prev, timezone));
   }, [timezone]);
 
   const setTheme = useCallback((t: ThemeId) => setThemeState(t), []);
@@ -233,8 +194,24 @@ export function useTaskStore() {
   }, []);
 
   const updateTaskStatus = useCallback((areaId: string, taskId: string, status: TaskStatus) => {
-    setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status })));
-  }, []);
+    setAreas(prev => {
+      if (status !== "done") {
+        return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status }));
+      }
+
+      const area = prev.find(a => a.id === areaId);
+      const task = area?.tasks.find(t => t.id === taskId);
+
+      // Recorrentes usam modelo "rolante": a ocorrência concluída vira uma
+      // cópia em Prontas, enquanto a task principal avança para a próxima data
+      // e continua visível na agenda.
+      if (task?.recurrence && !task.recurrenceSourceId) {
+        return prev.map(a => a.id === areaId ? { ...a, tasks: completeRecurringSource(a.tasks, taskId, timezone) } : a);
+      }
+
+      return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status }));
+    });
+  }, [timezone]);
 
   const updateTaskStyle = useCallback((areaId: string, taskId: string, style: Partial<TaskTextStyle>) => {
     setAreas(prev => updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, style: { ...t.style, ...style } })));
@@ -374,7 +351,7 @@ export function useTaskStore() {
     }));
     const incomingTags: TaskTag[] = Array.isArray(parsed.tags) ? parsed.tags : [];
     if (mode === "replace") {
-      setAreas(incomingAreas);
+      setAreas(normalizeRecurringAreas(ensureInbox(incomingAreas), timezone));
       setTags(incomingTags);
     } else {
       setAreas(prev => {
@@ -388,7 +365,7 @@ export function useTaskStore() {
             map.set(a.id, a);
           }
         }
-        return Array.from(map.values());
+        return normalizeRecurringAreas(ensureInbox(Array.from(map.values())), timezone);
       });
       setTags(prev => {
         const ids = new Set(prev.map(t => t.id));
@@ -527,15 +504,164 @@ export function useTaskStore() {
   };
 }
 
-function getUpcomingDates(rule: RecurrenceRule, daysAhead: number): Date[] {
-  const dates: Date[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  for (let i = 0; i <= daysAhead; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    if (rule.type === "weekly" && rule.daysOfWeek?.includes(d.getDay())) dates.push(new Date(d));
-    if (rule.type === "monthly" && rule.dayOfMonth === d.getDate()) dates.push(new Date(d));
+function normalizeRecurringAreas(areas: TaskArea[], timezone: string): TaskArea[] {
+  const today = getNowInTimezone(timezone).date;
+  let changed = false;
+  const nextAreas = areas.map(area => {
+    const normalized = reconcileRecurringTasks(area.tasks, today, timezone);
+    if (normalized !== area.tasks) changed = true;
+    return normalized === area.tasks ? area : { ...area, tasks: normalized };
+  });
+  return changed ? nextAreas : areas;
+}
+
+function reconcileRecurringTasks(tasks: Task[], today: string, timezone: string): Task[] {
+  const sources = tasks.filter(t => t.recurrence && !t.recurrenceSourceId);
+  if (sources.length === 0) return tasks;
+
+  const sourceIds = new Set(sources.map(t => t.id));
+  let changed = false;
+  let working = tasks.filter(t => {
+    // Remove instâncias antigas pendentes do modelo anterior. Agora só a fonte
+    // rolante fica pendente; as cópias com recurrenceSourceId ficam apenas em done.
+    if (t.recurrenceSourceId && sourceIds.has(t.recurrenceSourceId) && t.status !== "done") {
+      changed = true;
+      return false;
+    }
+    return true;
+  });
+
+  const doneCopies: Task[] = [];
+  working = working.map(task => {
+    if (!task.recurrence || task.recurrenceSourceId) return task;
+
+    if (task.status === "done") {
+      const completedDate = task.dueDate || today;
+      const alreadyArchived = working.some(t =>
+        t.id !== task.id &&
+        t.status === "done" &&
+        t.recurrenceSourceId === task.id &&
+        t.dueDate === completedDate
+      );
+      if (!alreadyArchived) doneCopies.push(makeRecurringDoneCopy(task, completedDate));
+
+      const nextDate = getNextDisplayOccurrence(task.recurrence, completedDate, today, false);
+      changed = true;
+      return rollRecurringSource(task, nextDate, "todo");
+    }
+
+    if (!task.dueDate || task.dueDate < today) {
+      const nextDate = getNextDisplayOccurrence(task.recurrence, task.dueDate || today, today, true);
+      changed = true;
+      return rollRecurringSource(task, nextDate, "todo");
+    }
+
+    return task;
+  });
+
+  return changed || doneCopies.length > 0 ? [...working, ...doneCopies] : tasks;
+}
+
+function completeRecurringSource(tasks: Task[], sourceId: string, timezone: string): Task[] {
+  const today = getNowInTimezone(timezone).date;
+  let changed = false;
+  const doneCopies: Task[] = [];
+  const next = tasks.map(task => {
+    if (task.id !== sourceId || !task.recurrence || task.recurrenceSourceId) return task;
+    const completedDate = task.dueDate || today;
+    const alreadyArchived = tasks.some(t =>
+      t.id !== task.id &&
+      t.status === "done" &&
+      t.recurrenceSourceId === task.id &&
+      t.dueDate === completedDate
+    );
+    if (!alreadyArchived) doneCopies.push(makeRecurringDoneCopy(task, completedDate));
+    const nextDate = getNextDisplayOccurrence(task.recurrence, completedDate, today, false);
+    changed = true;
+    return rollRecurringSource(task, nextDate, "todo");
+  });
+  return changed ? [...next, ...doneCopies] : tasks;
+}
+
+function makeRecurringDoneCopy(source: Task, completedDate: string): Task {
+  const copy: Task = {
+    ...source,
+    id: crypto.randomUUID(),
+    status: "done",
+    dueDate: completedDate,
+    recurrenceSourceId: source.id,
+    googleEventId: undefined,
+    googleCalendarId: undefined,
+    googleLastHash: undefined,
+    googleSyncedAt: undefined,
+    googleEtag: undefined,
+    googleUpdated: undefined,
+    comments: [...(source.comments || [])],
+    tagIds: [...(source.tagIds || [])],
+    subtasks: (source.subtasks || []).map(s => ({ ...s })),
+  };
+  return copy;
+}
+
+function rollRecurringSource(source: Task, nextDate: string, status: TaskStatus): Task {
+  const oldDueDate = source.dueDate;
+  const endOffset = oldDueDate && source.endDate ? diffDays(oldDueDate, source.endDate) : 0;
+  return {
+    ...source,
+    status,
+    dueDate: nextDate,
+    endDate: source.endDate ? addDays(nextDate, endOffset) : source.endDate,
+    googleLastHash: undefined,
+    googleSyncedAt: undefined,
+    subtasks: (source.subtasks || []).map(s => ({ ...s, done: false })),
+  };
+}
+
+function getNextDisplayOccurrence(rule: RecurrenceRule, afterDate: string, today: string, includeTodayWhenStale: boolean): string {
+  const after = getNextOccurrenceDate(rule, afterDate, false) || addDays(afterDate, 1);
+  if (after < today || includeTodayWhenStale) {
+    return getNextOccurrenceDate(rule, today, true) || after;
   }
-  return dates;
+  return after;
+}
+
+function getNextOccurrenceDate(rule: RecurrenceRule, baseDate: string, includeBase: boolean): string | null {
+  const base = parseLocalDate(baseDate);
+  for (let i = includeBase ? 0 : 1; i <= 370; i++) {
+    const candidate = addDaysToDate(base, i);
+    if (matchesRecurrenceDate(rule, candidate)) return formatLocalDate(candidate);
+  }
+  return null;
+}
+
+function matchesRecurrenceDate(rule: RecurrenceRule, date: Date): boolean {
+  if (rule.type === "weekly") return !!rule.daysOfWeek?.includes(date.getDay());
+  if (rule.type === "monthly") return rule.dayOfMonth === date.getDate();
+  return false;
+}
+
+function parseLocalDate(date: string): Date {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
+function formatLocalDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function addDays(date: string, days: number): string {
+  return formatLocalDate(addDaysToDate(parseLocalDate(date), days));
+}
+
+function addDaysToDate(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function diffDays(start: string, end: string): number {
+  const a = parseLocalDate(start).getTime();
+  const b = parseLocalDate(end).getTime();
+  return Math.round((b - a) / 86_400_000);
 }
