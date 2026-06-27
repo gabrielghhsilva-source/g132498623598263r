@@ -61,6 +61,8 @@ export interface Task {
   endDate?: string;
   endTime?: string;
   createdAt: string;
+  /** Timestamp ISO de quando a task foi concluída (para stats/heatmap). */
+  completedAt?: string;
   comments: TaskComment[];
   recurrence?: RecurrenceRule;
   recurrenceSourceId?: string;
