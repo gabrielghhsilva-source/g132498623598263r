@@ -175,6 +175,7 @@ const AppContent = () => {
       if (inField) return;
       if (e.key === "v" || e.key === "V") { e.preventDefault(); setVoiceTaskOpen(true); }
       else if (e.key === "i" || e.key === "I") { e.preventDefault(); setImageTaskOpen(true); }
+      else if (e.key === "f" || e.key === "F") { e.preventDefault(); setFocusOpen(true); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
