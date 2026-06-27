@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck } from "lucide-react";
+import JSZip from "jszip";
+import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck, Archive } from "lucide-react";
 
 type OutFormat =
   | "image/png"
