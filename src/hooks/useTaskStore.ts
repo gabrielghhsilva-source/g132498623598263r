@@ -209,7 +209,7 @@ export function useTaskStore() {
         // Cópias históricas de recorrência não voltam para a agenda; se forem
         // desmarcadas, removemos só a cópia para não duplicar a recorrente fonte.
         if (task?.recurrenceSourceId) return removeTaskFromArea(prev, areaId, taskId);
-        return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status }));
+        return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status, completedAt: undefined }));
       }
 
       const area = prev.find(a => a.id === areaId);
@@ -222,7 +222,7 @@ export function useTaskStore() {
         return prev.map(a => a.id === areaId ? { ...a, tasks: completeRecurringSource(a.tasks, taskId, timezone) } : a);
       }
 
-      return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status }));
+      return updateTaskInAreas(prev, areaId, taskId, t => ({ ...t, status, completedAt: new Date().toISOString() }));
     });
   }, [timezone]);
 
