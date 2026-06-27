@@ -19,9 +19,11 @@ import { CardNavigation } from "@/components/CardNavigation";
 import { PasswordGate } from "@/components/PasswordGate";
 import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
 import { ImageTaskDialog } from "@/components/ImageTaskDialog";
-import { ClipboardList, LayoutDashboard, ImageIcon, Wrench } from "lucide-react";
+import { ClipboardList, LayoutDashboard, ImageIcon, Wrench, BarChart3, Maximize2 } from "lucide-react";
 const MenuPage = lazy(() => import("@/components/MenuPage").then(m => ({ default: m.MenuPage })));
 const ImageConverter = lazy(() => import("@/components/ImageConverter").then(m => ({ default: m.ImageConverter })));
+const StatsDialog = lazy(() => import("@/components/StatsDialog").then(m => ({ default: m.StatsDialog })));
+const FocusMode = lazy(() => import("@/components/FocusMode").then(m => ({ default: m.FocusMode })));
 import { ElectronTitleBar } from "@/components/ElectronTitleBar";
 import { AppTab } from "@/lib/types";
 import { isUnlocked } from "@/lib/crypto";
@@ -117,6 +119,8 @@ const AppContent = () => {
   const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
   const [imageTaskOpen, setImageTaskOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
@@ -171,6 +175,7 @@ const AppContent = () => {
       if (inField) return;
       if (e.key === "v" || e.key === "V") { e.preventDefault(); setVoiceTaskOpen(true); }
       else if (e.key === "i" || e.key === "I") { e.preventDefault(); setImageTaskOpen(true); }
+      else if (e.key === "f" || e.key === "F") { e.preventDefault(); setFocusOpen(true); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -215,7 +220,21 @@ const AppContent = () => {
               <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
               <h1 className="text-base sm:text-xl font-bold tracking-tight truncate uppercase">{tabMeta[activeTab].label}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={() => setFocusOpen(true)}
+                title="Modo Foco (F)"
+                className="p-2 rounded-md hover:bg-accent text-primary transition-colors"
+              >
+                <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
+                onClick={() => setStatsOpen(true)}
+                title="Estatísticas"
+                className="p-2 rounded-md hover:bg-accent text-primary transition-colors"
+              >
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
               <button
                 onClick={() => setImageTaskOpen(true)}
                 title="Imagem → Tarefas (I)"
@@ -414,6 +433,28 @@ const AppContent = () => {
           className="hidden"
           onChange={handleImportFile}
         />
+
+        {statsOpen && (
+          <Suspense fallback={null}>
+            <StatsDialog
+              open={statsOpen}
+              onOpenChange={setStatsOpen}
+              areas={store.areas}
+              tags={store.tags}
+              timezone={store.timezone}
+            />
+          </Suspense>
+        )}
+        {focusOpen && (
+          <Suspense fallback={null}>
+            <FocusMode
+              open={focusOpen}
+              onClose={() => setFocusOpen(false)}
+              tasks={store.todayTasks}
+              onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+            />
+          </Suspense>
+        )}
       </div>
     </>
   );
