@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { TaskTag, TaskPriority, TaskTemplate } from "@/lib/types";
+import { TaskTag, TaskPriority, TaskTemplate, RecurrenceRule } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { VoiceRecorderButton } from "./VoiceRecorderButton";
-import { Plus, X, Copy, Trash2, Repeat } from "lucide-react";
+import { RecurrencePicker, getRepeatMode } from "./RecurrencePicker";
+import { Plus, X, Copy, Trash2 } from "lucide-react";
 
 interface AreaOption { id: string; name: string; icon: string; }
 
@@ -22,8 +23,6 @@ interface Props {
   onDeleteTemplate?: (id: string) => void;
 }
 
-type RepeatMode = "none" | "daily" | "weekly" | "monthly";
-const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags, onSubmit, onAddTag, onDeleteTag, templates = [], onDeleteTemplate }: Props) {
   const [areaId, setAreaId] = useState(defaultAreaId || areas[0]?.id || "");
