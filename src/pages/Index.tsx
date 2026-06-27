@@ -341,7 +341,7 @@ const AppContent = () => {
           )}
           {activeTab === "tools" && (
             <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
-              <ImageConverter />
+              <ToolsPage />
             </Suspense>
           )}
         </main>
