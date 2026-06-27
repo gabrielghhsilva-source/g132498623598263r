@@ -643,6 +643,7 @@ function makeRecurringDoneCopy(source: Task, completedDate: string): Task {
     id: crypto.randomUUID(),
     status: "done",
     dueDate: completedDate,
+    completedAt: new Date().toISOString(),
     recurrenceSourceId: source.id,
     googleEventId: undefined,
     googleCalendarId: undefined,
