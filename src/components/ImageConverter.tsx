@@ -17,6 +17,7 @@ interface ConvertedItem {
   convertedUrl: string;
   outFormat: OutFormat;
   previewUrl: string;
+  blob: Blob;
 }
 
 const FORMAT_LABEL: Record<OutFormat, string> = {
