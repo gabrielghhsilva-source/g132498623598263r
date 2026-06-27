@@ -4,6 +4,7 @@ import { isTaskOverdue } from "@/lib/timeUtils";
 import { TagBadges } from "./TagPicker";
 import { PriorityBadge } from "./PrioritySelect";
 import { SubtaskProgressBadge } from "./SubtaskList";
+import { useSwipe } from "@/hooks/useSwipe";
 import { MessageSquare, Calendar, Clock, Repeat, Check } from "lucide-react";
 
 const STATUS_DOT: Record<TaskStatus, string> = {
