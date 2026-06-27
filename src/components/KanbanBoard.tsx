@@ -420,6 +420,27 @@ export function KanbanBoard(props: Props) {
           onDelete={() => props.onDeleteTask(selectedAreaId, selectedTask.id)}
         />
       )}
+
+      <BulkActionBar
+        count={selectedMap.size}
+        areas={areas}
+        onClear={clearSelection}
+        onComplete={() => {
+          selectedMap.forEach((areaId, taskId) => props.onUpdateStatus(areaId, taskId, "done"));
+          clearSelection();
+        }}
+        onDelete={() => {
+          if (!window.confirm(`Excluir ${selectedMap.size} tarefa(s)?`)) return;
+          selectedMap.forEach((areaId, taskId) => props.onDeleteTask(areaId, taskId));
+          clearSelection();
+        }}
+        onMoveTo={(toAreaId) => {
+          selectedMap.forEach((fromAreaId, taskId) => {
+            if (fromAreaId !== toAreaId) props.onMoveTask(fromAreaId, toAreaId, taskId);
+          });
+          clearSelection();
+        }}
+      />
     </div>
   );
 }
