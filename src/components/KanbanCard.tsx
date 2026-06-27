@@ -181,6 +181,7 @@ function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectio
           <span>{task.status === "todo" ? "A fazer" : task.status === "in-progress" ? "Em progresso" : "Feita"}</span>
         </div>
       </div>
+      </div>
     </div>
   );
 }
