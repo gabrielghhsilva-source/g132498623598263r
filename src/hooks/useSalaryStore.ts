@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { SalaryData, ManualExpense, ManualIncome, DEFAULT_SALARY_DATA } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
+import { categorize, ExpenseCategory } from "@/lib/categorize";
 
 function loadSecure<T>(key: string, fallback: T): T {
   try {
