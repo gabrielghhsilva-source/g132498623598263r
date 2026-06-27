@@ -335,16 +335,27 @@ export function ImageConverter() {
 
       {items.length > 0 && (
         <div className="bg-card border border-border rounded-lg shadow-sm">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
             <h3 className="text-sm font-bold uppercase tracking-wide text-foreground/80">
               Resultados ({items.length})
             </h3>
-            <button
-              onClick={clearAll}
-              className="text-xs font-semibold text-muted-foreground hover:text-destructive"
-            >
-              Limpar tudo
-            </button>
+            <div className="flex items-center gap-2">
+              {items.length > 1 && (
+                <button
+                  onClick={downloadZip}
+                  className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90"
+                  title="Baixar todas em ZIP"
+                >
+                  <Archive className="w-3.5 h-3.5" /> ZIP
+                </button>
+              )}
+              <button
+                onClick={clearAll}
+                className="text-xs font-semibold text-muted-foreground hover:text-destructive"
+              >
+                Limpar
+              </button>
+            </div>
           </div>
           <div className="divide-y divide-border">
             {items.map(it => {
