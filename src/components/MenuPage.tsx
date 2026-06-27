@@ -219,22 +219,33 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               onAddContribution={invest.addContribution}
             />
           )}
+          {finTab === "salary" && (
+            <CategoryBreakdown expenses={salary.data.manualExpenses} />
+          )}
           {finTab === "investments" && (
-            <InvestmentDashboard
-              areas={invest.areas}
-              onAddArea={invest.addArea}
-              onDeleteArea={invest.deleteArea}
-              onAddInvestment={invest.addInvestment}
-              onDeleteInvestment={invest.deleteInvestment}
-              onAddContribution={invest.addContribution}
-              onAddBulkContributions={invest.addBulkContributions}
-              onAddGoal={invest.addGoal}
-              onDeleteGoal={invest.deleteGoal}
-              onAddDebt={invest.addDebt}
-              onDeleteDebt={invest.deleteDebt}
-              onSetMonthlyOverride={invest.setMonthlyOverride}
-              onCreateTaskReminder={onCreateTaskReminder}
-            />
+            <>
+              <PatrimonyOverview
+                areas={invest.areas}
+                onConfirmContribution={(areaId, investmentId, date, amount) =>
+                  invest.addContribution(areaId, investmentId, date, amount)
+                }
+              />
+              <InvestmentDashboard
+                areas={invest.areas}
+                onAddArea={invest.addArea}
+                onDeleteArea={invest.deleteArea}
+                onAddInvestment={invest.addInvestment}
+                onDeleteInvestment={invest.deleteInvestment}
+                onAddContribution={invest.addContribution}
+                onAddBulkContributions={invest.addBulkContributions}
+                onAddGoal={invest.addGoal}
+                onDeleteGoal={invest.deleteGoal}
+                onAddDebt={invest.addDebt}
+                onDeleteDebt={invest.deleteDebt}
+                onSetMonthlyOverride={invest.setMonthlyOverride}
+                onCreateTaskReminder={onCreateTaskReminder}
+              />
+            </>
           )}
           {finTab === "stocks" && (
             <StockMarket
