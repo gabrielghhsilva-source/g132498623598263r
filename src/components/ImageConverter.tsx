@@ -271,6 +271,28 @@ export function ImageConverter() {
               className="mt-3 w-full accent-primary disabled:opacity-50"
             />
           </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex justify-between">
+              <span>Redimensionar (lado maior)</span>
+              <span className="tabular-nums text-foreground">
+                {maxDim === 0 ? "tamanho original" : `${maxDim}px`}
+              </span>
+            </label>
+            <div className="mt-2 grid grid-cols-5 gap-1.5">
+              {[0, 512, 1024, 1920, 2560].map(v => (
+                <button
+                  key={v}
+                  onClick={() => setMaxDim(v)}
+                  className={`px-2 py-1.5 rounded text-xs font-semibold border ${
+                    maxDim === v ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-accent"
+                  }`}
+                >
+                  {v === 0 ? "Original" : `${v}px`}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div
