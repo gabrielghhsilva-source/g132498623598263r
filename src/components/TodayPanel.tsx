@@ -568,6 +568,7 @@ function ListRow({
           {task.dueTime || "--:--"}
         </button>
       )}
+      </div>
     </div>
   );
 }
