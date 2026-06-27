@@ -80,7 +80,7 @@ async function detectSupport(): Promise<Record<OutFormat, boolean>> {
   return result;
 }
 
-async function convertFile(file: File, outFormat: OutFormat, quality: number): Promise<Blob> {
+async function convertFile(file: File, outFormat: OutFormat, quality: number, maxDim: number): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -89,16 +89,23 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number): P
       im.onerror = reject;
       im.src = url;
     });
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (maxDim > 0 && (w > maxDim || h > maxDim)) {
+      const ratio = w / h;
+      if (w >= h) { w = maxDim; h = Math.round(maxDim / ratio); }
+      else { h = maxDim; w = Math.round(maxDim * ratio); }
+    }
     const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas indisponível");
     if (outFormat === "image/jpeg" || outFormat === "image/bmp") {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, 0, 0, w, h);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("Falha ao converter (formato não suportado pelo navegador)"))),
