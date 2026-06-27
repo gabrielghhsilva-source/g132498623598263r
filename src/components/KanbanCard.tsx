@@ -56,6 +56,22 @@ function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectio
         isDragging ? "opacity-40 scale-95" : ""
       } ${isSelected ? "ring-2 ring-primary border-primary" : task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
     >
+      {/* Selection checkbox: visible on hover/selection */}
+      {onToggleSelect && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(true); }}
+          className={`absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full border flex items-center justify-center transition-opacity ${
+            isSelected
+              ? "bg-primary border-primary opacity-100"
+              : "bg-card border-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:border-primary"
+          }`}
+          title={isSelected ? "Desmarcar" : "Selecionar (ou shift+click no card)"}
+          aria-label="Selecionar tarefa"
+        >
+          {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+        </button>
+      )}
       {/* Priority strip on the left */}
       {priority !== "none" && (
         <div
