@@ -26,8 +26,7 @@ export function useSalaryStore() {
     setData(prev => ({ ...prev, salary }));
   }, []);
 
-  const addExpense = useCallback((name: string, amount: number, recurring = false, category?: import("@/lib/categorize").ExpenseCategory) => {
-    const { categorize } = require("@/lib/categorize") as typeof import("@/lib/categorize");
+  const addExpense = useCallback((name: string, amount: number, recurring = false, category?: ExpenseCategory) => {
     const cat = category ?? categorize(name);
     const expense: ManualExpense = { id: crypto.randomUUID(), name, amount, recurring, category: cat };
     setData(prev => ({
