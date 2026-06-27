@@ -119,6 +119,8 @@ const AppContent = () => {
   const [voiceTaskOpen, setVoiceTaskOpen] = useState(false);
   const [imageTaskOpen, setImageTaskOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (sessionStorage.getItem("preloader-shown")) return true;
     return false;
