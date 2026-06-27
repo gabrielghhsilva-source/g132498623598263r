@@ -238,6 +238,8 @@ export interface ManualExpense {
   name: string;
   amount: number;
   recurring?: boolean;
+  /** Categoria automática ou manual (ver lib/categorize.ts). */
+  category?: import("./categorize").ExpenseCategory;
 }
 
 export interface ManualIncome {
