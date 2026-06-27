@@ -185,6 +185,8 @@ export function ImageConverter() {
   const clearAll = () => {
     items.forEach(it => URL.revokeObjectURL(it.convertedUrl));
     setItems([]);
+  };
+
   const downloadZip = async () => {
     if (items.length === 0) return;
     const zip = new JSZip();
