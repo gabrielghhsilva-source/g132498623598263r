@@ -33,6 +33,12 @@ function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectio
   const priority = task.priority || "none";
   const priorityColor = PRIORITY_META[priority].color;
 
+  // Swipe (touch): direita = concluir/desfazer
+  const swipe = useSwipe({
+    onSwipeRight: onQuickToggleDone,
+    disabled: selectionActive,
+  });
+
   const handleCardClick = (e: React.MouseEvent) => {
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
       e.preventDefault();
@@ -46,17 +52,35 @@ function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectio
     onClick();
   };
 
+  const swipeActive = Math.abs(swipe.offset) > 4;
+
   return (
-    <div
-      data-kanban-card
-      draggable={!selectionActive}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={handleCardClick}
-      className={`group relative fut-surface rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
-        isDragging ? "opacity-40 scale-95" : ""
-      } ${isSelected ? "ring-2 ring-primary border-primary" : task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
-    >
+    <div className="relative touch-pan-y select-none">
+      {/* Pista de fundo do swipe (esquerda = ação direita, etc) */}
+      {swipeActive && (
+        <div className="absolute inset-0 rounded-lg flex items-center justify-start px-3 pointer-events-none">
+          {swipe.offset > 0 && (
+            <div className="flex items-center gap-1 text-success font-semibold text-xs">
+              <Check className="w-4 h-4" /> {task.status === "done" ? "Reabrir" : "Concluir"}
+            </div>
+          )}
+        </div>
+      )}
+      <div
+        data-kanban-card
+        draggable={!selectionActive}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onClick={handleCardClick}
+        onPointerDown={swipe.onPointerDown}
+        onPointerMove={swipe.onPointerMove}
+        onPointerUp={swipe.onPointerUp}
+        onPointerCancel={swipe.onPointerCancel}
+        style={swipeActive ? { transform: `translateX(${swipe.offset}px)`, transition: "none" } : undefined}
+        className={`group relative fut-surface rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
+          isDragging ? "opacity-40 scale-95" : ""
+        } ${isSelected ? "ring-2 ring-primary border-primary" : task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
+      >
       {/* Selection checkbox: visible on hover/selection */}
       {onToggleSelect && (
         <button
