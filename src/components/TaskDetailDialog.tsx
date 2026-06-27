@@ -121,53 +121,14 @@ export function TaskDetailDialog(props: Props) {
           </div>
 
           {/* Recurrence */}
-          <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
-            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Repeat className="w-3.5 h-3.5" /> Repetição na agenda
-            </label>
-            {isRecurringHistoryCopy ? (
-              <p className="text-[11px] text-muted-foreground">
-                Esta é uma cópia já concluída de uma tarefa repetitiva. Edite a tarefa principal na agenda para mudar a repetição.
-              </p>
-            ) : (
-              <>
-                <select
-                  value={repeatMode}
-                  onChange={e => updateRepeatMode(e.target.value as RepeatMode)}
-                  className="w-full bg-background rounded-lg px-3 py-2 text-sm outline-none border border-border"
-                >
-                  <option value="none">Não repetir</option>
-                  <option value="daily">Todos os dias</option>
-                  <option value="weekly">Dias da semana</option>
-                  <option value="monthly">Todo mês</option>
-                </select>
-                {repeatMode === "weekly" && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {DAY_LABELS.map((label, index) => {
-                      const active = repeatDays.includes(index);
-                      return (
-                        <button
-                          key={label}
-                          type="button"
-                          onClick={() => toggleRepeatDay(index)}
-                          className={`px-2 py-1 rounded-full text-[11px] border transition-colors ${
-                            active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {repeatMode !== "none" && (
-                  <p className="text-[10px] text-muted-foreground">
-                    Ao concluir, uma cópia vai para Prontas e a tarefa original continua na agenda na próxima data.
-                  </p>
-                )}
-              </>
-            )}
-          </div>
+          <RecurrencePicker
+            rule={task.recurrence}
+            sourceDate={sourceDate}
+            onChange={props.onUpdateRecurrence}
+            disabled={isRecurringHistoryCopy}
+            disabledReason="Esta é uma cópia já concluída de uma tarefa repetitiva. Edite a tarefa principal na agenda para mudar a repetição."
+          />
+
 
           {/* Tags */}
           <div>
@@ -347,18 +308,5 @@ export function TaskDetailDialog(props: Props) {
   );
 }
 
-function getRepeatMode(rule?: RecurrenceRule): RepeatMode {
-  if (!rule) return "none";
-  if (rule.type === "weekly" && (rule.daysOfWeek || []).length === 7) return "daily";
-  if (rule.type === "weekly") return "weekly";
-  if (rule.type === "monthly") return "monthly";
-  return "none";
-}
 
-function buildRecurrence(mode: RepeatMode, days: number[], dueDate: string): RecurrenceRule | undefined {
-  const base = new Date((dueDate || new Date().toISOString().split("T")[0]) + "T12:00:00");
-  if (mode === "daily") return { type: "weekly", daysOfWeek: [0, 1, 2, 3, 4, 5, 6], advanceDays: 0 };
-  if (mode === "weekly") return { type: "weekly", daysOfWeek: days.length ? days : [base.getDay()], advanceDays: 0 };
-  if (mode === "monthly") return { type: "monthly", dayOfMonth: base.getDate(), advanceDays: 0 };
-  return undefined;
-}
+
