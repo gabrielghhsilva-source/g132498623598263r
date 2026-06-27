@@ -5,7 +5,7 @@ import { AddTaskInput } from "@/lib/taskOperations";
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { VoiceRecorderButton } from "./VoiceRecorderButton";
-import { RecurrencePicker, getRepeatMode } from "./RecurrencePicker";
+import { RecurrencePicker } from "./RecurrencePicker";
 import { Plus, X, Copy, Trash2 } from "lucide-react";
 
 interface AreaOption { id: string; name: string; icon: string; }
