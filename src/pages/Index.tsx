@@ -433,6 +433,28 @@ const AppContent = () => {
           className="hidden"
           onChange={handleImportFile}
         />
+
+        {statsOpen && (
+          <Suspense fallback={null}>
+            <StatsDialog
+              open={statsOpen}
+              onOpenChange={setStatsOpen}
+              areas={store.areas}
+              tags={store.tags}
+              timezone={store.timezone}
+            />
+          </Suspense>
+        )}
+        {focusOpen && (
+          <Suspense fallback={null}>
+            <FocusMode
+              open={focusOpen}
+              onClose={() => setFocusOpen(false)}
+              tasks={store.todayTasks}
+              onMarkDone={(areaId, taskId) => store.updateTaskStatus(areaId, taskId, "done")}
+            />
+          </Suspense>
+        )}
       </div>
     </>
   );
