@@ -220,7 +220,23 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
             />
           )}
           {finTab === "salary" && (
-            <CategoryBreakdown expenses={salary.data.manualExpenses} />
+            <>
+              <SalaryPanel
+                salary={salary.data.salary}
+                manualExpenses={salary.data.manualExpenses}
+                manualIncomes={salary.data.manualIncomes || []}
+                investmentAreas={invest.areas}
+                stockPositions={stocks.positions}
+                onSetSalary={salary.setSalary}
+                onAddExpense={salary.addExpense}
+                onDeleteExpense={salary.deleteExpense}
+                onAddIncome={salary.addIncome}
+                onDeleteIncome={salary.deleteIncome}
+                onAddInvestment={invest.addInvestment}
+                onAddContribution={invest.addContribution}
+              />
+              <CategoryBreakdown expenses={salary.data.manualExpenses} />
+            </>
           )}
           {finTab === "investments" && (
             <>
