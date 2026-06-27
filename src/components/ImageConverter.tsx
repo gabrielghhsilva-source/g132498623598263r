@@ -185,7 +185,30 @@ export function ImageConverter() {
   const clearAll = () => {
     items.forEach(it => URL.revokeObjectURL(it.convertedUrl));
     setItems([]);
+  const downloadZip = async () => {
+    if (items.length === 0) return;
+    const zip = new JSZip();
+    const seen = new Map<string, number>();
+    for (const it of items) {
+      const base = it.originalName.replace(/\.[^.]+$/, "");
+      const ext = FORMAT_EXT[it.outFormat];
+      let name = `${base}.${ext}`;
+      const used = seen.get(name) || 0;
+      if (used > 0) name = `${base}-${used}.${ext}`;
+      seen.set(`${base}.${ext}`, used + 1);
+      zip.file(name, it.blob);
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `imagens-convertidas-${Date.now()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+
 
   return (
     <div className="space-y-4">
