@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Task } from "@/lib/types";
+import { useSwipe } from "@/hooks/useSwipe";
 import {
   Bell, Check, Clock3, ListChecks, CalendarClock, CalendarDays,
   ChevronLeft, Play, Pause, RotateCcw, Timer, Plus, Minus, X, GripVertical,
