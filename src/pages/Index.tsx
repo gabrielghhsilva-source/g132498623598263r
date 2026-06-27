@@ -220,7 +220,21 @@ const AppContent = () => {
               <ActiveIcon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 ${tabMeta[activeTab].color}`} />
               <h1 className="text-base sm:text-xl font-bold tracking-tight truncate uppercase">{tabMeta[activeTab].label}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={() => setFocusOpen(true)}
+                title="Modo Foco (F)"
+                className="p-2 rounded-md hover:bg-accent text-primary transition-colors"
+              >
+                <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
+                onClick={() => setStatsOpen(true)}
+                title="Estatísticas"
+                className="p-2 rounded-md hover:bg-accent text-primary transition-colors"
+              >
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
               <button
                 onClick={() => setImageTaskOpen(true)}
                 title="Imagem → Tarefas (I)"
