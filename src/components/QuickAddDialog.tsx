@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { TaskTag, TaskPriority, TaskTemplate } from "@/lib/types";
+import { TaskTag, TaskPriority, TaskTemplate, RecurrenceRule } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { VoiceRecorderButton } from "./VoiceRecorderButton";
-import { Plus, X, Copy, Trash2, Repeat } from "lucide-react";
+import { RecurrencePicker } from "./RecurrencePicker";
+import { Plus, X, Copy, Trash2 } from "lucide-react";
 
 interface AreaOption { id: string; name: string; icon: string; }
 
@@ -22,8 +23,6 @@ interface Props {
   onDeleteTemplate?: (id: string) => void;
 }
 
-type RepeatMode = "none" | "daily" | "weekly" | "monthly";
-const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags, onSubmit, onAddTag, onDeleteTag, templates = [], onDeleteTemplate }: Props) {
   const [areaId, setAreaId] = useState(defaultAreaId || areas[0]?.id || "");
@@ -36,8 +35,7 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
   const [priority, setPriority] = useState<TaskPriority>("none");
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [subtasksText, setSubtasksText] = useState("");
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
-  const [repeatDays, setRepeatDays] = useState<number[]>([]);
+  const [recurrence, setRecurrence] = useState<RecurrenceRule | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
@@ -51,8 +49,7 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
       setPriority("none");
       setTagIds([]);
       setSubtasksText("");
-      setRepeatMode("none");
-      setRepeatDays([]);
+      setRecurrence(undefined);
     }
   }, [open, defaultAreaId, areas]);
 
@@ -65,18 +62,9 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
     setPriority(tpl.priority || "none");
     setTagIds([...(tpl.tagIds || [])]);
     setSubtasksText((tpl.subtasks || []).map(s => s.text).join("\n"));
-    if (tpl.recurrence?.type === "weekly") {
-      const days = tpl.recurrence.daysOfWeek || [];
-      setRepeatMode(days.length === 7 ? "daily" : "weekly");
-      setRepeatDays(days);
-    } else if (tpl.recurrence?.type === "monthly") {
-      setRepeatMode("monthly");
-      setRepeatDays([]);
-    } else {
-      setRepeatMode("none");
-      setRepeatDays([]);
-    }
+    setRecurrence(tpl.recurrence);
   };
+
 
   const handleSubmit = () => {
     if (!text.trim() || !areaId) return;
@@ -91,7 +79,7 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
       dueTime: dueTime || undefined,
       endDate: endDate || undefined,
       endTime: endTime || undefined,
-      recurrence: buildRecurrence(repeatMode, repeatDays, dueDate),
+      recurrence,
       priority,
       tagIds,
       subtasks,
@@ -246,45 +234,12 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
             <PrioritySelect value={priority} onChange={setPriority} />
           </div>
 
-          <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
-            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Repeat className="w-3.5 h-3.5" /> Repetição na agenda
-            </label>
-            <select
-              value={repeatMode}
-              onChange={e => setRepeatMode(e.target.value as RepeatMode)}
-              className="w-full bg-background rounded-lg px-3 py-2 text-sm outline-none border border-border"
-            >
-              <option value="none">Não repetir</option>
-              <option value="daily">Todos os dias</option>
-              <option value="weekly">Dias da semana</option>
-              <option value="monthly">Todo mês</option>
-            </select>
-            {repeatMode === "weekly" && (
-              <div className="flex flex-wrap gap-1.5">
-                {DAY_LABELS.map((label, index) => {
-                  const active = repeatDays.includes(index);
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => setRepeatDays(prev => active ? prev.filter(d => d !== index) : [...prev, index].sort())}
-                      className={`px-2 py-1 rounded-full text-[11px] border transition-colors ${
-                        active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {repeatMode !== "none" && (
-              <p className="text-[10px] text-muted-foreground">
-                A tarefa fica sempre na agenda na próxima data. Ao concluir, uma cópia vai para Prontas e a original avança automaticamente.
-              </p>
-            )}
-          </div>
+          <RecurrencePicker
+            rule={recurrence}
+            sourceDate={dueDate || new Date().toISOString().split("T")[0]}
+            onChange={setRecurrence}
+          />
+
 
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Etiquetas</label>
@@ -331,9 +286,5 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
   );
 }
 
-function buildRecurrence(mode: RepeatMode, days: number[], dueDate: string): AddTaskInput["recurrence"] {
-  if (mode === "daily") return { type: "weekly", daysOfWeek: [0, 1, 2, 3, 4, 5, 6], advanceDays: 0 };
-  if (mode === "weekly") return { type: "weekly", daysOfWeek: days.length ? days : [new Date((dueDate || new Date().toISOString().split("T")[0]) + "T12:00:00").getDay()], advanceDays: 0 };
-  if (mode === "monthly") return { type: "monthly", dayOfMonth: new Date((dueDate || new Date().toISOString().split("T")[0]) + "T12:00:00").getDate(), advanceDays: 0 };
-  return undefined;
-}
+
+

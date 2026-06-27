@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Task, TaskArea, TaskTag, TaskStatus, TaskTextStyle, TaskPriority, TaskTemplate, RecurrenceRule } from "@/lib/types";
 import { AddTaskInput } from "@/lib/taskOperations";
 import { KanbanColumn } from "./KanbanColumn";
@@ -6,6 +6,7 @@ import { DoneColumn, DONE_COLUMN_ID } from "./DoneColumn";
 import { MonthCalendarView } from "./MonthCalendarView";
 import { TaskDetailDialog } from "./TaskDetailDialog";
 import { QuickAddDialog } from "./QuickAddDialog";
+import { BulkActionBar } from "./BulkActionBar";
 import { Plus, Keyboard, Columns3, CalendarDays } from "lucide-react";
 
 const DEFAULT_AREA_IDS = ["work", "games", "leisure", "home", "investments"];
@@ -55,6 +56,31 @@ export function KanbanBoard(props: Props) {
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [boardView, setBoardView] = useState<BoardView>(() => (localStorage.getItem("tasks-board-view") as BoardView) || "kanban");
+
+  // Bulk selection: taskId -> areaId
+  const [selectedMap, setSelectedMap] = useState<Map<string, string>>(new Map());
+  const selectedIds = useMemo(() => new Set(selectedMap.keys()), [selectedMap]);
+  const selectionActive = selectedMap.size > 0;
+
+  const toggleSelect = useCallback((areaId: string, taskId: string) => {
+    setSelectedMap(prev => {
+      const next = new Map(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.set(taskId, areaId);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedMap(new Map()), []);
+
+  useEffect(() => {
+    if (!selectionActive) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") clearSelection();
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [selectionActive, clearSelection]);
 
   useEffect(() => {
     try { localStorage.setItem("tasks-board-view", boardView); } catch {}
@@ -306,6 +332,9 @@ export function KanbanBoard(props: Props) {
                 isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
                 draggingTaskId={draggingTaskId}
                 dragOverColumnId={dragOverColumnId}
+                selectedIds={selectedIds}
+                selectionActive={selectionActive}
+                onToggleSelect={toggleSelect}
                 onTaskClick={(t) => openTaskDetail(area.id, t)}
                 onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
                 onQuickToggleDone={(taskId) => {
@@ -391,6 +420,27 @@ export function KanbanBoard(props: Props) {
           onDelete={() => props.onDeleteTask(selectedAreaId, selectedTask.id)}
         />
       )}
+
+      <BulkActionBar
+        count={selectedMap.size}
+        areas={areas}
+        onClear={clearSelection}
+        onComplete={() => {
+          selectedMap.forEach((areaId, taskId) => props.onUpdateStatus(areaId, taskId, "done"));
+          clearSelection();
+        }}
+        onDelete={() => {
+          if (!window.confirm(`Excluir ${selectedMap.size} tarefa(s)?`)) return;
+          selectedMap.forEach((areaId, taskId) => props.onDeleteTask(areaId, taskId));
+          clearSelection();
+        }}
+        onMoveTo={(toAreaId) => {
+          selectedMap.forEach((fromAreaId, taskId) => {
+            if (fromAreaId !== toAreaId) props.onMoveTask(fromAreaId, toAreaId, taskId);
+          });
+          clearSelection();
+        }}
+      />
     </div>
   );
 }

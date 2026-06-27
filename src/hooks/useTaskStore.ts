@@ -723,7 +723,23 @@ function getNextOccurrenceDate(rule: RecurrenceRule, baseDate: string, includeBa
 
 function matchesRecurrenceDate(rule: RecurrenceRule, date: Date): boolean {
   if (rule.type === "weekly") return !!rule.daysOfWeek?.includes(date.getDay());
-  if (rule.type === "monthly") return rule.dayOfMonth === date.getDate();
+  if (rule.type === "monthly") {
+    const mode = rule.monthlyMode || "day-of-month";
+    if (mode === "last-day") {
+      const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      return date.getDate() === last;
+    }
+    if (mode === "nth-weekday" && rule.nthWeek && rule.nthWeekday !== undefined) {
+      if (date.getDay() !== rule.nthWeekday) return false;
+      if (rule.nthWeek === -1) {
+        const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 7);
+        return next.getMonth() !== date.getMonth();
+      }
+      const nth = Math.ceil(date.getDate() / 7);
+      return nth === rule.nthWeek;
+    }
+    return rule.dayOfMonth === date.getDate();
+  }
   return false;
 }
 

@@ -17,29 +17,61 @@ interface Props {
   tags: TaskTag[];
   timezone: string;
   isDragging?: boolean;
+  isSelected?: boolean;
+  selectionActive?: boolean;
   onClick: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
   onQuickToggleDone: () => void;
+  onToggleSelect?: (additive: boolean) => void;
 }
 
-function KanbanCardImpl({ task, tags, timezone, isDragging, onClick, onDragStart, onDragEnd, onQuickToggleDone }: Props) {
+function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectionActive, onClick, onDragStart, onDragEnd, onQuickToggleDone, onToggleSelect }: Props) {
   const isOverdue = isTaskOverdue(task.dueDate, task.dueTime, task.status, timezone);
   const taskTags = tags.filter(t => task.tagIds?.includes(t.id));
   const priority = task.priority || "none";
   const priorityColor = PRIORITY_META[priority].color;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      onToggleSelect?.(true);
+      return;
+    }
+    if (selectionActive) {
+      onToggleSelect?.(true);
+      return;
+    }
+    onClick();
+  };
+
   return (
     <div
       data-kanban-card
-      draggable
+      draggable={!selectionActive}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onClick={onClick}
+      onClick={handleCardClick}
       className={`group relative fut-surface rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
         isDragging ? "opacity-40 scale-95" : ""
-      } ${task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
+      } ${isSelected ? "ring-2 ring-primary border-primary" : task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
     >
+      {/* Selection checkbox: visible on hover/selection */}
+      {onToggleSelect && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(true); }}
+          className={`absolute top-1.5 right-1.5 z-10 w-4 h-4 rounded-full border flex items-center justify-center transition-opacity ${
+            isSelected
+              ? "bg-primary border-primary opacity-100"
+              : "bg-card border-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:border-primary"
+          }`}
+          title={isSelected ? "Desmarcar" : "Selecionar (ou shift+click no card)"}
+          aria-label="Selecionar tarefa"
+        >
+          {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+        </button>
+      )}
       {/* Priority strip on the left */}
       {priority !== "none" && (
         <div

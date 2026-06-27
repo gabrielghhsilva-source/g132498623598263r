@@ -70,14 +70,18 @@ const DAY_MAP = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
 export function recurrenceToRRule(rule: RecurrenceRule): string {
   if (rule.type === "weekly" && rule.daysOfWeek?.length) {
-    // Se cobre todos os 7 dias → DAILY (mais limpo na agenda)
     const days = [...rule.daysOfWeek].sort();
     if (days.length === 7) return "RRULE:FREQ=DAILY";
     const byday = days.map(d => DAY_MAP[d]).join(",");
     return `RRULE:FREQ=WEEKLY;BYDAY=${byday}`;
   }
-  if (rule.type === "monthly" && rule.dayOfMonth) {
-    return `RRULE:FREQ=MONTHLY;BYMONTHDAY=${rule.dayOfMonth}`;
+  if (rule.type === "monthly") {
+    const mode = rule.monthlyMode || "day-of-month";
+    if (mode === "last-day") return "RRULE:FREQ=MONTHLY;BYMONTHDAY=-1";
+    if (mode === "nth-weekday" && rule.nthWeek && rule.nthWeekday !== undefined) {
+      return `RRULE:FREQ=MONTHLY;BYDAY=${rule.nthWeek}${DAY_MAP[rule.nthWeekday]}`;
+    }
+    if (rule.dayOfMonth) return `RRULE:FREQ=MONTHLY;BYMONTHDAY=${rule.dayOfMonth}`;
   }
   return "";
 }
@@ -103,8 +107,20 @@ export function rruleToRecurrence(rrule?: string): RecurrenceRule | undefined {
     return { type: "weekly", daysOfWeek, advanceDays: 0 };
   }
   if (freq === "MONTHLY") {
+    if (parts.BYMONTHDAY === "-1") {
+      return { type: "monthly", monthlyMode: "last-day", advanceDays: 0 };
+    }
+    if (parts.BYDAY) {
+      const m = parts.BYDAY.match(/^(-?\d+)([A-Z]{2})$/);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        const wd = DAY_MAP.indexOf(m[2]);
+        const nthWeek = (n === -1 ? -1 : Math.max(1, Math.min(4, n))) as 1 | 2 | 3 | 4 | -1;
+        if (wd >= 0) return { type: "monthly", monthlyMode: "nth-weekday", nthWeek, nthWeekday: wd, advanceDays: 0 };
+      }
+    }
     const day = parseInt(parts.BYMONTHDAY || "1", 10);
-    return { type: "monthly", dayOfMonth: day, advanceDays: 0 };
+    return { type: "monthly", monthlyMode: "day-of-month", dayOfMonth: day, advanceDays: 0 };
   }
   return undefined;
 }

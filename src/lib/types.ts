@@ -34,10 +34,20 @@ export interface Subtask {
   done: boolean;
 }
 
+export type MonthlyRecurrenceMode = "day-of-month" | "last-day" | "nth-weekday";
+
 export interface RecurrenceRule {
   type: "weekly" | "monthly";
+  /** Dias da semana (0 = dom). Para weekly. */
   daysOfWeek?: number[];
+  /** Para monthly em modo "day-of-month": dia 1..31. */
   dayOfMonth?: number;
+  /** Para monthly: como repete (default "day-of-month"). */
+  monthlyMode?: MonthlyRecurrenceMode;
+  /** Para monthly nth-weekday: 1=primeira, 2=segunda, 3=terceira, 4=quarta, -1=última. */
+  nthWeek?: 1 | 2 | 3 | 4 | -1;
+  /** Para monthly nth-weekday: dia da semana 0..6. */
+  nthWeekday?: number;
   advanceDays: number;
 }
 
