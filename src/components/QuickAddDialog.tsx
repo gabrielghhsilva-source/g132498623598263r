@@ -35,8 +35,7 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
   const [priority, setPriority] = useState<TaskPriority>("none");
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [subtasksText, setSubtasksText] = useState("");
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
-  const [repeatDays, setRepeatDays] = useState<number[]>([]);
+  const [recurrence, setRecurrence] = useState<RecurrenceRule | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
@@ -50,8 +49,7 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
       setPriority("none");
       setTagIds([]);
       setSubtasksText("");
-      setRepeatMode("none");
-      setRepeatDays([]);
+      setRecurrence(undefined);
     }
   }, [open, defaultAreaId, areas]);
 
@@ -64,18 +62,9 @@ export function QuickAddDialog({ open, onOpenChange, areas, defaultAreaId, tags,
     setPriority(tpl.priority || "none");
     setTagIds([...(tpl.tagIds || [])]);
     setSubtasksText((tpl.subtasks || []).map(s => s.text).join("\n"));
-    if (tpl.recurrence?.type === "weekly") {
-      const days = tpl.recurrence.daysOfWeek || [];
-      setRepeatMode(days.length === 7 ? "daily" : "weekly");
-      setRepeatDays(days);
-    } else if (tpl.recurrence?.type === "monthly") {
-      setRepeatMode("monthly");
-      setRepeatDays([]);
-    } else {
-      setRepeatMode("none");
-      setRepeatDays([]);
-    }
+    setRecurrence(tpl.recurrence);
   };
+
 
   const handleSubmit = () => {
     if (!text.trim() || !areaId) return;
