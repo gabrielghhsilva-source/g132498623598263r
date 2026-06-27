@@ -32,16 +32,29 @@ function KanbanCardImpl({ task, tags, timezone, isDragging, isSelected, selectio
   const priority = task.priority || "none";
   const priorityColor = PRIORITY_META[priority].color;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      onToggleSelect?.(true);
+      return;
+    }
+    if (selectionActive) {
+      onToggleSelect?.(true);
+      return;
+    }
+    onClick();
+  };
+
   return (
     <div
       data-kanban-card
-      draggable
+      draggable={!selectionActive}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onClick={onClick}
+      onClick={handleCardClick}
       className={`group relative fut-surface rounded-lg border bg-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${
         isDragging ? "opacity-40 scale-95" : ""
-      } ${task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
+      } ${isSelected ? "ring-2 ring-primary border-primary" : task.status === "done" ? "border-success/30" : isOverdue ? "border-destructive/40" : "border-border"}`}
     >
       {/* Priority strip on the left */}
       {priority !== "none" && (
