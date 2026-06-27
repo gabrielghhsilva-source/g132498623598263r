@@ -152,6 +152,7 @@ export function ImageConverter() {
             convertedUrl,
             outFormat,
             previewUrl: convertedUrl,
+            blob,
           });
         } catch (e) {
           console.error("Falha em", f.name, e);
