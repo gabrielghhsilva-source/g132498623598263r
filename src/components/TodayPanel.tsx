@@ -495,13 +495,35 @@ function ListRow({
   const [editingTime, setEditingTime] = useState(false);
   const [timeVal, setTimeVal] = useState(task.dueTime || "");
 
+  const swipe = useSwipe({
+    onSwipeRight: onMarkDone,
+    onSwipeLeft: onPostpone,
+  });
+  const swipeActive = Math.abs(swipe.offset) > 4;
+
   return (
-    <div
-      draggable
-      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", task.id); }}
-      className="group flex items-center gap-2 px-2 py-2 rounded-lg border border-border/60 hover:border-border bg-card/60 hover:bg-card transition-all"
-    >
-      <GripVertical className="w-3 h-3 text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab flex-shrink-0" />
+    <div className="relative touch-pan-y select-none">
+      {swipeActive && (
+        <div className="absolute inset-0 rounded-lg flex items-center justify-between px-3 text-[11px] font-semibold pointer-events-none">
+          {swipe.offset > 0 ? (
+            <span className="flex items-center gap-1 text-success"><Check className="w-3.5 h-3.5" /> Concluir</span>
+          ) : <span />}
+          {swipe.offset < 0 ? (
+            <span className="flex items-center gap-1 text-info ml-auto">Adiar →</span>
+          ) : <span />}
+        </div>
+      )}
+      <div
+        draggable
+        onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", task.id); }}
+        onPointerDown={swipe.onPointerDown}
+        onPointerMove={swipe.onPointerMove}
+        onPointerUp={swipe.onPointerUp}
+        onPointerCancel={swipe.onPointerCancel}
+        style={swipeActive ? { transform: `translateX(${swipe.offset}px)`, transition: "none" } : undefined}
+        className="group flex items-center gap-2 px-2 py-2 rounded-lg border border-border/60 hover:border-border bg-card/60 hover:bg-card transition-all"
+      >
+        <GripVertical className="w-3 h-3 text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab flex-shrink-0" />
       <button
         onClick={onMarkDone}
         className="w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary hover:bg-primary/10 flex items-center justify-center flex-shrink-0 transition-all"
