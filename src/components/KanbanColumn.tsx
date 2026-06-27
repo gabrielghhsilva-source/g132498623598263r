@@ -10,6 +10,9 @@ interface Props {
   isCustom: boolean;
   draggingTaskId: string | null;
   dragOverColumnId: string | null;
+  selectedIds?: Set<string>;
+  selectionActive?: boolean;
+  onToggleSelect?: (areaId: string, taskId: string) => void;
   onTaskClick: (task: Task) => void;
   onQuickAdd: (text: string) => void;
   onQuickToggleDone: (taskId: string) => void;
@@ -21,8 +24,8 @@ interface Props {
 }
 
 function KanbanColumnImpl({
-  area, tags, timezone, isCustom, draggingTaskId, dragOverColumnId,
-  onTaskClick, onQuickAdd, onQuickToggleDone, onDeleteArea,
+  area, tags, timezone, isCustom, draggingTaskId, dragOverColumnId, selectedIds, selectionActive,
+  onTaskClick, onQuickAdd, onQuickToggleDone, onToggleSelect, onDeleteArea,
   onDragStart, onDragEnd, onDragOverColumn, onDropOnColumn,
 }: Props) {
   const [adding, setAdding] = useState(false);
@@ -120,6 +123,8 @@ function KanbanColumnImpl({
             tags={tags}
             timezone={timezone}
             isDragging={draggingTaskId === task.id}
+            isSelected={selectedIds?.has(task.id)}
+            selectionActive={selectionActive}
             onClick={() => onTaskClick(task)}
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
@@ -128,6 +133,7 @@ function KanbanColumnImpl({
             }}
             onDragEnd={onDragEnd}
             onQuickToggleDone={() => onQuickToggleDone(task.id)}
+            onToggleSelect={onToggleSelect ? () => onToggleSelect(area.id, task.id) : undefined}
           />
         ))}
 
