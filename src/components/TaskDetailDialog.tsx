@@ -4,12 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { PrioritySelect } from "./PrioritySelect";
 import { TagPicker } from "./TagPicker";
 import { SubtaskList } from "./SubtaskList";
-import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Paintbrush, Move, Copy, Repeat } from "lucide-react";
+import { RecurrencePicker } from "./RecurrencePicker";
+import { Trash2, Calendar, Clock, MessageSquare, Send, X, Type, Paintbrush, Move, Copy } from "lucide-react";
 
 const SIZE_MAP = { sm: "text-sm", base: "text-base", lg: "text-lg", xl: "text-xl" };
 const WEIGHT_MAP = { light: "font-light", normal: "font-normal", medium: "font-medium", semibold: "font-semibold", bold: "font-bold" };
-const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-type RepeatMode = "none" | "daily" | "weekly" | "monthly";
 
 interface AreaOption { id: string; name: string; icon: string; }
 
@@ -54,21 +53,9 @@ export function TaskDetailDialog(props: Props) {
     setNewComment("");
   };
 
-  const repeatMode = getRepeatMode(task.recurrence);
-  const repeatDays = task.recurrence?.type === "weekly" ? (task.recurrence.daysOfWeek || []) : [];
   const sourceDate = task.dueDate || new Date().toISOString().split("T")[0];
   const isRecurringHistoryCopy = !!task.recurrenceSourceId;
 
-  const updateRepeatMode = (mode: RepeatMode) => {
-    props.onUpdateRecurrence(buildRecurrence(mode, repeatDays, sourceDate));
-  };
-
-  const toggleRepeatDay = (day: number) => {
-    const nextDays = repeatDays.includes(day)
-      ? repeatDays.filter(d => d !== day)
-      : [...repeatDays, day].sort();
-    props.onUpdateRecurrence(buildRecurrence("weekly", nextDays, sourceDate));
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
