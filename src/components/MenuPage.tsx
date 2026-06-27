@@ -17,6 +17,8 @@ import { StockMarket } from "@/components/StockMarket";
 import { SalaryPanel } from "@/components/SalaryPanel";
 import { DebtsPanel } from "@/components/DebtsPanel";
 import { FinancialCharts } from "@/components/FinancialCharts";
+import { CategoryBreakdown } from "@/components/CategoryBreakdown";
+import { PatrimonyOverview } from "@/components/PatrimonyOverview";
 import { useDebtStore } from "@/hooks/useDebtStore";
 
 interface Props {
@@ -217,22 +219,49 @@ export function MenuPage({ invest, stocks, salary, onCreateTaskReminder }: Props
               onAddContribution={invest.addContribution}
             />
           )}
+          {finTab === "salary" && (
+            <>
+              <SalaryPanel
+                salary={salary.data.salary}
+                manualExpenses={salary.data.manualExpenses}
+                manualIncomes={salary.data.manualIncomes || []}
+                investmentAreas={invest.areas}
+                stockPositions={stocks.positions}
+                onSetSalary={salary.setSalary}
+                onAddExpense={salary.addExpense}
+                onDeleteExpense={salary.deleteExpense}
+                onAddIncome={salary.addIncome}
+                onDeleteIncome={salary.deleteIncome}
+                onAddInvestment={invest.addInvestment}
+                onAddContribution={invest.addContribution}
+              />
+              <CategoryBreakdown expenses={salary.data.manualExpenses} />
+            </>
+          )}
           {finTab === "investments" && (
-            <InvestmentDashboard
-              areas={invest.areas}
-              onAddArea={invest.addArea}
-              onDeleteArea={invest.deleteArea}
-              onAddInvestment={invest.addInvestment}
-              onDeleteInvestment={invest.deleteInvestment}
-              onAddContribution={invest.addContribution}
-              onAddBulkContributions={invest.addBulkContributions}
-              onAddGoal={invest.addGoal}
-              onDeleteGoal={invest.deleteGoal}
-              onAddDebt={invest.addDebt}
-              onDeleteDebt={invest.deleteDebt}
-              onSetMonthlyOverride={invest.setMonthlyOverride}
-              onCreateTaskReminder={onCreateTaskReminder}
-            />
+            <>
+              <PatrimonyOverview
+                areas={invest.areas}
+                onConfirmContribution={(areaId, investmentId, date, amount) =>
+                  invest.addContribution(areaId, investmentId, date, amount)
+                }
+              />
+              <InvestmentDashboard
+                areas={invest.areas}
+                onAddArea={invest.addArea}
+                onDeleteArea={invest.deleteArea}
+                onAddInvestment={invest.addInvestment}
+                onDeleteInvestment={invest.deleteInvestment}
+                onAddContribution={invest.addContribution}
+                onAddBulkContributions={invest.addBulkContributions}
+                onAddGoal={invest.addGoal}
+                onDeleteGoal={invest.deleteGoal}
+                onAddDebt={invest.addDebt}
+                onDeleteDebt={invest.deleteDebt}
+                onSetMonthlyOverride={invest.setMonthlyOverride}
+                onCreateTaskReminder={onCreateTaskReminder}
+              />
+            </>
           )}
           {finTab === "stocks" && (
             <StockMarket

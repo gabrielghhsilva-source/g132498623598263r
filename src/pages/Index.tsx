@@ -21,7 +21,7 @@ import { VoiceTaskDialog } from "@/components/VoiceTaskDialog";
 import { ImageTaskDialog } from "@/components/ImageTaskDialog";
 import { ClipboardList, LayoutDashboard, ImageIcon, Wrench, BarChart3, Maximize2 } from "lucide-react";
 const MenuPage = lazy(() => import("@/components/MenuPage").then(m => ({ default: m.MenuPage })));
-const ImageConverter = lazy(() => import("@/components/ImageConverter").then(m => ({ default: m.ImageConverter })));
+const ToolsPage = lazy(() => import("@/components/ToolsPage").then(m => ({ default: m.ToolsPage })));
 const StatsDialog = lazy(() => import("@/components/StatsDialog").then(m => ({ default: m.StatsDialog })));
 const FocusMode = lazy(() => import("@/components/FocusMode").then(m => ({ default: m.FocusMode })));
 import { ElectronTitleBar } from "@/components/ElectronTitleBar";
@@ -341,7 +341,7 @@ const AppContent = () => {
           )}
           {activeTab === "tools" && (
             <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
-              <ImageConverter />
+              <ToolsPage />
             </Suspense>
           )}
         </main>

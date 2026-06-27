@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck } from "lucide-react";
+import JSZip from "jszip";
+import { Upload, Download, Image as ImageIcon, X, Loader2, ShieldCheck, Archive } from "lucide-react";
 
 type OutFormat =
   | "image/png"
@@ -16,6 +17,7 @@ interface ConvertedItem {
   convertedUrl: string;
   outFormat: OutFormat;
   previewUrl: string;
+  blob: Blob;
 }
 
 const FORMAT_LABEL: Record<OutFormat, string> = {
@@ -79,7 +81,7 @@ async function detectSupport(): Promise<Record<OutFormat, boolean>> {
   return result;
 }
 
-async function convertFile(file: File, outFormat: OutFormat, quality: number): Promise<Blob> {
+async function convertFile(file: File, outFormat: OutFormat, quality: number, maxDim: number): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -88,16 +90,23 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number): P
       im.onerror = reject;
       im.src = url;
     });
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (maxDim > 0 && (w > maxDim || h > maxDim)) {
+      const ratio = w / h;
+      if (w >= h) { w = maxDim; h = Math.round(maxDim / ratio); }
+      else { h = maxDim; w = Math.round(maxDim * ratio); }
+    }
     const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas indisponível");
     if (outFormat === "image/jpeg" || outFormat === "image/bmp") {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, 0, 0, w, h);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("Falha ao converter (formato não suportado pelo navegador)"))),
@@ -113,6 +122,7 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number): P
 export function ImageConverter() {
   const [outFormat, setOutFormat] = useState<OutFormat>("image/webp");
   const [quality, setQuality] = useState(0.9);
+  const [maxDim, setMaxDim] = useState(0); // 0 = sem redimensionar
   const [items, setItems] = useState<ConvertedItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -132,7 +142,7 @@ export function ImageConverter() {
       const out: ConvertedItem[] = [];
       for (const f of arr) {
         try {
-          const blob = await convertFile(f, outFormat, quality);
+          const blob = await convertFile(f, outFormat, quality, maxDim);
           const convertedUrl = URL.createObjectURL(blob);
           out.push({
             id: crypto.randomUUID(),
@@ -142,6 +152,7 @@ export function ImageConverter() {
             convertedUrl,
             outFormat,
             previewUrl: convertedUrl,
+            blob,
           });
         } catch (e) {
           console.error("Falha em", f.name, e);
@@ -175,6 +186,31 @@ export function ImageConverter() {
     items.forEach(it => URL.revokeObjectURL(it.convertedUrl));
     setItems([]);
   };
+
+  const downloadZip = async () => {
+    if (items.length === 0) return;
+    const zip = new JSZip();
+    const seen = new Map<string, number>();
+    for (const it of items) {
+      const base = it.originalName.replace(/\.[^.]+$/, "");
+      const ext = FORMAT_EXT[it.outFormat];
+      let name = `${base}.${ext}`;
+      const used = seen.get(name) || 0;
+      if (used > 0) name = `${base}-${used}.${ext}`;
+      seen.set(`${base}.${ext}`, used + 1);
+      zip.file(name, it.blob);
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `imagens-convertidas-${Date.now()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
 
   return (
     <div className="space-y-4">
@@ -235,6 +271,28 @@ export function ImageConverter() {
               className="mt-3 w-full accent-primary disabled:opacity-50"
             />
           </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex justify-between">
+              <span>Redimensionar (lado maior)</span>
+              <span className="tabular-nums text-foreground">
+                {maxDim === 0 ? "tamanho original" : `${maxDim}px`}
+              </span>
+            </label>
+            <div className="mt-2 grid grid-cols-5 gap-1.5">
+              {[0, 512, 1024, 1920, 2560].map(v => (
+                <button
+                  key={v}
+                  onClick={() => setMaxDim(v)}
+                  className={`px-2 py-1.5 rounded text-xs font-semibold border ${
+                    maxDim === v ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-accent"
+                  }`}
+                >
+                  {v === 0 ? "Original" : `${v}px`}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div
@@ -277,16 +335,27 @@ export function ImageConverter() {
 
       {items.length > 0 && (
         <div className="bg-card border border-border rounded-lg shadow-sm">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
             <h3 className="text-sm font-bold uppercase tracking-wide text-foreground/80">
               Resultados ({items.length})
             </h3>
-            <button
-              onClick={clearAll}
-              className="text-xs font-semibold text-muted-foreground hover:text-destructive"
-            >
-              Limpar tudo
-            </button>
+            <div className="flex items-center gap-2">
+              {items.length > 1 && (
+                <button
+                  onClick={downloadZip}
+                  className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90"
+                  title="Baixar todas em ZIP"
+                >
+                  <Archive className="w-3.5 h-3.5" /> ZIP
+                </button>
+              )}
+              <button
+                onClick={clearAll}
+                className="text-xs font-semibold text-muted-foreground hover:text-destructive"
+              >
+                Limpar
+              </button>
+            </div>
           </div>
           <div className="divide-y divide-border">
             {items.map(it => {

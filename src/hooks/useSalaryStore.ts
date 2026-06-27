@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { SalaryData, ManualExpense, ManualIncome, DEFAULT_SALARY_DATA } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/crypto";
+import { categorize, ExpenseCategory } from "@/lib/categorize";
 
 function loadSecure<T>(key: string, fallback: T): T {
   try {
@@ -25,8 +26,9 @@ export function useSalaryStore() {
     setData(prev => ({ ...prev, salary }));
   }, []);
 
-  const addExpense = useCallback((name: string, amount: number, recurring = false) => {
-    const expense: ManualExpense = { id: crypto.randomUUID(), name, amount, recurring };
+  const addExpense = useCallback((name: string, amount: number, recurring = false, category?: ExpenseCategory) => {
+    const cat = category ?? categorize(name);
+    const expense: ManualExpense = { id: crypto.randomUUID(), name, amount, recurring, category: cat };
     setData(prev => ({
       ...prev,
       manualExpenses: [...prev.manualExpenses, expense],
