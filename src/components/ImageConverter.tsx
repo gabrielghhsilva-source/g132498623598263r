@@ -121,6 +121,7 @@ async function convertFile(file: File, outFormat: OutFormat, quality: number, ma
 export function ImageConverter() {
   const [outFormat, setOutFormat] = useState<OutFormat>("image/webp");
   const [quality, setQuality] = useState(0.9);
+  const [maxDim, setMaxDim] = useState(0); // 0 = sem redimensionar
   const [items, setItems] = useState<ConvertedItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -140,7 +141,7 @@ export function ImageConverter() {
       const out: ConvertedItem[] = [];
       for (const f of arr) {
         try {
-          const blob = await convertFile(f, outFormat, quality);
+          const blob = await convertFile(f, outFormat, quality, maxDim);
           const convertedUrl = URL.createObjectURL(blob);
           out.push({
             id: crypto.randomUUID(),
