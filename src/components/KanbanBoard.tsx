@@ -332,6 +332,9 @@ export function KanbanBoard(props: Props) {
                 isCustom={!DEFAULT_AREA_IDS.includes(area.id)}
                 draggingTaskId={draggingTaskId}
                 dragOverColumnId={dragOverColumnId}
+                selectedIds={selectedIds}
+                selectionActive={selectionActive}
+                onToggleSelect={toggleSelect}
                 onTaskClick={(t) => openTaskDetail(area.id, t)}
                 onQuickAdd={(text) => props.onAddTaskQuick(area.id, text)}
                 onQuickToggleDone={(taskId) => {
