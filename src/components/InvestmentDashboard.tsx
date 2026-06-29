@@ -46,10 +46,47 @@ export function InvestmentDashboard({
   const [newAreaColor, setNewAreaColor] = useState("#3b82f6");
   const [newAreaEmoji, setNewAreaEmoji] = useState("🏦");
   const [globalSimDate, setGlobalSimDate] = useState("");
+  const { rates, tesouro, loading: quotesLoading, refresh: refreshQuotes } = useQuotes();
+  const appliedRef = useRef<string>("");
 
   const allInvestments = areas.flatMap(a => a.investments);
   const allDebts = areas.flatMap(a => a.debts || []);
   const grandTotals = getAreaTotals(allInvestments, allDebts);
+
+  // Auto-apply fetched quotes to investments linked to external sources.
+  useEffect(() => {
+    if (!rates) return;
+    const stamp = `${rates.fetchedAt}|${tesouro.length}`;
+    if (appliedRef.current === stamp) return;
+    appliedRef.current = stamp;
+
+    for (const area of areas) {
+      for (const inv of area.investments) {
+        if (!inv.source) continue;
+        if (inv.source.type === "stock") {
+          if (!inv.source.stockSymbol) continue;
+          fetchStockQuote(inv.source.stockSymbol).then(price => {
+            if (price == null) return;
+            const shares = inv.source!.stockShares ?? 0;
+            onUpdateInvestment(area.id, inv.id, {
+              manualCurrentValue: Math.round(price * shares * 100) / 100,
+              lastQuoteAt: new Date().toISOString(),
+            });
+          });
+          continue;
+        }
+        const derived = deriveRateFromSource(inv.source, rates, tesouro);
+        if (!derived) continue;
+        const newRate = Math.round(derived.rateOfReturn * 100) / 100;
+        if (newRate === inv.rateOfReturn && derived.rateType === inv.rateType) continue;
+        onUpdateInvestment(area.id, inv.id, {
+          rateOfReturn: newRate,
+          rateType: derived.rateType,
+          lastQuoteAt: new Date().toISOString(),
+        });
+      }
+    }
+  }, [rates, tesouro, areas, onUpdateInvestment]);
 
   const handleAddArea = () => {
     if (!newAreaName.trim()) return;
