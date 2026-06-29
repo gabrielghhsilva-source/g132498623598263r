@@ -197,7 +197,7 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
 }
 function InvestmentAreaCard({
   area, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onUpdateInvestment, rates, tesouro, onCreateTaskReminder,
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
@@ -210,6 +210,9 @@ function InvestmentAreaCard({
   onAddDebt: (name: string, amount: number) => void;
   onDeleteDebt: (debtId: string) => void;
   onSetMonthlyOverride: (invId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdateInvestment: (invId: string, patch: Partial<Investment>) => void;
+  rates: import("@/lib/quotesApi").MarketRates | null;
+  tesouro: import("@/lib/quotesApi").TesouroTitulo[];
   onCreateTaskReminder?: (text: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
