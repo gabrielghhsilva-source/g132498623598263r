@@ -105,6 +105,14 @@ export function InvestmentDashboard({
             Patrimônio Total
           </h2>
           <QuickContributionDialog areas={areas} onAddContribution={onAddContribution} />
+          <button
+            onClick={() => refreshQuotes(true)}
+            disabled={quotesLoading}
+            className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            title="Atualizar cotações (CDI, Selic, IPCA, Tesouro, ações)"
+          >
+            <RefreshCw className={`w-3 h-3 ${quotesLoading ? "animate-spin" : ""}`} /> Cotações
+          </button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
