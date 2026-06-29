@@ -420,12 +420,15 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride, onUpdate, rates, tesouro }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
   onAddBulkContributions: (entries: { date: string; amount: number }[]) => void;
   onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdate: (patch: Partial<Investment>) => void;
+  rates: import("@/lib/quotesApi").MarketRates | null;
+  tesouro: import("@/lib/quotesApi").TesouroTitulo[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [contDate, setContDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -433,6 +436,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   const [showOverride, setShowOverride] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [showLinkSource, setShowLinkSource] = useState(false);
   const [showAllContributions, setShowAllContributions] = useState(false);
   const currentVal = getCurrentValue(inv);
   // Capital investido (sem juros): histórico de aportes + aportes automáticos + aportes manuais.
