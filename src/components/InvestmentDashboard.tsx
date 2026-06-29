@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { InvestmentArea, Investment, InvestmentGoal, Debt } from "@/lib/types";
 import { getAreaTotals, calculateGrowth, simulateUntilDate, getCurrentValue, simulateGlobalUntilDate } from "@/lib/investmentCalc";
-import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History, List, X } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Target, TrendingUp, DollarSign, Calendar, BarChart3, Minus, History, List, X, Link2, RefreshCw } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ContributionAmountInput } from "./ContributionAmountInput";
 import { QuickContributionDialog } from "./QuickContributionDialog";
 import { HistoryBuilderDialog } from "./HistoryBuilderDialog";
+import { LinkSourceDialog } from "./LinkSourceDialog";
+import { useQuotes } from "@/hooks/useQuotes";
+import { deriveRateFromSource, fetchStockQuote } from "@/lib/quotesApi";
 
 const BANK_EMOJIS = ["🏦", "💰", "📊", "🪙", "💎", "🏛️", "📈", "💳", "🔐", "🌐"];
 
@@ -30,22 +33,60 @@ interface Props {
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
   onDeleteDebt: (areaId: string, debtId: string) => void;
   onSetMonthlyOverride: (areaId: string, investmentId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdateInvestment: (areaId: string, investmentId: string, patch: Partial<Investment>) => void;
   onCreateTaskReminder?: (text: string) => void;
 }
 
 export function InvestmentDashboard({
   areas, onAddArea, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onUpdateInvestment, onCreateTaskReminder,
 }: Props) {
   const [showAddArea, setShowAddArea] = useState(false);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaColor, setNewAreaColor] = useState("#3b82f6");
   const [newAreaEmoji, setNewAreaEmoji] = useState("🏦");
   const [globalSimDate, setGlobalSimDate] = useState("");
+  const { rates, tesouro, loading: quotesLoading, refresh: refreshQuotes } = useQuotes();
+  const appliedRef = useRef<string>("");
 
   const allInvestments = areas.flatMap(a => a.investments);
   const allDebts = areas.flatMap(a => a.debts || []);
   const grandTotals = getAreaTotals(allInvestments, allDebts);
+
+  // Auto-apply fetched quotes to investments linked to external sources.
+  useEffect(() => {
+    if (!rates) return;
+    const stamp = `${rates.fetchedAt}|${tesouro.length}`;
+    if (appliedRef.current === stamp) return;
+    appliedRef.current = stamp;
+
+    for (const area of areas) {
+      for (const inv of area.investments) {
+        if (!inv.source) continue;
+        if (inv.source.type === "stock") {
+          if (!inv.source.stockSymbol) continue;
+          fetchStockQuote(inv.source.stockSymbol).then(price => {
+            if (price == null) return;
+            const shares = inv.source!.stockShares ?? 0;
+            onUpdateInvestment(area.id, inv.id, {
+              manualCurrentValue: Math.round(price * shares * 100) / 100,
+              lastQuoteAt: new Date().toISOString(),
+            });
+          });
+          continue;
+        }
+        const derived = deriveRateFromSource(inv.source, rates, tesouro);
+        if (!derived) continue;
+        const newRate = Math.round(derived.rateOfReturn * 100) / 100;
+        if (newRate === inv.rateOfReturn && derived.rateType === inv.rateType) continue;
+        onUpdateInvestment(area.id, inv.id, {
+          rateOfReturn: newRate,
+          rateType: derived.rateType,
+          lastQuoteAt: new Date().toISOString(),
+        });
+      }
+    }
+  }, [rates, tesouro, areas, onUpdateInvestment]);
 
   const handleAddArea = () => {
     if (!newAreaName.trim()) return;
@@ -64,6 +105,14 @@ export function InvestmentDashboard({
             Patrimônio Total
           </h2>
           <QuickContributionDialog areas={areas} onAddContribution={onAddContribution} />
+          <button
+            onClick={() => refreshQuotes(true)}
+            disabled={quotesLoading}
+            className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            title="Atualizar cotações (CDI, Selic, IPCA, Tesouro, ações)"
+          >
+            <RefreshCw className={`w-3 h-3 ${quotesLoading ? "animate-spin" : ""}`} /> Cotações
+          </button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <StatBlock label="Investido" value={formatCurrency(grandTotals.totalInvested)} color="text-muted-foreground" />
@@ -100,6 +149,9 @@ export function InvestmentDashboard({
           onAddDebt={(name, amount) => onAddDebt(area.id, name, amount)}
           onDeleteDebt={debtId => onDeleteDebt(area.id, debtId)}
           onSetMonthlyOverride={(invId, override) => onSetMonthlyOverride(area.id, invId, override)}
+          onUpdateInvestment={(invId, patch) => onUpdateInvestment(area.id, invId, patch)}
+          rates={rates}
+          tesouro={tesouro}
           onCreateTaskReminder={onCreateTaskReminder}
         />
       ))}
@@ -145,7 +197,7 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
 }
 function InvestmentAreaCard({
   area, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onUpdateInvestment, rates, tesouro, onCreateTaskReminder,
 }: {
   area: InvestmentArea;
   onDeleteArea: () => void;
@@ -158,6 +210,9 @@ function InvestmentAreaCard({
   onAddDebt: (name: string, amount: number) => void;
   onDeleteDebt: (debtId: string) => void;
   onSetMonthlyOverride: (invId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdateInvestment: (invId: string, patch: Partial<Investment>) => void;
+  rates: import("@/lib/quotesApi").MarketRates | null;
+  tesouro: import("@/lib/quotesApi").TesouroTitulo[];
   onCreateTaskReminder?: (text: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -210,6 +265,9 @@ function InvestmentAreaCard({
               onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)}
               onAddBulkContributions={entries => onAddBulkContributions(inv.id, entries)}
               onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)}
+              onUpdate={(patch) => onUpdateInvestment(inv.id, patch)}
+              rates={rates}
+              tesouro={tesouro}
             />
           ))}
           {showAddInv ? (
@@ -362,12 +420,15 @@ function AreaGrowthChart({ investments, color }: { investments: Investment[]; co
   );
 }
 
-function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride }: {
+function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, onAddBulkContributions, onSetOverride, onUpdate, rates, tesouro }: {
   investment: Investment; color: string;
   onDelete: () => void;
   onAddContribution: (date: string, amount: number) => void;
   onAddBulkContributions: (entries: { date: string; amount: number }[]) => void;
   onSetOverride: (override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdate: (patch: Partial<Investment>) => void;
+  rates: import("@/lib/quotesApi").MarketRates | null;
+  tesouro: import("@/lib/quotesApi").TesouroTitulo[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [contDate, setContDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -375,6 +436,7 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
   const [showOverride, setShowOverride] = useState(false);
   const [overrideAmount, setOverrideAmount] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [showLinkSource, setShowLinkSource] = useState(false);
   const [showAllContributions, setShowAllContributions] = useState(false);
   const currentVal = getCurrentValue(inv);
   // Capital investido (sem juros): histórico de aportes + aportes automáticos + aportes manuais.
@@ -396,7 +458,14 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
           <TrendingUp className="w-4 h-4" style={{ color }} />
           <div>
-            <p className="text-sm font-medium">{inv.name}</p>
+            <p className="text-sm font-medium flex items-center gap-1.5">
+              {inv.name}
+              {inv.source && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold uppercase tracking-wide" title={`Vinculado: ${inv.source.type}`}>
+                  {inv.source.type}
+                </span>
+              )}
+            </p>
             <p className="text-xs text-muted-foreground">
               {formatCurrency(investedCapital)} <span className={profit >= 0 ? "text-success" : "text-destructive"}>({profit >= 0 ? "+" : ""}{formatCurrency(profit)})</span>
             </p>
@@ -448,7 +517,14 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           <div>
             <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
               <p className="text-xs font-medium">Aportes manuais ({inv.contributions.length})</p>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setShowLinkSource(true)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Vincular taxa a CDI/Selic/IPCA/Tesouro ou cotação a uma ação"
+                >
+                  <Link2 className="w-3 h-3" /> {inv.source ? "Editar fonte" : "Vincular"}
+                </button>
                 <button
                   onClick={() => setShowAllContributions(true)}
                   className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-secondary text-foreground hover:bg-accent transition-colors"
@@ -499,6 +575,15 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           )}
           {showAllContributions && (
             <AllContributionsDialog investment={inv} onClose={() => setShowAllContributions(false)} />
+          )}
+          {showLinkSource && (
+            <LinkSourceDialog
+              investment={inv}
+              rates={rates}
+              tesouro={tesouro}
+              onClose={() => setShowLinkSource(false)}
+              onSave={onUpdate}
+            />
           )}
         </div>
       )}

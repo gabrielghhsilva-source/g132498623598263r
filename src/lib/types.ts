@@ -187,6 +187,28 @@ export interface MonthlyOverride {
   amount: number;
 }
 
+export type InvestmentDataSource =
+  | "manual"
+  | "cdi"        // % do CDI (ex: 100%, 110%)
+  | "selic"      // Selic + spread (% a.a.)
+  | "ipca"       // IPCA + spread (% a.a.)
+  | "tesouro"    // Tesouro Direto (taxa do título escolhido)
+  | "stock";     // Ação/FII: valor atual = preço × cotas
+
+export interface InvestmentSourceConfig {
+  type: InvestmentDataSource;
+  /** Para CDI: percentual (ex: 1.10 = 110% do CDI). */
+  multiplier?: number;
+  /** Para Selic/IPCA: spread em % a.a. (ex: 2 = "Selic + 2%"). */
+  spread?: number;
+  /** Para Tesouro: código do título (ex: "Tesouro Selic 2029"). */
+  tesouroCode?: string;
+  /** Para Stock: símbolo (ex: PETR4.SA). */
+  stockSymbol?: string;
+  /** Para Stock: quantidade de cotas. */
+  stockShares?: number;
+}
+
 export interface Investment {
   id: string;
   name: string;
@@ -203,6 +225,12 @@ export interface Investment {
   contributionStep?: number;
   /** Sugestões clicáveis de valores rápidos. */
   quickAmounts?: number[];
+  /** Vínculo a fonte externa (BCB, Tesouro, Bolsa) para atualização automática. */
+  source?: InvestmentSourceConfig;
+  /** Valor atual sobrescrito por cotação (usado quando source = stock). */
+  manualCurrentValue?: number;
+  /** Timestamp da última atualização de cotação. */
+  lastQuoteAt?: string;
 }
 
 export interface ContributionRecord {
