@@ -265,6 +265,9 @@ function InvestmentAreaCard({
               onAddContribution={(date, amount) => onAddContribution(inv.id, date, amount)}
               onAddBulkContributions={entries => onAddBulkContributions(inv.id, entries)}
               onSetOverride={(override) => onSetMonthlyOverride(inv.id, override)}
+              onUpdate={(patch) => onUpdateInvestment(inv.id, patch)}
+              rates={rates}
+              tesouro={tesouro}
             />
           ))}
           {showAddInv ? (
