@@ -28,6 +28,10 @@ export function calculateGrowth(investment: Investment, months: number): GrowthD
 }
 
 export function getCurrentValue(investment: Investment): number {
+  // Quando há vínculo com cotação (ex: ações), o valor atual vem do preço × cotas.
+  if (investment.manualCurrentValue != null && !Number.isNaN(investment.manualCurrentValue)) {
+    return Math.round(investment.manualCurrentValue * 100) / 100;
+  }
   const start = new Date(investment.startDate);
   const now = new Date();
   const months = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
