@@ -76,11 +76,12 @@ export async function fetchTesouroTitulos(): Promise<TesouroTitulo[]> {
   }
 }
 
-export async function fetchStockQuote(symbol: string, appPassword: string): Promise<number | null> {
+export async function fetchStockQuote(symbol: string): Promise<number | null> {
   try {
+    const pwd = getAppPassword();
     const { data, error } = await supabase.functions.invoke("stock-proxy", {
       body: { action: "quote", symbol },
-      headers: { "x-app-password": appPassword },
+      headers: pwd ? { "x-app-password": pwd } : undefined,
     });
     if (error) return null;
     const raw = data?.["Global Quote"]?.["05. price"];
