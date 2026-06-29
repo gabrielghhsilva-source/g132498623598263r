@@ -2,6 +2,7 @@
 // Stock quotes route through the existing `stock-proxy` edge function.
 
 import { supabase } from "@/integrations/supabase/client";
+import { getAppPassword } from "@/lib/crypto";
 
 export interface MarketRates {
   /** CDI mensal acumulado (% a.m.). Série BCB 4391. */
