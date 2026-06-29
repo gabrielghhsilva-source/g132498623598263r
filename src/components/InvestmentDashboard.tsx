@@ -517,7 +517,14 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           <div>
             <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
               <p className="text-xs font-medium">Aportes manuais ({inv.contributions.length})</p>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setShowLinkSource(true)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Vincular taxa a CDI/Selic/IPCA/Tesouro ou cotação a uma ação"
+                >
+                  <Link2 className="w-3 h-3" /> {inv.source ? "Editar fonte" : "Vincular"}
+                </button>
                 <button
                   onClick={() => setShowAllContributions(true)}
                   className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-secondary text-foreground hover:bg-accent transition-colors"
