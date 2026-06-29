@@ -576,6 +576,15 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
           {showAllContributions && (
             <AllContributionsDialog investment={inv} onClose={() => setShowAllContributions(false)} />
           )}
+          {showLinkSource && (
+            <LinkSourceDialog
+              investment={inv}
+              rates={rates}
+              tesouro={tesouro}
+              onClose={() => setShowLinkSource(false)}
+              onSave={onUpdate}
+            />
+          )}
         </div>
       )}
     </div>
