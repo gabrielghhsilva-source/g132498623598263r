@@ -33,12 +33,13 @@ interface Props {
   onAddDebt: (areaId: string, name: string, monthlyAmount: number) => void;
   onDeleteDebt: (areaId: string, debtId: string) => void;
   onSetMonthlyOverride: (areaId: string, investmentId: string, override: import("@/lib/types").MonthlyOverride | undefined) => void;
+  onUpdateInvestment: (areaId: string, investmentId: string, patch: Partial<Investment>) => void;
   onCreateTaskReminder?: (text: string) => void;
 }
 
 export function InvestmentDashboard({
   areas, onAddArea, onDeleteArea, onAddInvestment, onDeleteInvestment,
-  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onCreateTaskReminder,
+  onAddContribution, onAddBulkContributions, onAddGoal, onDeleteGoal, onAddDebt, onDeleteDebt, onSetMonthlyOverride, onUpdateInvestment, onCreateTaskReminder,
 }: Props) {
   const [showAddArea, setShowAddArea] = useState(false);
   const [newAreaName, setNewAreaName] = useState("");
