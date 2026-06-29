@@ -458,7 +458,14 @@ function InvestmentItem({ investment: inv, color, onDelete, onAddContribution, o
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
           <TrendingUp className="w-4 h-4" style={{ color }} />
           <div>
-            <p className="text-sm font-medium">{inv.name}</p>
+            <p className="text-sm font-medium flex items-center gap-1.5">
+              {inv.name}
+              {inv.source && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold uppercase tracking-wide" title={`Vinculado: ${inv.source.type}`}>
+                  {inv.source.type}
+                </span>
+              )}
+            </p>
             <p className="text-xs text-muted-foreground">
               {formatCurrency(investedCapital)} <span className={profit >= 0 ? "text-success" : "text-destructive"}>({profit >= 0 ? "+" : ""}{formatCurrency(profit)})</span>
             </p>
