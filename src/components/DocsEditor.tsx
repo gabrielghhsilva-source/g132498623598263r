@@ -173,7 +173,7 @@ export function DocsEditor({ doc, templates, onSave, onBack, onAddTemplate, onDe
     let out = tpl.html;
     for (const p of tpl.placeholders) {
       const v = window.prompt(`Preencher: ${p}`, "");
-      if (v != null) out = out.replaceAll(new RegExp(`\\{\\{\\s*${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\}\\}`, "g"), v);
+      if (v != null) out = out.replace(new RegExp(`\\{\\{\\s*${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\}\\}`, "g"), v);
     }
     const clean = sanitize(out);
     if (editorRef.current) editorRef.current.innerHTML = clean;
