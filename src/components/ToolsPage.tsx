@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { ImageIcon, QrCode } from "lucide-react";
+import { ImageIcon, QrCode, FileText } from "lucide-react";
 import { ImageConverter } from "@/components/ImageConverter";
 import { QRCodeTool } from "@/components/QRCodeTool";
+import { DocsPage } from "@/components/DocsPage";
 
-type Tool = "image" | "qr";
+type Tool = "image" | "qr" | "docs";
 
 const TABS: { id: Tool; label: string; icon: typeof ImageIcon }[] = [
-  { id: "image", label: "Imagem", icon: ImageIcon },
+  { id: "docs",  label: "Docs",    icon: FileText },
+  { id: "image", label: "Imagem",  icon: ImageIcon },
   { id: "qr",    label: "QR Code", icon: QrCode },
 ];
 
@@ -33,6 +35,7 @@ export function ToolsPage() {
           );
         })}
       </div>
+      {tool === "docs" && <DocsPage />}
       {tool === "image" && <ImageConverter />}
       {tool === "qr" && <QRCodeTool />}
     </div>
